@@ -185,6 +185,27 @@ public abstract class Streams {
         };
     }
 
+    public static <T> Stream<T> fromArray(final T... values) {
+        return new Stream<T>() {
+            private int i = 0;
+
+            @Override
+            public void close() throws StreamCloseException {
+            }
+
+            @Override
+            public boolean hasNext() throws StreamReadException {
+                return i < values.length;
+            }
+
+            @Override
+            public T next() throws StreamReadException {
+                if (i < values.length) return values[i++];
+                throw new NoSuchElementException();
+            }
+        };
+    }
+
     public static <T, TIterator extends Iterator<T> & AutoCloseable> Stream<T> fromCloseableIterator(final TIterator iterator) {
         return new Stream<T>() {
             public boolean hasNext() {
