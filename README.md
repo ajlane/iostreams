@@ -7,10 +7,13 @@ A `Stream` provides `hasNext` and `next` methods, just like an `Iterator`, but i
 
 Like `Iterable`, `Streamable` types can provide fresh instances of `Stream` to provide sequential access to a resource.
 
-Utility methods on `Streams` and `Streamable` allow streams to be transformed and composed.
+Utility methods on `Streams` and `Streamables` allow streams to be transformed and composed.
 
 Example
 -------
+
+This example uses Streams to lazily read an arbitrary number of text files and output their contents line-by-line.
+
 ```java
 
 public static void main(final String... args) throws StreamException {
