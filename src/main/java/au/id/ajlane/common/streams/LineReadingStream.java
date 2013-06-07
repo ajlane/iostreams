@@ -25,11 +25,11 @@ public class LineReadingStream extends AbstractStream<String> {
         return fromFile(file.toPath(), Charset.defaultCharset());
     }
 
-    private final Path file;
     private final Charset charset;
+    private final Path file;
     private BufferedReader reader = null;
 
-    private LineReadingStream(Path file, Charset charset) {
+    private LineReadingStream(final Path file, final Charset charset) {
         this.file = file;
         this.charset = charset;
     }

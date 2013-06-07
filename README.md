@@ -3,7 +3,7 @@ Streams
 
 Composable heavy-weight iterators for Java.
 
-A `Stream` provides `hasNext` and `next` methods, just like an `Iterator`, but is also `Closeable` and throws predictable checked exceptions (`StreamReadException` and `StreamCloseException`).
+A `Stream` provides `hasNext` and `next` methods, just like an `Iterator`, but is also `Closeable` and throws predictable checked exceptions.
 
 Like `Iterable`, `Streamable` types can provide fresh instances of `Stream` to provide sequential access to a resource.
 
@@ -16,32 +16,38 @@ This example uses Streams to lazily read an arbitrary number of text files and o
 
 ```java
 
-public static void main(final String... args) throws StreamException {
-    // Collect all of the file names and convert them to NIO Paths
-    final Stream<Path> files = Streams.transform(Streams.fromArray(args), new AbstractStreamTransform<String, Path>() {
-        @Override
-        protected Path transform(String filename) {
-            return Paths.get(filename);
-        }
-    });
+    public static void main(final String... args) throws StreamException {
 
-    // Convert each file into a stream of lines and merge the results for all files into a single stream
-    final Stream<String> lines = Streams.flatten(files, new AbstractStreamTransform<Path, Stream<String>>() {
-        @Override
-        protected Stream<String> transform(Path file) {
-            return LineReadingStream.fromFile(file, StandardCharsets.UTF_8);
-        }
-    });
+        // Create a stream to read each file and emit the lines of text
+        Stream<String> lines = Streams.flatten(Streams.fromArray(args), new AbstractStreamTransform<String, Stream<String>>() {
+            @Override
+            protected Stream<String> transform(final String file) {
+                return LineReadingStream.fromFile(Paths.get(file), StandardCharsets.UTF_8);
+            }
+        });
 
-    // Read each line and print to standard out
-    try {
-        // Lines will be read lazily, one at a time. Each file will be properly closed before reading the next one.
-        while (lines.hasNext()) {
-            System.out.println(lines.next());
-        }
-    } finally {
-        lines.close();
+        // Filter out blank lines and lines beginning with #
+        lines = Streams.filter(lines, new AbstractStreamFilter<String>() {
+            @Override
+            public boolean keep(final String line) {
+                return line != null && line.length() > 0 && !line.matches("\\s*(\\#.*)?");
+            }
+        });
+
+        // Print to standard out
+        print(lines);
     }
-}
+
+    public static void print(final Stream<String> lines) throws StreamException {
+        // Read each line and print to standard out
+        // We don't care about files or encoding here, the stream will handle all of that for us.
+        try {
+            while (lines.hasNext()) {
+                System.out.println(lines.next());
+            }
+        } finally {
+            lines.close();
+        }
+    }
 
 ```

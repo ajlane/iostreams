@@ -11,8 +11,8 @@ public abstract class AbstractStream<T> implements Stream<T> {
         CLOSED
     }
 
-    private State state = State.NEW;
     private T next = null;
+    private State state = State.NEW;
     ;
 
     public final void close() throws StreamCloseException {
@@ -68,6 +68,7 @@ public abstract class AbstractStream<T> implements Stream<T> {
     protected void open() throws StreamReadException {
     }
 
+    @SuppressWarnings("SameReturnValue")
     protected final T terminate() {
         state = State.TERMINATED;
         return null;

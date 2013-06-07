@@ -9,91 +9,35 @@ public abstract class Streams {
 
     private static final Stream<?> EMPTY = new Stream<Object>() {
         @Override
-        public void close() throws StreamCloseException {
+        public void close() {
         }
 
         @Override
-        public boolean hasNext() throws StreamReadException {
+        public boolean hasNext() {
             return false;
         }
 
         @Override
-        public Object next() throws StreamReadException {
+        public Object next() {
             throw new NoSuchElementException();
         }
     };
 
-    @SuppressWarnings("unchecked")
-    public static <T> Stream<T> empty() {
-        return (Stream<T>) EMPTY;
-    }
-
-    public static <T> Stream<T> singleton(final T item) {
-        return new Stream<T>() {
-            private boolean hasNext = true;
-
-            @Override
-            public void close() throws StreamCloseException {
-            }
-
-            @Override
-            public boolean hasNext() throws StreamReadException {
-                return hasNext;
-            }
-
-            @Override
-            public T next() throws StreamReadException {
-                if (hasNext) {
-                    hasNext = false;
-                    return item;
-                }
-                throw new NoSuchElementException();
-            }
-        };
-    }
-
-    public static <T, R> Stream<R> transform(final Stream<T> stream, final StreamTransform<T, R> transform) {
-        return new Stream<R>() {
-            @Override
-            public void close() throws StreamCloseException {
-                try {
-                    transform.close();
-                } finally {
-                    stream.close();
-                }
-            }
-
-            @Override
-            public boolean hasNext() throws StreamReadException {
-                return stream.hasNext();
-            }
-
-            @Override
-            public R next() throws StreamReadException {
-                return transform.apply(stream.next());
-            }
-        };
-    }
-
-    public static <T, R> Stream<R> flatten(final Stream<T> stream, final StreamTransform<T, Stream<R>> transform) {
-        return concat(transform(stream, transform));
-    }
-
-    public static <T> Stream<T> concat(final Iterable<? extends Stream<T>> streams) {
+    public static <T> Stream<T> concat(final Iterable<? extends Stream<? extends T>> streams) {
         return concat(fromIterable(streams));
     }
 
-    public static <T> Stream<T> concat(final Iterator<? extends Stream<T>> streams) {
+    public static <T> Stream<T> concat(final Iterator<? extends Stream<? extends T>> streams) {
         return concat(fromIterator(streams));
     }
 
-    public static <T> Stream<T> concat(final Streamable<? extends Stream<T>> streams) {
+    public static <T> Stream<T> concat(final Streamable<? extends Stream<? extends T>> streams) {
         return concat(streams.stream());
     }
 
-    public static <T> Stream<T> concat(final Stream<? extends Stream<T>> streams) {
+    public static <T> Stream<T> concat(final Stream<? extends Stream<? extends T>> streams) {
         return new AbstractStream<T>() {
-            private Stream<T> current = null;
+            private Stream<? extends T> current = null;
 
             @Override
             protected void open() throws StreamReadException {
@@ -129,7 +73,8 @@ public abstract class Streams {
         };
     }
 
-    public static <T> Stream<T> concat(final Stream<T>... streams) {
+    @SafeVarargs
+    public static <T> Stream<T> concat(final Stream<? extends T>... streams) {
         return new AbstractStream<T>() {
             private int i = 0;
 
@@ -159,47 +104,64 @@ public abstract class Streams {
         };
     }
 
-    public static <T> Stream<T> fromIterable(final Iterable<T> iterable) {
-        return fromIterator(iterable.iterator());
+    @SuppressWarnings("unchecked")
+    public static <T> Stream<T> empty() {
+        return (Stream<T>) EMPTY;
     }
 
-    public static <T> Stream<T> fromIterator(final Iterator<T> iterator) {
-        return new Stream<T>() {
-            public boolean hasNext() {
-                return iterator.hasNext();
+    public static <T> Stream<T> filter(final Stream<? extends T> stream, final StreamFilter<? super T> filter) {
+        return new AbstractStream<T>() {
+            @Override
+            protected void end() throws StreamCloseException {
+                filter.close();
             }
 
-            public T next() {
-                return iterator.next();
-            }
+            private boolean terminate = false;
 
-            public void close() throws StreamCloseException {
-                if (iterator instanceof Closeable) {
-                    try {
-                        ((Closeable) iterator).close();
-                    } catch (IOException ex) {
-                        throw new StreamCloseException("Could not close underlying iterator.", ex);
+            @Override
+            protected T find() throws StreamReadException {
+                while (!terminate && stream.hasNext()) {
+                    if (Thread.interrupted())
+                        throw new StreamReadException("The thread was interrupted while filtering the stream.", new InterruptedException());
+                    final T next = stream.next();
+                    switch (filter.apply(next)) {
+                        case KEEP_AND_CONTINUE:
+                            return next;
+                        case SKIP_AND_CONTINUE:
+                            continue;
+                        case KEEP_AND_TERMINATE:
+                            this.terminate = true;
+                            return next;
+                        case SKIP_AND_TERMINATE:
+                        default:
+                            break;
                     }
                 }
+                return terminate();
             }
         };
     }
 
+    public static <T, R> Stream<R> flatten(final Stream<? extends T> stream, final StreamTransform<? super T, Stream<R>> transform) {
+        return concat(transform(stream, transform));
+    }
+
+    @SafeVarargs
     public static <T> Stream<T> fromArray(final T... values) {
         return new Stream<T>() {
             private int i = 0;
 
             @Override
-            public void close() throws StreamCloseException {
+            public void close() {
             }
 
             @Override
-            public boolean hasNext() throws StreamReadException {
+            public boolean hasNext() {
                 return i < values.length;
             }
 
             @Override
-            public T next() throws StreamReadException {
+            public T next() {
                 if (i < values.length) return values[i++];
                 throw new NoSuchElementException();
             }
@@ -224,6 +186,79 @@ public abstract class Streams {
                 } catch (Exception ex) {
                     throw new StreamCloseException("Could not close underlying iterator.", ex);
                 }
+            }
+        };
+    }
+
+    public static <T> Stream<T> fromIterable(final Iterable<? extends T> iterable) {
+        return fromIterator(iterable.iterator());
+    }
+
+    public static <T> Stream<T> fromIterator(final Iterator<? extends T> iterator) {
+        return new Stream<T>() {
+            public boolean hasNext() {
+                return iterator.hasNext();
+            }
+
+            public T next() {
+                return iterator.next();
+            }
+
+            public void close() throws StreamCloseException {
+                if (iterator instanceof Closeable) {
+                    try {
+                        ((Closeable) iterator).close();
+                    } catch (IOException ex) {
+                        throw new StreamCloseException("Could not close underlying iterator.", ex);
+                    }
+                }
+            }
+        };
+    }
+
+    public static <T> Stream<T> singleton(final T item) {
+        return new Stream<T>() {
+            private boolean hasNext = true;
+
+            @Override
+            public void close() {
+            }
+
+            @Override
+            public boolean hasNext() {
+                return hasNext;
+            }
+
+            @Override
+            public T next() {
+                if (hasNext) {
+                    hasNext = false;
+                    return item;
+                }
+                throw new NoSuchElementException();
+            }
+        };
+    }
+
+    public static <T, R> Stream<R> transform(final Stream<? extends T> stream, final StreamTransform<? super T, ? extends R> transform) {
+        return new Stream<R>() {
+            @Override
+            public void close() throws StreamCloseException {
+                try {
+                    transform.close();
+                } finally {
+                    stream.close();
+                }
+            }
+
+            @Override
+            public boolean hasNext() throws StreamReadException {
+                return stream.hasNext();
+            }
+
+            @Override
+            public R next() throws StreamReadException {
+                return transform.apply(stream.next());
             }
         };
     }

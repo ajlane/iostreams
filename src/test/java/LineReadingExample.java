@@ -1,30 +1,35 @@
-import au.id.ajlane.common.streams.*;
-
 import java.nio.charset.StandardCharsets;
-import java.nio.file.Path;
 import java.nio.file.Paths;
+
+import au.id.ajlane.common.streams.*;
 
 public class LineReadingExample {
     public static void main(final String... args) throws StreamException {
-        // Collect all of the file names and convert them to NIO Paths
-        final Stream<Path> files = Streams.transform(Streams.fromArray(args), new AbstractStreamTransform<String, Path>() {
+
+        // Create a stream to read each file and emit the lines of text
+        Stream<String> lines = Streams.flatten(Streams.fromArray(args), new AbstractStreamTransform<String, Stream<String>>() {
             @Override
-            protected Path transform(String filename) {
-                return Paths.get(filename);
+            protected Stream<String> transform(final String file) {
+                return LineReadingStream.fromFile(Paths.get(file), StandardCharsets.UTF_8);
             }
         });
 
-        // Convert each file into a stream of lines and merge the results for all files into a single stream
-        final Stream<String> lines = Streams.flatten(files, new AbstractStreamTransform<Path, Stream<String>>() {
+        // Filter out blank lines and lines beginning with #
+        lines = Streams.filter(lines, new AbstractStreamFilter<String>() {
             @Override
-            protected Stream<String> transform(Path file) {
-                return LineReadingStream.fromFile(file, StandardCharsets.UTF_8);
+            public boolean keep(final String line) {
+                return line != null && line.length() > 0 && !line.matches("\\s*(\\#.*)?");
             }
         });
 
+        // Print to standard out
+        print(lines);
+    }
+
+    public static void print(final Stream<String> lines) throws StreamException {
         // Read each line and print to standard out
+        // We don't care about files or encoding here, the stream will handle all of that for us.
         try {
-            // Lines will be read lazily, one at a time. Each file will be properly closed before reading the next one.
             while (lines.hasNext()) {
                 System.out.println(lines.next());
             }

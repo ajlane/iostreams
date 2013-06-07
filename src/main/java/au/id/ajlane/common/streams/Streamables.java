@@ -9,29 +9,6 @@ public abstract class Streamables {
         }
     };
 
-    @SuppressWarnings("unchecked")
-    public static <T> Streamable<T> empty() {
-        return (Streamable<T>) EMPTY;
-    }
-
-    public static <T> Streamable<T> singleton(final T item) {
-        return new Streamable<T>() {
-            @Override
-            public Stream<T> stream() {
-                return Streams.singleton(item);
-            }
-        };
-    }
-
-    public static <T> Streamable<T> fromIterable(final Iterable<T> iterable) {
-        return new Streamable<T>() {
-            @Override
-            public Stream<T> stream() {
-                return Streams.fromIterator(iterable.iterator());
-            }
-        };
-    }
-
     public static <T> Streamable<T> concat(final Stream<? extends Streamable<T>> streamables) {
         return new Streamable<T>() {
             @Override
@@ -77,6 +54,7 @@ public abstract class Streamables {
         };
     }
 
+    @SafeVarargs
     public static <T> Streamable<T> concat(final Streamable<T>... streamables) {
         return new Streamable<T>() {
             @Override
@@ -87,7 +65,7 @@ public abstract class Streamables {
                     private Stream<? extends T> current = null;
 
                     @Override
-                    protected void open() throws StreamReadException {
+                    protected void open() {
                         if (i < streamables.length) {
                             current = streamables[i].stream();
                         }
@@ -104,6 +82,7 @@ public abstract class Streamables {
                                 } catch (StreamCloseException ex) {
                                     throw new StreamReadException("Could not close one of the concatenated streams.", ex);
                                 }
+                                i++;
                                 if (i < streamables.length) {
                                     current = streamables[i].stream();
                                 } else {
@@ -119,6 +98,48 @@ public abstract class Streamables {
                         if (current != null) current.close();
                     }
                 };
+            }
+        };
+    }
+
+    @SuppressWarnings("unchecked")
+    public static <T> Streamable<T> empty() {
+        return (Streamable<T>) EMPTY;
+    }
+
+    public static <T> Streamable<T> filter(final Streamable<T> streamable, final StreamFilter<? super T> filter) {
+        return new Streamable<T>() {
+            @Override
+            public Stream<? extends T> stream() {
+                return Streams.filter(streamable.stream(), filter);
+            }
+        };
+    }
+
+    @SafeVarargs
+    public static <T> Streamable<T> fromArray(final T... values) {
+        return new Streamable<T>() {
+            @Override
+            public Stream<? extends T> stream() {
+                return Streams.fromArray(values);
+            }
+        };
+    }
+
+    public static <T> Streamable<T> fromIterable(final Iterable<T> iterable) {
+        return new Streamable<T>() {
+            @Override
+            public Stream<T> stream() {
+                return Streams.fromIterator(iterable.iterator());
+            }
+        };
+    }
+
+    public static <T> Streamable<T> singleton(final T item) {
+        return new Streamable<T>() {
+            @Override
+            public Stream<T> stream() {
+                return Streams.singleton(item);
             }
         };
     }
