@@ -51,3 +51,32 @@ This example uses Streams to lazily read an arbitrary number of text files and o
     }
 
 ```
+
+Maven
+-----
+
+Include the following in your pom.xml to start using Streams.
+
+```xml
+<dependencies>
+    <dependency>
+        <groupId>au.id.ajlane.common</groupId>
+        <artifactId>streams</artifactId>
+        <version>0.0.1-SNAPSHOT</version>
+    </dependency>
+</dependencies>
+
+<repositories>
+    <repository>
+        <id>ajlane-snapshots</id>
+        <layout>default</layout>
+        <url>http://repository-ajlane.forge.cloudbees.com/snapshot/</url>
+        <releases>
+            <enabled>false</enabled>
+        </releases>
+        <snapshots>
+            <enabled>true</enabled>
+        </snapshots>
+    </repository>
+</repositories>
+```
