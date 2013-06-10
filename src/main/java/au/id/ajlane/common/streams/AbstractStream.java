@@ -1,7 +1,29 @@
+/*
+ * Copyright 2013 Aaron Lane
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package au.id.ajlane.common.streams;
 
 import java.util.NoSuchElementException;
 
+/**
+ * A convenient abstract base class for implementing {@link Stream}.
+ *
+ * @param <T>
+ *         The type of the items in the {@code Stream}.
+ */
 public abstract class AbstractStream<T> implements Stream<T> {
     private static enum State {
         NEW,
@@ -13,15 +35,19 @@ public abstract class AbstractStream<T> implements Stream<T> {
 
     private T next = null;
     private State state = State.NEW;
-    ;
 
+    /**
+     * {@inheritDoc}
+     */
+    @Override
     public final void close() throws StreamCloseException {
         end();
         state = State.CLOSED;
     }
 
-    ;
-
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public final boolean hasNext() throws StreamReadException {
         switch (state) {
@@ -40,6 +66,9 @@ public abstract class AbstractStream<T> implements Stream<T> {
         }
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public final T next() throws NoSuchElementException, StreamReadException {
         switch (state) {
@@ -58,6 +87,17 @@ public abstract class AbstractStream<T> implements Stream<T> {
         }
     }
 
+    /**
+     * Releases any resources held by this {@code Stream}.
+     * <p/>
+     * This method will be called by the base class when {@link #close()} is called.
+     * <p/>
+     * Like {@code close}, successive calls to {@code end()} should have no further effect.
+     *
+     * @throws StreamCloseException
+     *         If the {@code Stream} could not be closed for some reason. The {@code Stream} may not release all
+     *         resources if this is the case.
+     */
     protected void end() throws StreamCloseException {
     }
 
