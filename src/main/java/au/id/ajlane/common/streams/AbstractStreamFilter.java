@@ -22,7 +22,7 @@ package au.id.ajlane.common.streams;
  * @param <T>
  *         The type of the items in the {@link Stream}.
  */
-public class AbstractStreamFilter<T> implements StreamFilter<T> {
+public abstract class AbstractStreamFilter<T> implements StreamFilter<T> {
 
     private boolean open = false;
     private boolean terminate = false;
@@ -37,8 +37,8 @@ public class AbstractStreamFilter<T> implements StreamFilter<T> {
             this.open = false;
         }
         if (keep(item)) {
-            if (terminate) return FilterDecision.KEEP_AND_CONTINUE;
-            return FilterDecision.SKIP_AND_CONTINUE;
+            if (terminate) return FilterDecision.KEEP_AND_TERMINATE;
+            return FilterDecision.KEEP_AND_CONTINUE;
         } else {
             if (terminate) return FilterDecision.SKIP_AND_TERMINATE;
             return FilterDecision.SKIP_AND_CONTINUE;

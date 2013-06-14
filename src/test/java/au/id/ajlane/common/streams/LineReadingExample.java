@@ -1,7 +1,7 @@
+package au.id.ajlane.common.streams;
+
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Paths;
-
-import au.id.ajlane.common.streams.*;
 
 public class LineReadingExample {
     public static void main(final String... args) throws StreamException {

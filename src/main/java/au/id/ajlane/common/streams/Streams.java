@@ -16,10 +16,7 @@
 
 package au.id.ajlane.common.streams;
 
-import java.io.Closeable;
-import java.io.IOException;
-import java.util.Iterator;
-import java.util.NoSuchElementException;
+import java.util.*;
 
 public abstract class Streams {
 
@@ -39,6 +36,19 @@ public abstract class Streams {
         }
     };
 
+    public static <T, TCollection extends Collection<T>> TCollection addToCollection(final TCollection collection, final Stream<T> stream) throws StreamException {
+        Objects.requireNonNull(collection, "The collection cannot be null.");
+        Objects.requireNonNull(stream, "The stream cannot be null.");
+        try {
+            while (stream.hasNext()) {
+                collection.add(stream.next());
+            }
+        } finally {
+            stream.close();
+        }
+        return collection;
+    }
+
     public static <T> Stream<T> concat(final Iterable<? extends Stream<? extends T>> streams) {
         return concat(fromIterable(streams));
     }
@@ -48,16 +58,20 @@ public abstract class Streams {
     }
 
     public static <T> Stream<T> concat(final Streamable<? extends Stream<? extends T>> streams) {
+        Objects.requireNonNull(streams, "The streamable cannot be null.");
         return concat(streams.stream());
     }
 
     public static <T> Stream<T> concat(final Stream<? extends Stream<? extends T>> streams) {
+        Objects.requireNonNull(streams, "The stream of streams cannot be null.");
         return new AbstractStream<T>() {
             private Stream<? extends T> current = null;
 
             @Override
             protected void open() throws StreamReadException {
-                if (streams.hasNext()) current = streams.next();
+                if (streams.hasNext()) {
+                    current = Objects.requireNonNull(streams.next(), "The first concatenated stream was null");
+                }
             }
 
             @Override
@@ -72,7 +86,7 @@ public abstract class Streams {
                             throw new StreamReadException("Could not close one of the concatenated streams.", ex);
                         }
                         if (streams.hasNext()) {
-                            current = streams.next();
+                            current = Objects.requireNonNull(streams.next(), "One of the concatenated streams was null.");
                         } else {
                             current = null;
                         }
@@ -91,17 +105,20 @@ public abstract class Streams {
 
     @SafeVarargs
     public static <T> Stream<T> concat(final Stream<? extends T>... streams) {
+        Objects.requireNonNull(streams);
+
         return new AbstractStream<T>() {
             private int i = 0;
 
             @Override
             protected T find() throws StreamReadException {
                 while (i < streams.length) {
-                    if (streams[i].hasNext()) {
-                        return streams[i].next();
+                    final Stream<? extends T> stream = Objects.requireNonNull(streams[i], "One of the concatenated streams was null.");
+                    if (stream.hasNext()) {
+                        return stream.next();
                     } else {
                         try {
-                            streams[i].close();
+                            stream.close();
                         } catch (StreamCloseException ex) {
                             throw new StreamReadException("Could not close one of the concatenated streams.", ex);
                         }
@@ -114,7 +131,7 @@ public abstract class Streams {
             @Override
             protected void end() throws StreamCloseException {
                 if (i < streams.length) {
-                    streams[i].close();
+                    if (streams[i] != null) streams[i].close();
                 }
             }
         };
@@ -126,6 +143,8 @@ public abstract class Streams {
     }
 
     public static <T> Stream<T> filter(final Stream<? extends T> stream, final StreamFilter<? super T> filter) {
+        Objects.requireNonNull(stream, "The stream cannot be null.");
+        Objects.requireNonNull(filter, "The filter cannot be null.");
         return new AbstractStream<T>() {
             @Override
             protected void end() throws StreamCloseException {
@@ -162,8 +181,40 @@ public abstract class Streams {
         return concat(transform(stream, transform));
     }
 
+    public static <T> Stream<T> flattenArrays(final Stream<? extends T[]> stream) {
+        return Streams.flatten(stream, new AbstractStreamTransform<T[], Stream<T>>() {
+            @Override
+            public Stream<T> transform(final T[] item) {
+                return Streams.fromArray(item);
+            }
+        });
+    }
+
+    public static <T> Stream<T> flattenIterables(final Stream<? extends Iterable<? extends T>> stream) {
+        return flatten(stream, new AbstractStreamTransform<Iterable<? extends T>, Stream<T>>() {
+            @Override
+            public Stream<T> transform(final Iterable<? extends T> item) {
+                return Streams.fromIterable(item);
+            }
+        });
+    }
+
+    public static <T> Stream<T> flattenIterators(final Stream<? extends Iterator<? extends T>> stream) {
+        return Streams.flatten(stream, new AbstractStreamTransform<Iterator<? extends T>, Stream<T>>() {
+            @Override
+            public Stream<T> transform(final Iterator<? extends T> item) {
+                return Streams.fromIterator(item);
+            }
+        });
+    }
+
+    public static <T> Stream<T> flattenStreams(final Stream<? extends Stream<? extends T>> stream) {
+        return concat(stream);
+    }
+
     @SafeVarargs
     public static <T> Stream<T> fromArray(final T... values) {
+        Objects.requireNonNull(values, "The array cannot be null. Use an empty array instead.");
         return new Stream<T>() {
             private int i = 0;
 
@@ -184,33 +235,13 @@ public abstract class Streams {
         };
     }
 
-    public static <T, TIterator extends Iterator<T> & AutoCloseable> Stream<T> fromCloseableIterator(final TIterator iterator) {
-        return new Stream<T>() {
-            public boolean hasNext() {
-                return iterator.hasNext();
-            }
-
-            public T next() {
-                return iterator.next();
-            }
-
-            public void close() throws StreamCloseException {
-                try {
-                    iterator.close();
-                } catch (RuntimeException ex) {
-                    throw ex;
-                } catch (Exception ex) {
-                    throw new StreamCloseException("Could not close underlying iterator.", ex);
-                }
-            }
-        };
-    }
-
     public static <T> Stream<T> fromIterable(final Iterable<? extends T> iterable) {
+        Objects.requireNonNull(iterable, "The iterable cannot be null.");
         return fromIterator(iterable.iterator());
     }
 
     public static <T> Stream<T> fromIterator(final Iterator<? extends T> iterator) {
+        Objects.requireNonNull(iterator, "The iterator cannot be null.");
         return new Stream<T>() {
             public boolean hasNext() {
                 return iterator.hasNext();
@@ -221,10 +252,10 @@ public abstract class Streams {
             }
 
             public void close() throws StreamCloseException {
-                if (iterator instanceof Closeable) {
+                if (iterator instanceof AutoCloseable) {
                     try {
-                        ((Closeable) iterator).close();
-                    } catch (IOException ex) {
+                        ((AutoCloseable) iterator).close();
+                    } catch (Exception ex) {
                         throw new StreamCloseException("Could not close underlying iterator.", ex);
                     }
                 }
@@ -256,7 +287,28 @@ public abstract class Streams {
         };
     }
 
+    @SuppressWarnings("unchecked")
+    public static <T> T[] toArray(final Stream<T> stream) throws StreamException {
+        Objects.requireNonNull(stream, "The stream cannot be null.");
+        final List<T> list = new ArrayList<>();
+        return (T[]) addToCollection(list, stream).toArray();
+    }
+
+    public static <T> List<T> toList(final Stream<T> stream) throws StreamException {
+        Objects.requireNonNull("The stream cannot be null.");
+        final List<T> list = new ArrayList<>();
+        return addToCollection(list, stream);
+    }
+
+    public static <T> Set<T> toSet(final Stream<T> stream) throws StreamException {
+        Objects.requireNonNull("The stream cannot be null.");
+        final Set<T> set = new HashSet<>();
+        return addToCollection(set, stream);
+    }
+
     public static <T, R> Stream<R> transform(final Stream<? extends T> stream, final StreamTransform<? super T, ? extends R> transform) {
+        Objects.requireNonNull(stream, "The stream cannot be null.");
+        Objects.requireNonNull(transform, "The transform cannot be null.");
         return new Stream<R>() {
             @Override
             public void close() throws StreamCloseException {

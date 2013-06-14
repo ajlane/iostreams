@@ -79,6 +79,7 @@ public abstract class AbstractStream<T> implements Stream<T> {
                 doFind();
                 return next();
             case HAS_NEXT:
+                this.state = State.NEEDS_NEXT;
                 return next;
             case TERMINATED:
             case CLOSED:
@@ -114,16 +115,14 @@ public abstract class AbstractStream<T> implements Stream<T> {
         return null;
     }
 
-    private final void doFind() throws StreamReadException {
+    private void doFind() throws StreamReadException {
         this.next = find();
         if (state == State.NEEDS_NEXT) {
             state = State.HAS_NEXT;
         }
     }
 
-    ;
-
-    private final void doOpen() throws StreamReadException {
+    private void doOpen() throws StreamReadException {
         open();
         if (state == State.NEW) {
             state = State.NEEDS_NEXT;

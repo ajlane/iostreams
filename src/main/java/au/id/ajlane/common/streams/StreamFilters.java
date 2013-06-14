@@ -16,19 +16,16 @@
 
 package au.id.ajlane.common.streams;
 
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.*;
 
 /**
  * Utility functions for working with instances of {@link StreamFilter}.
  */
 public abstract class StreamFilters {
 
-    private static StreamFilter<?> ALL = new AbstractStreamFilter<Object>() {
+    private static final StreamFilter<?> ALL = new AbstractStreamFilter<Object>() {
     };
-    private static StreamFilter<?> NONE = new AbstractStreamFilter<Object>() {
+    private static final StreamFilter<?> NONE = new AbstractStreamFilter<Object>() {
         @Override
         protected boolean keep(final Object item) {
             return terminate(false);
@@ -59,7 +56,7 @@ public abstract class StreamFilters {
     @SafeVarargs
     public static <T> StreamFilter<T> blacklist(final T... values) {
         final HashSet<T> set = new HashSet<>();
-        for (final T value : values) set.add(value);
+        Collections.addAll(set, values);
         return blacklist((Set<? super T>) set);
     }
 
@@ -152,16 +149,18 @@ public abstract class StreamFilters {
 
             @Override
             protected boolean keep(final T item) throws StreamFilterException {
-                switch (filter.apply(item)) {
+                final FilterDecision decision = filter.apply(item);
+                switch (decision) {
                     case KEEP_AND_CONTINUE:
                         return false;
                     case KEEP_AND_TERMINATE:
-                        return honourTermination ? terminate(false) : false;
+                        return honourTermination && terminate(false);
                     case SKIP_AND_CONTINUE:
                         return true;
                     case SKIP_AND_TERMINATE:
+                        return !honourTermination || terminate(true);
                     default:
-                        return honourTermination ? terminate(true) : true;
+                        throw new IllegalStateException(decision.name());
                 }
             }
         };
@@ -228,21 +227,23 @@ public abstract class StreamFilters {
                 boolean terminate = false;
 
                 for (final StreamFilter<? super T> filter : filters) {
-                    switch (filter.apply(item)) {
+                    final FilterDecision decision = filter.apply(item);
+                    switch (decision) {
                         case SKIP_AND_TERMINATE:
                             return terminate(false);
                         case SKIP_AND_CONTINUE:
-                            return terminate ? terminate(false) : false;
+                            return terminate && terminate(false);
                         case KEEP_AND_TERMINATE:
                             terminate = true;
                             continue;
                         case KEEP_AND_CONTINUE:
-                        default:
                             continue;
+                        default:
+                            throw new IllegalStateException(decision.name());
                     }
                 }
 
-                return terminate ? terminate(true) : true;
+                return !terminate || terminate(true);
             }
         };
     }
@@ -259,7 +260,7 @@ public abstract class StreamFilters {
     @SafeVarargs
     public static <T> StreamFilter<T> whitelist(final T... values) {
         final HashSet<T> set = new HashSet<>();
-        for (final T value : values) set.add(value);
+        Collections.addAll(set, values);
         return whitelist((Set<? super T>) set);
     }
 
