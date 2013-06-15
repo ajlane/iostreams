@@ -33,5 +33,5 @@ public interface Streamable<T> {
      *
      * @return An instance of {@link Stream}.
      */
-    public Stream<? extends T> stream();
+    public Stream<T> stream();
 }

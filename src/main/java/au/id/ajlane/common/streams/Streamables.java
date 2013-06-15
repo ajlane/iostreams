@@ -16,16 +16,30 @@
 
 package au.id.ajlane.common.streams;
 
+import java.util.List;
+import java.util.Objects;
+import java.util.Set;
+
 public abstract class Streamables {
 
     private static final Streamable<?> EMPTY = new Streamable<Object>() {
         @Override
-        public Stream<?> stream() {
+        public Stream<Object> stream() {
             return Streams.empty();
         }
     };
 
-    public static <T> Streamable<T> concat(final Stream<? extends Streamable<T>> streamables) {
+    public static <T, R> Streamable<R> cast(final Streamable<T> streamable) {
+        return new Streamable<R>() {
+            @Override
+            public Stream<R> stream() {
+                return Streams.cast(streamable.stream());
+            }
+        };
+    }
+
+    public static <T> Streamable<T> concat(final Streamable<? extends Streamable<T>> streamables) {
+        Objects.requireNonNull(streamables, "The streamable cannot be null.");
         return new Streamable<T>() {
             @Override
             public Stream<T> stream() {
@@ -33,10 +47,12 @@ public abstract class Streamables {
 
                     private Stream<? extends T> current = null;
 
+                    private Stream<? extends Streamable<T>> streamablesStream = streamables.stream();
+
                     @Override
                     protected void open() throws StreamReadException {
-                        if (streamables.hasNext()) {
-                            current = streamables.next().stream();
+                        if (streamablesStream.hasNext()) {
+                            current = streamablesStream.next().stream();
                         }
                     }
 
@@ -51,8 +67,8 @@ public abstract class Streamables {
                                 } catch (StreamCloseException ex) {
                                     throw new StreamReadException("Could not close one of the concatenated streams.", ex);
                                 }
-                                if (streamables.hasNext()) {
-                                    current = streamables.next().stream();
+                                if (streamablesStream.hasNext()) {
+                                    current = streamablesStream.next().stream();
                                 } else {
                                     current = null;
                                 }
@@ -72,6 +88,7 @@ public abstract class Streamables {
 
     @SafeVarargs
     public static <T> Streamable<T> concat(final Streamable<T>... streamables) {
+        Objects.requireNonNull(streamables, "The array cannot be null.");
         return new Streamable<T>() {
             @Override
             public Stream<T> stream() {
@@ -124,25 +141,64 @@ public abstract class Streamables {
     }
 
     public static <T> Streamable<T> filter(final Streamable<T> streamable, final StreamFilter<? super T> filter) {
+        Objects.requireNonNull(streamable, "The streamable cannot be null.");
+        Objects.requireNonNull(filter, "The filter cannot be null.");
         return new Streamable<T>() {
             @Override
-            public Stream<? extends T> stream() {
+            public Stream<T> stream() {
                 return Streams.filter(streamable.stream(), filter);
+            }
+        };
+    }
+
+    public static <T> Streamable<T> flattenArrays(final Streamable<T[]> streamable) {
+        Objects.requireNonNull(streamable, "The streamable cannot be null.");
+        return new Streamable<T>() {
+            @Override
+            public Stream<T> stream() {
+                return Streams.flattenArrays(streamable.stream());
+            }
+        };
+    }
+
+    public static <T> Streamable<T> flattenIterables(final Streamable<? extends Iterable<? extends T>> streamable) {
+        Objects.requireNonNull(streamable, "The streamable cannot be null.");
+        return new Streamable<T>() {
+            @Override
+            public Stream<T> stream() {
+                return Streams.flattenIterables(streamable.stream());
+            }
+        };
+    }
+
+    public static <T> Streamable<T> flattenStreamables(final Streamable<? extends Streamable<T>> streamable) {
+        Objects.requireNonNull(streamable, "The streamable cannot be null.");
+        return new Streamable<T>() {
+            @Override
+            public Stream<T> stream() {
+                return Streams.flatten(streamable.stream(), new AbstractStreamTransform<Streamable<T>, Stream<T>>() {
+                    @Override
+                    protected Stream<T> transform(final Streamable<T> item) {
+                        return item.stream();
+                    }
+                });
             }
         };
     }
 
     @SafeVarargs
     public static <T> Streamable<T> fromArray(final T... values) {
+        Objects.requireNonNull(values, "The array cannot be null.");
         return new Streamable<T>() {
             @Override
-            public Stream<? extends T> stream() {
+            public Stream<T> stream() {
                 return Streams.fromArray(values);
             }
         };
     }
 
     public static <T> Streamable<T> fromIterable(final Iterable<T> iterable) {
+        Objects.requireNonNull(iterable, "The iterable cannot be null.");
         return new Streamable<T>() {
             @Override
             public Stream<T> stream() {
@@ -160,10 +216,22 @@ public abstract class Streamables {
         };
     }
 
-    public static <T, R> Streamable<R> transform(final Streamable<T> streamable, final StreamTransform<T, R> transform) {
+    public static <T> T[] toArray(final Streamable<T> streamable) throws StreamException {
+        return Streams.toArray(streamable.stream());
+    }
+
+    public static <T> List<? extends T> toList(final Streamable<T> streamable) throws StreamException {
+        return Streams.toList(streamable.stream());
+    }
+
+    public static <T> Set<T> toSet(final Streamable<T> streamable) throws StreamException {
+        return Streams.toSet(streamable.stream());
+    }
+
+    public static <T, R> Streamable<R> transform(final Streamable<T> streamable, final StreamTransform<? super T, ? extends R> transform) {
         return new Streamable<R>() {
             @Override
-            public Stream<? extends R> stream() {
+            public Stream<R> stream() {
                 return Streams.transform(streamable.stream(), transform);
             }
         };

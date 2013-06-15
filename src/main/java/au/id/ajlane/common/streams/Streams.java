@@ -177,7 +177,7 @@ public abstract class Streams {
         };
     }
 
-    public static <T, R> Stream<R> flatten(final Stream<? extends T> stream, final StreamTransform<? super T, Stream<R>> transform) {
+    public static <T, R> Stream<R> flatten(final Stream<? extends T> stream, final StreamTransform<? super T, ? extends Stream<R>> transform) {
         return concat(transform(stream, transform));
     }
 
@@ -292,6 +292,16 @@ public abstract class Streams {
         Objects.requireNonNull(stream, "The stream cannot be null.");
         final List<T> list = new ArrayList<>();
         return (T[]) addToCollection(list, stream).toArray();
+    }
+
+    public static <T, R> Stream<R> cast(final Stream<T> stream){
+        return transform(stream, new AbstractStreamTransform<T, R>() {
+            @Override
+            @SuppressWarnings("unchecked")
+            protected R transform(final T item) {
+                return (R)item;
+            }
+        });
     }
 
     public static <T> List<T> toList(final Stream<T> stream) throws StreamException {
