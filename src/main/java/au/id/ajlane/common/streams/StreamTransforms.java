@@ -16,72 +16,186 @@
 
 package au.id.ajlane.common.streams;
 
-public abstract class StreamTransforms {
+/**
+ * Utility functions for working with instances of {@link StreamTransform}.
+ */
+@SuppressWarnings("StandardVariableNames")
+public final class StreamTransforms
+{
+    @SuppressWarnings("rawtypes")
+    private static final StreamTransform IDENTITY = new StreamTransform()
+    {
+        @Override
+        public Object apply(final Object item)
+        {
+            return item;
+        }
 
-    public static <T extends R, R> StreamTransform<T, R> identity() {
-        return new StreamTransform<T, R>() {
-            @Override
-            public R apply(final T item) {
-                return item;
-            }
+        @Override
+        public void close()
+        {
+        }
+    };
 
-            @Override
-            public void close() {
-            }
-        };
+    /**
+     * Provides the identity transform, which does not alter the items in the {@link Stream}.
+     *
+     * @param <T>
+     *         The type of the items in the original {@link Stream}.
+     * @param <R>
+     *         The type of the items in the transformed {@link Stream}.
+     * @return A {@link StreamTransform}.
+     */
+    @SuppressWarnings("unchecked")
+    public static <T extends R, R> StreamTransform<T, R> identity()
+    {
+        return (StreamTransform<T, R>) StreamTransforms.IDENTITY;
     }
 
-    public static <T, I, R> StreamTransform<T, R> pipe(final StreamTransform<T, I> a, final StreamTransform<I, R> b) {
-        return new AbstractStreamTransform<T, R>() {
+    /**
+     * Joins two existing {@link StreamTransform} instances into a single {@code StreamTransform}.
+     * <p/>
+     * Each transform is applied in sequence.
+     *
+     * @param a
+     *         The first transform.
+     * @param b
+     *         The second transform.
+     * @param <T>
+     *         The type of the items in the original {@link Stream}.
+     * @param <I>
+     *         The intermediate type of the transformed items.
+     * @param <R>
+     *         The type of the items in the transformed {@link Stream}.
+     * @return A {@link StreamTransform}.
+     */
+    public static <T, I, R> StreamTransform<T, R> pipe(final StreamTransform<T, I> a, final StreamTransform<I, R> b)
+    {
+        return new AbstractStreamTransform<T, R>()
+        {
             @Override
-            public R transform(final T item) throws StreamTransformException {
+            public R transform(final T item) throws StreamTransformException
+            {
                 return b.apply(a.apply(item));
             }
         };
     }
 
-    public static <T, I1, I2, R> StreamTransform<T, R> pipe(final StreamTransform<T, I1> a, final StreamTransform<I1, I2> b, final StreamTransform<I2, R> c) {
-        return new AbstractStreamTransform<T, R>() {
+    /**
+     * Joins three existing {@link StreamTransform} instances into a single {@code StreamTransform}.
+     * <p/>
+     * Each transform is applied in sequence.
+     *
+     * @param a
+     *         The first transform.
+     * @param b
+     *         The second transform.
+     * @param c
+     *         The third transform.
+     * @param <T>
+     *         The type of the items in the original {@link Stream}.
+     * @param <I1>
+     *         The first intermediate type of the transformed items.
+     * @param <I2>
+     *         The second intermediate type of the transformed items.
+     * @param <R>
+     *         The type of the items in the transformed {@link Stream}.
+     * @return A {@link StreamTransform}.
+     */
+    public static <T, I1, I2, R> StreamTransform<T, R> pipe(final StreamTransform<T, I1> a, final StreamTransform<I1, I2> b, final StreamTransform<I2, R> c)
+    {
+        return new AbstractStreamTransform<T, R>()
+        {
             @Override
-            public R transform(final T item) throws StreamTransformException {
+            public R transform(final T item) throws StreamTransformException
+            {
                 return c.apply(b.apply(a.apply(item)));
             }
         };
     }
 
-    public static <T, I1, I2, I3, R> StreamTransform<T, R> pipe(final StreamTransform<T, I1> a, final StreamTransform<I1, I2> b, final StreamTransform<I2, I3> c, final StreamTransform<I3, R> d) {
-        return new AbstractStreamTransform<T, R>() {
+    /**
+     * Joins four existing {@link StreamTransform} instances into a single {@code StreamTransform}.
+     * <p/>
+     * Each transform is applied in sequence.
+     *
+     * @param a
+     *         The first transform.
+     * @param b
+     *         The second transform.
+     * @param c
+     *         The third transform.
+     * @param d
+     *         The fourth transform.
+     * @param <T>
+     *         The type of the items in the original {@link Stream}.
+     * @param <I1>
+     *         The first intermediate type of the transformed items.
+     * @param <I2>
+     *         The second intermediate type of the transformed items.
+     * @param <I3>
+     *         The third intermediate type of the transformed items.
+     * @param <R>
+     *         The type of the items in the transformed {@link Stream}.
+     * @return A {@link StreamTransform}.
+     */
+    public static <T, I1, I2, I3, R> StreamTransform<T, R> pipe(final StreamTransform<T, I1> a, final StreamTransform<I1, I2> b, final StreamTransform<I2, I3> c, final StreamTransform<I3, R> d)
+    {
+        return new AbstractStreamTransform<T, R>()
+        {
             @Override
-            public R transform(final T item) throws StreamTransformException {
+            public R transform(final T item) throws StreamTransformException
+            {
                 return d.apply(c.apply(b.apply(a.apply(item))));
             }
         };
     }
 
-    public static <T, I1, I2, I3, I4, R> StreamTransform<T, R> pipe(final StreamTransform<T, I1> a, final StreamTransform<I1, I2> b, final StreamTransform<I2, I3> c, final StreamTransform<I3, I4> d, final StreamTransform<I4, R> e) {
-        return new AbstractStreamTransform<T, R>() {
+    /**
+     * Joins five existing {@link StreamTransform} instances into a single {@code StreamTransform}.
+     * <p/>
+     * Each transform is applied in sequence.
+     * <p/>
+     * To join more than five transforms together, group the transforms in batches, then join the groups.
+     *
+     * @param a
+     *         The first transform.
+     * @param b
+     *         The second transform.
+     * @param c
+     *         The third transform.
+     * @param d
+     *         The fourth transform.
+     * @param e
+     *         The fifth transform.
+     * @param <T>
+     *         The type of the items in the original {@link Stream}.
+     * @param <I1>
+     *         The first intermediate type of the transformed items.
+     * @param <I2>
+     *         The second intermediate type of the transformed items.
+     * @param <I3>
+     *         The third intermediate type of the transformed items.
+     * @param <I4>
+     *         The fourth intermediate type of the transformed items.
+     * @param <R>
+     *         The type of the items in the transformed {@link Stream}.
+     * @return A {@link StreamTransform}.
+     */
+    public static <T, I1, I2, I3, I4, R> StreamTransform<T, R> pipe(final StreamTransform<T, I1> a, final StreamTransform<I1, I2> b, final StreamTransform<I2, I3> c, final StreamTransform<I3, I4> d, final StreamTransform<I4, R> e)
+    {
+        return new AbstractStreamTransform<T, R>()
+        {
             @Override
-            public R transform(final T item) throws StreamTransformException {
+            public R transform(final T item) throws StreamTransformException
+            {
                 return e.apply(d.apply(c.apply(b.apply(a.apply(item)))));
             }
         };
     }
 
-    @SuppressWarnings("unchecked")
-    public static <T> StreamTransform<T, ?> pipe(final StreamTransform<T, ?> first, final StreamTransform... rest) {
-        return new AbstractStreamTransform<T, Object>() {
-            @Override
-            public Object transform(final T item) throws StreamTransformException {
-                Object result = first.apply(item);
-                for (int i = 0; i < rest.length; i++) {
-                    result = rest[i].apply(result);
-                }
-                return result;
-            }
-        };
-    }
-
-    private StreamTransforms() throws InstantiationException {
-        throw new InstantiationException();
+    private StreamTransforms() throws InstantiationException
+    {
+        throw new InstantiationException("This class cannot be instantiated.");
     }
 }

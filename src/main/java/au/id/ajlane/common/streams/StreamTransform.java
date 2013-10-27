@@ -23,8 +23,11 @@ package au.id.ajlane.common.streams;
  *         The type of the items in the original {@code Stream}.
  * @param <R>
  *         The type of the items in the transformed {@code Stream}.
+ * @see Streams#transform(Stream, StreamTransform)
+ * @see Streamables#transform(Streamable, StreamTransform)
  */
-public interface StreamTransform<T, R> {
+public interface StreamTransform<T, R>
+{
     /**
      * Transforms a single item in the {@link Stream}.
      *
@@ -34,7 +37,7 @@ public interface StreamTransform<T, R> {
      * @throws StreamTransformException
      *         If the item cannot be transformed.
      */
-    public R apply(T item) throws StreamTransformException;
+    R apply(T item) throws StreamTransformException;
 
     /**
      * Releases any resources held by the {@code StreamTransform}.
@@ -47,5 +50,5 @@ public interface StreamTransform<T, R> {
      *         If the {@code StreamFilter} could not be closed for some reason. The {@code StreamFilter} may not release
      *         all resources if this is the case.
      */
-    public void close() throws StreamCloseException;
+    void close() throws StreamCloseException;
 }

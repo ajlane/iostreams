@@ -16,8 +16,28 @@
 
 package au.id.ajlane.common.streams;
 
-public class StreamFilterException extends StreamReadException {
-    public StreamFilterException(final String message, final Exception cause) {
+/**
+ * Indicates a problem when filtering a {@link Stream}.
+ */
+public class StreamFilterException extends StreamReadException
+{
+    private static final long serialVersionUID = 6468977132736522343L;
+
+    /**
+     * Constructs a new {@code StreamFilterException} with the given message and cause.
+     *
+     * @param message
+     *         A message describing the exception in terms of the filtered {@link Stream}. Must not be empty or {@code
+     *         null}.
+     * @param cause
+     *         The underlying cause of the issue. Must not be {@code null}.
+     * @throws IllegalArgumentException
+     *         If the message is empty.
+     * @throws NullPointerException
+     *         If either the message or the cause is {@code null}.
+     */
+    public StreamFilterException(final String message, final Exception cause)
+    {
         super(message, cause);
     }
 }

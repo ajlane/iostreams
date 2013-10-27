@@ -21,14 +21,23 @@ import java.util.*;
 /**
  * Utility functions for working with instances of {@link StreamFilter}.
  */
-public abstract class StreamFilters {
+public final class StreamFilters
+{
 
-    private static final StreamFilter<?> ALL = new AbstractStreamFilter<Object>() {
-    };
-    private static final StreamFilter<?> NONE = new AbstractStreamFilter<Object>() {
+    private static final StreamFilter<?> ALL = new AbstractStreamFilter<Object>()
+    {
         @Override
-        protected boolean keep(final Object item) {
-            return terminate(false);
+        protected boolean keep(final Object item)
+        {
+            return true;
+        }
+    };
+    private static final StreamFilter<?> NONE = new AbstractStreamFilter<Object>()
+    {
+        @Override
+        protected boolean keep(final Object item)
+        {
+            return this.terminate(false);
         }
     };
 
@@ -40,8 +49,9 @@ public abstract class StreamFilters {
      * @return An instance of {@code StreamFilter}.
      */
     @SuppressWarnings("unchecked")
-    public static <T> StreamFilter<T> all() {
-        return (StreamFilter<T>) ALL;
+    public static <T> StreamFilter<T> all()
+    {
+        return (StreamFilter<T>) StreamFilters.ALL;
     }
 
     /**
@@ -54,10 +64,11 @@ public abstract class StreamFilters {
      * @return An instance of {@code StreamFilter}.
      */
     @SafeVarargs
-    public static <T> StreamFilter<T> blacklist(final T... values) {
-        final HashSet<T> set = new HashSet<>();
+    public static <T> StreamFilter<T> blacklist(final T... values)
+    {
+        final Set<T> set = new HashSet<>(values.length);
         Collections.addAll(set, values);
-        return blacklist((Set<? super T>) set);
+        return StreamFilters.blacklist(set);
     }
 
     /**
@@ -69,13 +80,17 @@ public abstract class StreamFilters {
      *         The type of the values in the {@code Stream}.
      * @return An instance of {@code StreamFilter}.
      */
-    public static <T> StreamFilter<T> blacklist(final Iterable<T> values) {
-        if (values instanceof Set<?>) {
-            return blacklist((Set<? super T>) values);
+    public static <T> StreamFilter<T> blacklist(final Iterable<? extends T> values)
+    {
+        if (values instanceof Set<?>)
+        {
+            @SuppressWarnings("unchecked")
+            final Set<? extends T> set = (Set<? extends T>) values;
+            return StreamFilters.blacklist(set);
         }
-        final HashSet<T> set = new HashSet<>();
+        final Set<T> set = new HashSet<>();
         for (final T value : values) set.add(value);
-        return blacklist((Set<? super T>) set);
+        return StreamFilters.blacklist(set);
     }
 
     /**
@@ -87,11 +102,16 @@ public abstract class StreamFilters {
      *         The type of the values in the {@code Stream}.
      * @return An instance of {@code StreamFilter}.
      */
-    public static <T> StreamFilter<T> blacklist(final Collection<T> values) {
-        if (values instanceof Set<?>) {
-            return blacklist((Set<? super T>) values);
+    public static <T> StreamFilter<T> blacklist(final Collection<? extends T> values)
+    {
+        if (values instanceof Set<?>)
+        {
+            @SuppressWarnings("unchecked")
+            final Set<? extends T> set = (Set<? extends T>) values;
+            return StreamFilters.blacklist(set);
         }
-        return blacklist((Set<? super T>) new HashSet<>(values));
+        final Set<? extends T> set = new HashSet<>(values);
+        return StreamFilters.blacklist(set);
     }
 
     /**
@@ -103,10 +123,13 @@ public abstract class StreamFilters {
      *         The type of the values in the {@code Stream}.
      * @return An instance of {@code StreamFilter}.
      */
-    public static <T> StreamFilter<T> blacklist(final Set<? super T> values) {
-        return new AbstractStreamFilter<T>() {
+    public static <T> StreamFilter<T> blacklist(final Set<? extends T> values)
+    {
+        return new AbstractStreamFilter<T>()
+        {
             @Override
-            protected boolean keep(final T item) {
+            protected boolean keep(final T item)
+            {
                 return !values.contains(item);
             }
         };
@@ -124,8 +147,9 @@ public abstract class StreamFilters {
      *         The type of the items in the {@code Stream}.
      * @return An instance of {@code StreamFilter}.
      */
-    public static <T> StreamFilter<T> invert(final StreamFilter<? super T> filter) {
-        return invert(filter, false);
+    public static <T> StreamFilter<T> invert(final StreamFilter<? super T> filter)
+    {
+        return StreamFilters.invert(filter, false);
     }
 
     /**
@@ -140,25 +164,30 @@ public abstract class StreamFilters {
      *         The type of the items in the {@code Stream}.
      * @return An instance of {@code StreamFilter}.
      */
-    public static <T> StreamFilter<T> invert(final StreamFilter<? super T> filter, final boolean honourTermination) {
-        return new AbstractStreamFilter<T>() {
+    public static <T> StreamFilter<T> invert(final StreamFilter<? super T> filter, final boolean honourTermination)
+    {
+        return new AbstractStreamFilter<T>()
+        {
             @Override
-            public void close() throws StreamCloseException {
+            public void close() throws StreamCloseException
+            {
                 filter.close();
             }
 
             @Override
-            protected boolean keep(final T item) throws StreamFilterException {
+            protected boolean keep(final T item) throws StreamFilterException
+            {
                 final FilterDecision decision = filter.apply(item);
-                switch (decision) {
+                switch (decision)
+                {
                     case KEEP_AND_CONTINUE:
                         return false;
                     case KEEP_AND_TERMINATE:
-                        return honourTermination && terminate(false);
+                        return honourTermination && this.terminate(false);
                     case SKIP_AND_CONTINUE:
                         return true;
                     case SKIP_AND_TERMINATE:
-                        return !honourTermination || terminate(true);
+                        return !honourTermination || this.terminate(true);
                     default:
                         throw new IllegalStateException(decision.name());
                 }
@@ -174,8 +203,9 @@ public abstract class StreamFilters {
      * @return An instance of {@code StreamFilter}.
      */
     @SuppressWarnings("unchecked")
-    public static <T> StreamFilter<T> none() {
-        return (StreamFilter<T>) NONE;
+    public static <T> StreamFilter<T> none()
+    {
+        return (StreamFilter<T>) StreamFilters.NONE;
     }
 
     /**
@@ -194,8 +224,9 @@ public abstract class StreamFilters {
      * @return An instance of @{link StreamFilter}.
      */
     @SafeVarargs
-    public static <T> StreamFilter<T> pipe(final StreamFilter<? super T>... filters) {
-        return pipe(Arrays.asList(filters));
+    public static <T> StreamFilter<T> pipe(final StreamFilter<? super T>... filters)
+    {
+        return StreamFilters.pipe(Arrays.asList(filters));
     }
 
     /**
@@ -213,26 +244,34 @@ public abstract class StreamFilters {
      *         The type of the items in the {@code Stream}.
      * @return An instance of @{link StreamFilter}.
      */
-    public static <T> StreamFilter<T> pipe(final Iterable<? extends StreamFilter<? super T>> filters) {
-        return new AbstractStreamFilter<T>() {
+    public static <T> StreamFilter<T> pipe(final Iterable<? extends StreamFilter<? super T>> filters)
+    {
+        return new AbstractStreamFilter<T>()
+        {
+
             @Override
-            public void close() throws StreamCloseException {
-                for (final StreamFilter<? super T> filter : filters) {
+            public void close() throws StreamCloseException
+            {
+                for (final StreamFilter<? super T> filter : filters)
+                {
                     filter.close();
                 }
             }
 
             @Override
-            protected boolean keep(final T item) throws StreamFilterException {
+            protected boolean keep(final T item) throws StreamFilterException
+            {
                 boolean terminate = false;
 
-                for (final StreamFilter<? super T> filter : filters) {
+                for (final StreamFilter<? super T> filter : filters)
+                {
                     final FilterDecision decision = filter.apply(item);
-                    switch (decision) {
+                    switch (decision)
+                    {
                         case SKIP_AND_TERMINATE:
-                            return terminate(false);
+                            return this.terminate(false);
                         case SKIP_AND_CONTINUE:
-                            return terminate && terminate(false);
+                            return terminate && this.terminate(false);
                         case KEEP_AND_TERMINATE:
                             terminate = true;
                             continue;
@@ -243,7 +282,7 @@ public abstract class StreamFilters {
                     }
                 }
 
-                return !terminate || terminate(true);
+                return !terminate || this.terminate(true);
             }
         };
     }
@@ -258,10 +297,11 @@ public abstract class StreamFilters {
      * @return An instance of {@code StreamFilter}.
      */
     @SafeVarargs
-    public static <T> StreamFilter<T> whitelist(final T... values) {
-        final HashSet<T> set = new HashSet<>();
+    public static <T> StreamFilter<T> whitelist(final T... values)
+    {
+        final Collection<T> set = new HashSet<>(values.length);
         Collections.addAll(set, values);
-        return whitelist((Set<? super T>) set);
+        return StreamFilters.whitelist(set);
     }
 
     /**
@@ -273,13 +313,17 @@ public abstract class StreamFilters {
      *         The type of the values in the {@code Stream}.
      * @return An instance of {@code StreamFilter}.
      */
-    public static <T> StreamFilter<T> whitelist(final Iterable<T> values) {
-        if (values instanceof Set<?>) {
-            return whitelist((Set<? super T>) values);
+    public static <T> StreamFilter<T> whitelist(final Iterable<? extends T> values)
+    {
+        if (values instanceof Set<?>)
+        {
+            @SuppressWarnings("unchecked")
+            final Set<? extends T> set = (Set<? extends T>) values;
+            return StreamFilters.whitelist(set);
         }
-        final HashSet<T> set = new HashSet<>();
+        final Set<T> set = new HashSet<>();
         for (final T value : values) set.add(value);
-        return whitelist((Set<? super T>) set);
+        return StreamFilters.whitelist(set);
     }
 
     /**
@@ -291,11 +335,16 @@ public abstract class StreamFilters {
      *         The type of the values in the {@code Stream}.
      * @return An instance of {@code StreamFilter}.
      */
-    public static <T> StreamFilter<T> whitelist(final Collection<T> values) {
-        if (values instanceof Set<?>) {
-            return whitelist((Set<? super T>) values);
+    public static <T> StreamFilter<T> whitelist(final Collection<? extends T> values)
+    {
+        if (values instanceof Set<?>)
+        {
+            @SuppressWarnings("unchecked")
+            final Set<? extends T> set = (Set<? extends T>) values;
+            return StreamFilters.whitelist(set);
         }
-        return whitelist((Set<? super T>) new HashSet<>(values));
+        final Set<? extends T> set = new HashSet<>(values);
+        return StreamFilters.whitelist(set);
     }
 
     /**
@@ -307,16 +356,20 @@ public abstract class StreamFilters {
      *         The type of the values in the {@code Stream}.
      * @return An instance of {@code StreamFilter}.
      */
-    public static <T> StreamFilter<T> whitelist(final Set<? super T> values) {
-        return new AbstractStreamFilter<T>() {
+    public static <T> StreamFilter<T> whitelist(final Set<? extends T> values)
+    {
+        return new AbstractStreamFilter<T>()
+        {
             @Override
-            protected boolean keep(final T item) {
+            protected boolean keep(final T item)
+            {
                 return values.contains(item);
             }
         };
     }
 
-    private StreamFilters() throws InstantiationException {
-        throw new InstantiationException();
+    private StreamFilters() throws InstantiationException
+    {
+        throw new InstantiationException("This class cannot be instantiated.");
     }
 }

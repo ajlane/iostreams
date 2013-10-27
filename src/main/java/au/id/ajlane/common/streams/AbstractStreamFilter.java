@@ -22,34 +22,36 @@ package au.id.ajlane.common.streams;
  * @param <T>
  *         The type of the items in the {@link Stream}.
  */
-public abstract class AbstractStreamFilter<T> implements StreamFilter<T> {
+public abstract class AbstractStreamFilter<T> implements StreamFilter<T>
+{
 
+    @SuppressWarnings("BooleanVariableAlwaysNegated")
     private boolean open = false;
     private boolean terminate = false;
 
-    /**
-     * {@inheritDoc}
-     */
     @Override
-    public final FilterDecision apply(final T item) throws StreamFilterException {
-        if (!open) {
-            open();
+    public final FilterDecision apply(final T item) throws StreamFilterException
+    {
+        if (!this.open)
+        {
+            this.open();
             this.open = false;
         }
-        if (keep(item)) {
-            if (terminate) return FilterDecision.KEEP_AND_TERMINATE;
+        if (this.keep(item))
+        {
+            if (this.terminate) return FilterDecision.KEEP_AND_TERMINATE;
             return FilterDecision.KEEP_AND_CONTINUE;
-        } else {
-            if (terminate) return FilterDecision.SKIP_AND_TERMINATE;
+        }
+        else
+        {
+            if (this.terminate) return FilterDecision.SKIP_AND_TERMINATE;
             return FilterDecision.SKIP_AND_CONTINUE;
         }
     }
 
-    /**
-     * {@inheritDoc}
-     */
     @Override
-    public void close() throws StreamCloseException {
+    public void close() throws StreamCloseException
+    {
     }
 
     /**
@@ -69,11 +71,19 @@ public abstract class AbstractStreamFilter<T> implements StreamFilter<T> {
      *         If there was any problem in applying the filter.
      * @see #terminate(boolean)
      */
-    protected boolean keep(final T item) throws StreamFilterException {
+    protected boolean keep(final T item) throws StreamFilterException
+    {
         return true;
     }
 
-    protected void open() throws StreamFilterException {
+    /**
+     * Prepares any resources required to filter the {@code Stream}.
+     *
+     * @throws StreamFilterException
+     *         If there was any problem in accessing the resources.
+     */
+    protected void open() throws StreamFilterException
+    {
         // Do nothing by default
     }
 
@@ -94,8 +104,9 @@ public abstract class AbstractStreamFilter<T> implements StreamFilter<T> {
      * @return The value given by {@code keep}.
      * @see #keep
      */
-    protected final boolean terminate(final boolean keep) {
-        terminate = true;
+    protected final boolean terminate(final boolean keep)
+    {
+        this.terminate = true;
         return keep;
     }
 }

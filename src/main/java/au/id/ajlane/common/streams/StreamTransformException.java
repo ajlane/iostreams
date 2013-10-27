@@ -16,8 +16,28 @@
 
 package au.id.ajlane.common.streams;
 
-public class StreamTransformException extends StreamReadException {
-    public StreamTransformException(final String message, final Exception cause) {
+/**
+ * Indicates a problem when transforming in the items in a {@link Stream}.
+ */
+public class StreamTransformException extends StreamReadException
+{
+    private static final long serialVersionUID = 2808271490532906032L;
+
+    /**
+     * Constructs a {@code StreamTransformException} with the given message and cause.
+     *
+     * @param message
+     *         A message describing the exception in terms of the transformed {@link Stream}. Must not be empty or
+     *         {@code null}.
+     * @param cause
+     *         The underlying cause of the issue. Must not be {@code null}.
+     * @throws IllegalArgumentException
+     *         If the message is empty.
+     * @throws NullPointerException
+     *         If either the message or the cause is {@code null}.
+     */
+    public StreamTransformException(final String message, final Exception cause)
+    {
         super(message, cause);
     }
 }

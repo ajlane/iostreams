@@ -23,8 +23,11 @@ import java.io.Closeable;
  *
  * @param <T>
  *         The type of the items in the {@code Stream}.
+ * @see Streams#filter(Stream, StreamFilter)
+ * @see Streamables#filter(Streamable, StreamFilter)
  */
-public interface StreamFilter<T> extends Closeable {
+public interface StreamFilter<T> extends Closeable
+{
     /**
      * Tests the current item in the {@code Stream}.
      *
@@ -34,7 +37,7 @@ public interface StreamFilter<T> extends Closeable {
      * @throws StreamFilterException
      *         If the filter cannot make a decision.
      */
-    public FilterDecision apply(T item) throws StreamFilterException;
+    FilterDecision apply(T item) throws StreamFilterException;
 
     /**
      * Releases any resources held by the {@code StreamFilter}.
@@ -49,5 +52,5 @@ public interface StreamFilter<T> extends Closeable {
      *         all resources if this is the case.
      */
     @Override
-    public void close() throws StreamCloseException;
+    void close() throws StreamCloseException;
 }

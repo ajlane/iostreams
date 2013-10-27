@@ -16,8 +16,27 @@
 
 package au.id.ajlane.common.streams;
 
-public class StreamCloseException extends StreamException {
-    public StreamCloseException(final String message, final Exception cause) {
+/**
+ * Indicates that the resources held by a {@link Stream} could not be released.
+ */
+public class StreamCloseException extends StreamException
+{
+    private static final long serialVersionUID = -4458433200743954325L;
+
+    /**
+     * Constructs a new {@code StreamCloseException} with the given message and cause.
+     *
+     * @param message
+     *         A message describing the issue in terms of the {@link Stream}. Must not be empty of {@code null}.
+     * @param cause
+     *         The underlying cause of the issue. Must not be {@code null}.
+     * @throws IllegalArgumentException
+     *         If the message is empty.
+     * @throws NullPointerException
+     *         If the either the message or the cause is {@code null}.
+     */
+    public StreamCloseException(final String message, final Exception cause)
+    {
         super(message, cause);
     }
 }

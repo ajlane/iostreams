@@ -24,39 +24,60 @@ import java.io.IOException;
  * @see StreamReadException
  * @see StreamCloseException
  */
-public abstract class StreamException extends IOException {
+public abstract class StreamException extends IOException
+{
+    private static final long serialVersionUID = 2772263250587555205L;
 
-    private static Exception checkCause(final Exception cause) {
-        if (cause == null) {
-            final IllegalArgumentException illegalArgumentException = new IllegalArgumentException("The cause of a " + StreamException.class.getSimpleName() + " cannot be null.");
-            illegalArgumentException.addSuppressed(cause);
-            throw illegalArgumentException;
+    private static Exception checkCause(final Exception cause)
+    {
+        if (cause == null)
+        {
+            final NullPointerException error = new NullPointerException(
+                    "The cause of a " + StreamException.class.getSimpleName() + " cannot be null."
+            );
+            error.addSuppressed(cause);
+            throw error;
         }
         return cause;
     }
 
-    private static String checkMessage(final String message, final Exception cause) {
-        if (message == null || message.length() == 0) {
-            final IllegalArgumentException illegalArgumentException = new IllegalArgumentException("The message of a " + StreamException.class.getSimpleName() + " cannot be null or empty. Try to describe the cause of the exception in terms of what the stream is doing.");
-            illegalArgumentException.addSuppressed(cause);
-            throw illegalArgumentException;
+    private static String checkMessage(final String message, final Exception cause)
+    {
+        if (message == null)
+        {
+            final NullPointerException error = new NullPointerException(
+                    "The message of a " + StreamException.class.getSimpleName() +
+                    " cannot be null. Try to describe the cause of the exception in terms of what the stream is doing."
+            );
+            error.addSuppressed(cause);
+            throw error;
+        }
+        if (message.isEmpty())
+        {
+            final IllegalArgumentException error = new IllegalArgumentException(
+                    "The message of a " + StreamException.class.getSimpleName() +
+                    " cannot empty. Try to describe the cause of the exception in terms of what the stream is doing."
+            );
+            error.addSuppressed(cause);
+            throw error;
         }
         return message;
     }
 
     /**
-     * Constructs a new {@link StreamException} with the given message and cause.
-     * <p/>
-     * Note that both a message and a cause <i>must</i> be provided.
+     * Constructs a new {@code StreamException} with the given message and cause.
      *
      * @param message
-     *         A message describing the exception in terms of the {@code Stream}.
+     *         A message describing the exception in terms of the {@link Stream}. Must not be empty or {@code null}.
      * @param cause
-     *         The underlying cause of the issue.
+     *         The underlying cause of the issue. Must not be {@code null}.
      * @throws IllegalArgumentException
-     *         If the message is {@code null} or empty, or the cause is {@code null}.
+     *         If the message is empty.
+     * @throws NullPointerException
+     *         If either the message or the cause is {@code null}.
      */
-    public StreamException(final String message, final Exception cause) {
-        super(checkMessage(message, cause), checkCause(cause));
+    protected StreamException(final String message, final Exception cause)
+    {
+        super(StreamException.checkMessage(message, cause), StreamException.checkCause(cause));
     }
 }

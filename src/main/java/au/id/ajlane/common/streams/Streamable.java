@@ -18,20 +18,23 @@ package au.id.ajlane.common.streams;
 
 /**
  * Provides reusable access to a stream of items.
- *
+ * <p/>
  * For once-off streams, prefer to use {@link Stream} directly.
+ * <p/>
+ * Utility methods on {@link Streamables} can make working with {@code Streamable}s easier: Use {@link
+ * Streamables#transform} to modify the items in the provided {@code Stream}s, or {@link Streamables#filter} to remove
+ * particular items. Join the {@code Streams}s from multiple {@code Streamable}s together with {@link
+ * Streamables#concat}.
  *
- * Utility methods on {@link Streamables} can make working with {@code Streamable}s easier: Use {@link Streamables#transform} to
- * modify the items in the provided {@code Stream}s, or {@link Streamables#filter} to remove particular items. Join the {@code
- * Streams}s from multiple {@code Streamable}s together with {@link Streamables#concat}.
- *
- * @param <T> The type of the items in the {@code Streamable}.
+ * @param <T>
+ *         The type of the items in the {@code Streamable}.
  */
-public interface Streamable<T> {
+public interface Streamable<T>
+{
     /**
      * Provides a ready {@link Stream} to iterate over the items in this {@code Streamable}.
      *
      * @return An instance of {@link Stream}.
      */
-    public Stream<T> stream();
+    Stream<T> stream();
 }

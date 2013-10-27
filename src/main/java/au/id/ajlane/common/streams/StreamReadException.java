@@ -19,21 +19,24 @@ package au.id.ajlane.common.streams;
 /**
  * Indicates a problem when reading from a {@link Stream}.
  */
-public class StreamReadException extends StreamException {
+public class StreamReadException extends StreamException
+{
+    private static final long serialVersionUID = -1762416184437292517L;
 
     /**
-     * Constructs a new {@link StreamReadException} with the given message and cause.
-     * <p/>
-     * Note that both a message and a cause <i>must</i> be provided.
+     * Constructs a new {@code StreamReadException} with the given message and cause.
      *
      * @param message
-     *         A message describing the exception in terms of the {@code Stream}.
+     *         A message describing the exception in terms of the {@link Stream}. Must not be empty or {@code null}.
      * @param cause
-     *         The underlying cause of the issue.
+     *         The underlying cause of the issue. Must not be {@code null}.
      * @throws IllegalArgumentException
-     *         If the message is {@code null} or empty, or the cause is {@code null}.
+     *         If the message is empty.
+     * @throws NullPointerException
+     *         If the message or cause is {@code null}.
      */
-    public StreamReadException(final String message, final Exception cause) {
+    public StreamReadException(final String message, final Exception cause)
+    {
         super(message, cause);
     }
 }

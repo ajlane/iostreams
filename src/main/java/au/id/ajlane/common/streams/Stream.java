@@ -17,13 +17,14 @@
 package au.id.ajlane.common.streams;
 
 import java.io.Closeable;
+import java.util.Iterator;
+import java.util.NoSuchElementException;
 
 /**
  * An iterator over a stream of items.
  * <p/>
- * Unlike {@link java.util.Iterator}, this class accommodates streams which are backed by heavy-weight resources
- * (sockets, databases, etc.), require blocking calculations, or require clean-up when the consumer has finishes
- * iterating.
+ * Unlike {@link Iterator}, this class accommodates streams which are backed by heavy-weight resources (sockets,
+ * databases, etc.), require blocking calculations, or require clean-up when the consumer has finishes iterating.
  * <p/>
  * Consider the easier-to-use {@link AbstractStream} when implementing a new {@code Stream}.
  * <p/>
@@ -36,7 +37,8 @@ import java.io.Closeable;
  * @param <T>
  *         The type of the items in the {@code Stream}
  */
-public interface Stream<T> extends Closeable {
+public interface Stream<T> extends Closeable
+{
 
     /**
      * Releases any resources held by the {@code Stream}.
@@ -51,7 +53,7 @@ public interface Stream<T> extends Closeable {
      *         resources if this is the case.
      */
     @Override
-    public void close() throws StreamCloseException;
+    void close() throws StreamCloseException;
 
     /**
      * Checks if there are any more items in the {@code Stream}.
@@ -66,7 +68,7 @@ public interface Stream<T> extends Closeable {
      * @throws StreamReadException
      *         If there was any problem in reading from the underlying resource.
      */
-    public boolean hasNext() throws StreamReadException;
+    boolean hasNext() throws StreamReadException;
 
     /**
      * Returns the next item in the {@code Stream}.
@@ -75,11 +77,11 @@ public interface Stream<T> extends Closeable {
      * StreamReadException} with a {@link InterruptedException} as the cause.
      *
      * @return The next item in the {@code Stream}. {@code null} is a valid item, although discouraged.
-     * @throws java.util.NoSuchElementException
+     * @throws NoSuchElementException
      *         If there is no next item (calling {@link #hasNext} before this method would have returned {@code
      *         false}).
      * @throws StreamReadException
      *         If there was any problem in reading from the underlying resource.
      */
-    public T next() throws StreamReadException;
+    T next() throws StreamReadException;
 }

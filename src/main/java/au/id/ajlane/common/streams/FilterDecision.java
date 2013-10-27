@@ -19,12 +19,14 @@ package au.id.ajlane.common.streams;
 /**
  * Represents a filtering decision made by a {@link StreamFilter}.
  * <p/>
- * Filter decisions, especially early termination decisions, are advisory only.
+ * Filter decisions, especially early termination decisions, are advisory only. The decisions of several filters may be
+ * combined to form the final filter decision.
  *
  * @see StreamFilter
  * @see Streams#filter
  */
-public enum FilterDecision {
+public enum FilterDecision
+{
     /**
      * Use the current item in the {@code Stream} and continue iterating.
      */

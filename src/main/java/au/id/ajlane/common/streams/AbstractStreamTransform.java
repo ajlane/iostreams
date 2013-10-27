@@ -24,27 +24,25 @@ package au.id.ajlane.common.streams;
  * @param <R>
  *         The type of the items in the new {@code Stream}.
  */
-public abstract class AbstractStreamTransform<T, R> implements StreamTransform<T, R> {
+public abstract class AbstractStreamTransform<T, R> implements StreamTransform<T, R>
+{
+    @SuppressWarnings("BooleanVariableAlwaysNegated")
+    private boolean open = false;
 
-    private boolean isOpen = false;
-
-    /**
-     * {@inheritDoc}
-     */
     @Override
-    public final R apply(final T item) throws StreamTransformException {
-        if (!isOpen) {
-            open();
-            isOpen = true;
+    public final R apply(final T item) throws StreamTransformException
+    {
+        if (!this.open)
+        {
+            this.open();
+            this.open = true;
         }
-        return transform(item);
+        return this.transform(item);
     }
 
-    /**
-     * {@inheritDoc}
-     */
     @Override
-    public void close() throws StreamCloseException {
+    public void close() throws StreamCloseException
+    {
         // Do nothing by default
     }
 
@@ -56,7 +54,8 @@ public abstract class AbstractStreamTransform<T, R> implements StreamTransform<T
      * @throws StreamTransformException
      *         If there was any problem in preparing the transform.
      */
-    protected void open() throws StreamTransformException {
+    protected void open() throws StreamTransformException
+    {
         // Do nothing by default
     }
 
