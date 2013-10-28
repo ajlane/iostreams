@@ -18,9 +18,11 @@ package au.id.ajlane.common.streams;
 
 import java.util.*;
 
+/**
+ * Utilities for working with instances of {@link Stream}.
+ */
 public final class Streams
 {
-
     private static final Stream<?> EMPTY = new Stream<Object>()
     {
         @Override
@@ -29,9 +31,21 @@ public final class Streams
         }
 
         @Override
+        public boolean equals(Object obj)
+        {
+            return obj != null && obj.getClass().equals(this.getClass()) && obj == this;
+        }
+
+        @Override
         public boolean hasNext()
         {
             return false;
+        }
+
+        @Override
+        public int hashCode()
+        {
+            return 1;
         }
 
         @Override
