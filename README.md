@@ -18,36 +18,47 @@ This example uses Streams to lazily read an arbitrary number of text files and o
 
 ```java
 
-    public static void main(final String... args) throws StreamException {
+    public static void main(final String... args) throws StreamException
+    {
+        final Stream<String> files = Streams.fromArray(args);
 
-        // Create a stream to read each file and emit the lines of text
-        Stream<String> lines = Streams.flatten(Streams.fromArray(args), new AbstractStreamTransform<String, Stream<String>>() {
-            @Override
-            protected Stream<String> transform(final String file) {
-                return LineReadingStream.fromFile(Paths.get(file), StandardCharsets.UTF_8);
-            }
-        });
+        // Convert each file into a stream of lines.
+        final Stream<String> lines = Streams.flatten(
+                files,
+                new AbstractStreamTransform<String, Stream<String>>()
+                {
+                    @Override
+                    protected Stream<String> transform(final String file)
+                    {
+                        return FileLineReadingStream.fromFile(Paths.get(file), StandardCharsets.UTF_8);
+                    }
+                }
+        );
 
-        // Filter out blank lines and lines beginning with #
-        lines = Streams.filter(lines, new AbstractStreamFilter<String>() {
-            @Override
-            public boolean keep(final String line) {
-                return line != null && line.length() > 0 && !line.matches("\\s*(\\#.*)?");
-            }
-        });
+        // Filter out any blank lines or lines starting with '#'.
+        final Stream<String> filteredLines = Streams.filter(
+                lines,
+                new AbstractStreamFilter<String>()
+                {
+                    @Override
+                    public boolean keep(final String line)
+                    {
+                        return line != null && !line.isEmpty() && !line.matches("\\s*(#.*)?");
+                    }
+                }
+        );
 
-        // Print to standard out
-        print(lines);
-    }
-
-    public static void print(final Stream<String> lines) throws StreamException {
-        // Read each line and print to standard out
+        // Consume the stream of lines by printing to standard out.
         // We don't care about files or encoding here, the stream will handle all of that for us.
-        try {
-            while (lines.hasNext()) {
+        try
+        {
+            while (lines.hasNext())
+            {
                 System.out.println(lines.next());
             }
-        } finally {
+        }
+        finally
+        {
             lines.close();
         }
     }

@@ -21,16 +21,16 @@ import java.util.Objects;
 import java.util.Set;
 
 /**
- * Utility methods for working with instances of {@link Streamable}.
+ * Utilities for working with instances of {@link Streamable}.
  */
 public final class Streamables
 {
-    private static class EmptyStreamable implements Streamable<Object>
+    private static final Streamable<?> EMPTY = new Streamable<Object>()
     {
         @Override
         public boolean equals(final Object obj)
         {
-            return obj.getClass().equals(this.getClass()) && obj == Streamables.EMPTY;
+            return obj.getClass().equals(this.getClass()) && obj == this;
         }
 
         @Override
@@ -50,9 +50,7 @@ public final class Streamables
         {
             return "{}";
         }
-    }
-
-    private static final Streamable<?> EMPTY = new Streamables.EmptyStreamable();
+    };
 
     /**
      * Changes the type of the items in the {@link Streamable} by lazily casting each item.

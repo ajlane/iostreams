@@ -19,7 +19,7 @@ package au.id.ajlane.common.streams;
 import java.util.*;
 
 /**
- * Utility functions for working with instances of {@link StreamFilter}.
+ * Utilities for working with instances of {@link StreamFilter}.
  */
 public final class StreamFilters
 {

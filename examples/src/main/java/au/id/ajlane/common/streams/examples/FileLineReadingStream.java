@@ -13,8 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-package au.id.ajlane.common.streams;
+package au.id.ajlane.common.streams.examples;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -23,22 +22,28 @@ import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
+import au.id.ajlane.common.streams.AbstractStream;
+import au.id.ajlane.common.streams.Stream;
+import au.id.ajlane.common.streams.StreamCloseException;
+import au.id.ajlane.common.streams.StreamReadException;
+
 /**
  * A {@link Stream} which lazily reads each line of text from a file.
  * <p/>
  * The {@code Stream} will open the file when either {@link #hasNext} or {@link #next} is first called. It will close
  * the file when {@link #close} is called.
  */
-public class FileLineReadingStream extends AbstractStream<String> implements LineReadingStream
+public class FileLineReadingStream extends AbstractStream<String>
 {
     /**
-     * Provides a {@code FileLineReadingStream} for the given file, using the given encoding.
+     * Provides a {@code au.id.ajlane.common.streams.examples.FileLineReadingStream} for the given file, using the given
+     * encoding.
      *
      * @param file
      *         The text file to read.
      * @param charset
      *         The encoding of the text file.
-     * @return An instance of {@code FileLineReadingStream}.
+     * @return An instance of {@code au.id.ajlane.common.streams.examples.FileLineReadingStream}.
      */
     public static FileLineReadingStream fromFile(final Path file, final Charset charset)
     {
@@ -46,11 +51,12 @@ public class FileLineReadingStream extends AbstractStream<String> implements Lin
     }
 
     /**
-     * Provides a {@code FileLineReadingStream} for the given file, using the system default encoding.
+     * Provides a {@code au.id.ajlane.common.streams.examples.FileLineReadingStream} for the given file, using the
+     * system default encoding.
      *
      * @param file
      *         The text file to read.
-     * @return An instance of {@code FileLineReadingStream}.
+     * @return An instance of {@code au.id.ajlane.common.streams.examples.FileLineReadingStream}.
      */
     public static FileLineReadingStream fromFile(final Path file)
     {
@@ -58,13 +64,14 @@ public class FileLineReadingStream extends AbstractStream<String> implements Lin
     }
 
     /**
-     * Provides a {@code FileLineReadingStream} for the given file, using the given encoding.
+     * Provides a {@code au.id.ajlane.common.streams.examples.FileLineReadingStream} for the given file, using the given
+     * encoding.
      *
      * @param file
      *         The text file to read.
      * @param charset
      *         The encoding of the text file.
-     * @return An instance of {@code FileLineReadingStream}.
+     * @return An instance of {@code au.id.ajlane.common.streams.examples.FileLineReadingStream}.
      */
     public static FileLineReadingStream fromFile(final File file, final Charset charset)
     {
@@ -72,11 +79,12 @@ public class FileLineReadingStream extends AbstractStream<String> implements Lin
     }
 
     /**
-     * Provides a {@code FileLineReadingStream} for the given file, using the system default encoding.
+     * Provides a {@code au.id.ajlane.common.streams.examples.FileLineReadingStream} for the given file, using the
+     * system default encoding.
      *
      * @param file
      *         The text file to read.
-     * @return An instance of {@code FileLineReadingStream}.
+     * @return An instance of {@code au.id.ajlane.common.streams.examples.FileLineReadingStream}.
      */
     public static FileLineReadingStream fromFile(final File file)
     {
@@ -99,7 +107,6 @@ public class FileLineReadingStream extends AbstractStream<String> implements Lin
      *
      * @return An integer >= 0.
      */
-    @Override
     public int getLineCount()
     {
         return this.count;

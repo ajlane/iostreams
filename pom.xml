@@ -6,7 +6,11 @@
 
     <groupId>au.id.ajlane.common</groupId>
     <artifactId>streams</artifactId>
+    <packaging>pom</packaging>
     <version>0.0.1-SNAPSHOT</version>
+    <modules>
+        <module>example</module>
+    </modules>
 
     <name>Streams</name>
 
