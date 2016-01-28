@@ -1,7 +1,7 @@
-Streams
+IOStreams
 =======
 
-Composable heavy-weight iterators for Java.
+Composable heavy-weight iterators for Java. Like Java 8 Streams that can throw checked exceptions.
 
 A `Stream` provides `hasNext` and `next` methods, just like an `Iterator`, but is also `Closeable` and throws predictable checked exceptions.
 
@@ -62,34 +62,3 @@ public static void main(final String... args) throws StreamException
         lines.close();
     }
 }
-
-```
-
-Maven
------
-
-Include the following in your pom.xml to start using Streams.
-
-```xml
-<dependencies>
-    <dependency>
-        <groupId>au.id.ajlane.common</groupId>
-        <artifactId>streams</artifactId>
-        <version>0.0.1-SNAPSHOT</version>
-    </dependency>
-</dependencies>
-
-<repositories>
-    <repository>
-        <id>ajlane-snapshots</id>
-        <layout>default</layout>
-        <url>http://repository-ajlane.forge.cloudbees.com/snapshot/</url>
-        <releases>
-            <enabled>false</enabled>
-        </releases>
-        <snapshots>
-            <enabled>true</enabled>
-        </snapshots>
-    </repository>
-</repositories>
-```
