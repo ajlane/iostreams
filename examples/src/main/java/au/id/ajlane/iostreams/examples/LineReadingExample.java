@@ -5,22 +5,27 @@ import java.nio.file.Paths;
 
 import au.id.ajlane.iostreams.*;
 
-@SuppressWarnings({
-                          "JavaDoc",
-                          "UseOfSystemOutOrSystemErr",
-                          "DynamicRegexReplaceableByCompiledPattern",
-                          "UtilityClassWithoutPrivateConstructor"
-                  })
 public final class LineReadingExample
 {
     public static void main(final String... args) throws IOStreamException
     {
-        final IOStream<String> files = IOStreams.fromArray(args);
+        // Consume each file by printing uncommented lines to standard out.
+        // We don't care about files or encoding here, the stream will handle all of that for us.
+        try(final IOStream<String> lines = getFilteredLines(args))
+        {
+            while (lines.hasNext())
+            {
+                System.out.println(lines.next());
+            }
+        }
+    }
+
+    private static IOStream<String> getFilteredLines(final String... files){
 
         // Convert each file into a stream of lines.
         final IOStream<String> lines = IOStreams.flatten(
-                files,
-                file -> FileLineReadingIOStream.fromFile(Paths.get(file), StandardCharsets.UTF_8)
+            IOStreams.fromArray(files),
+            file -> FileLineReadingIOStream.fromFile(Paths.get(file), StandardCharsets.UTF_8)
         );
 
         // Filter out any blank lines or lines starting with '#'.
@@ -31,18 +36,8 @@ public final class LineReadingExample
             return FilterDecision.SKIP_AND_CONTINUE;
         });
 
-        // Consume the stream of lines by printing to standard out.
-        // We don't care about files or encoding here, the stream will handle all of that for us.
-        try
-        {
-            while (lines.hasNext())
-            {
-                System.out.println(lines.next());
-            }
-        }
-        finally
-        {
-            lines.close();
-        }
+        return filteredLines;
     }
+
+    private LineReadingExample(){}
 }
