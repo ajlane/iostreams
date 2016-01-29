@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package au.id.ajlane.iostreams.examples;
+package au.id.ajlane.iostreams;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -22,84 +22,97 @@ import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
-import au.id.ajlane.iostreams.AbstractIOStream;
-import au.id.ajlane.iostreams.IOStream;
-import au.id.ajlane.iostreams.IOStreamCloseException;
-import au.id.ajlane.iostreams.IOStreamReadException;
-
 /**
  * An {@link IOStream} which lazily reads each line of text from a file.
  * <p>
  * The {@code IOStream} will open the file when either {@link #hasNext} or {@link #next} is first called. It will close
  * the file when {@link #close} is called.
+ * <p>
+ * The instance of {@link FileLine} is reused between lines. Consumers should {@link FileLine#clone()} a line if they
+ * want to preserve its values.
  */
-public class FileLineReadingIOStream extends AbstractIOStream<NumberedLine>
+public class FileLineIOStream extends AbstractIOStream<FileLine>
 {
     /**
-     * Provides a {@code FileLineReadingIOStream} for the given file, using the given
-     * encoding.
+     * Provides a {@code FileLineIOStream} for the given file, using the given encoding.
      *
      * @param file
      *         The text file to read.
      * @param charset
      *         The encoding of the text file.
-     * @return An instance of {@code FileLineReadingIOStream}.
+     * @return A ready stream.
      */
-    public static FileLineReadingIOStream fromFile(final Path file, final Charset charset)
+    public static FileLineIOStream fromFile(final Path file, final Charset charset)
     {
-        return new FileLineReadingIOStream(file, charset);
+        return new FileLineIOStream(file, charset);
     }
 
     /**
-     * Provides a {@code FileLineReadingIOStream} for the given file, using the
-     * system default encoding.
+     * Provides a {@code FileLineIOStream} for the given file, using the system default encoding.
      *
      * @param file
      *         The text file to read.
-     * @return An instance of {@code FileLineReadingIOStream}.
+     * @return A ready stream.
      */
-    public static FileLineReadingIOStream fromFile(final Path file)
+    public static FileLineIOStream fromFile(final Path file)
     {
-        return FileLineReadingIOStream.fromFile(file, Charset.defaultCharset());
+        return FileLineIOStream.fromFile(file, Charset.defaultCharset());
     }
 
     /**
-     * Provides a {@code FileLineReadingIOStream} for the given file, using the given
-     * encoding.
+     * Provides a {@code FileLineIOStream} for the given file, using the given encoding.
      *
      * @param file
      *         The text file to read.
      * @param charset
      *         The encoding of the text file.
-     * @return An instance of {@code FileLineReadingIOStream}.
+     * @return A ready stream.
      */
-    public static FileLineReadingIOStream fromFile(final File file, final Charset charset)
+    public static FileLineIOStream fromFile(final File file, final Charset charset)
     {
-        return FileLineReadingIOStream.fromFile(file.toPath(), charset);
+        return FileLineIOStream.fromFile(file.toPath(), charset);
     }
 
     /**
-     * Provides a {@code FileLineReadingIOStream} for the given file, using the
-     * system default encoding.
+     * Provides a {@code FileLineIOStream} for the given file, using the system default encoding.
      *
      * @param file
      *         The text file to read.
-     * @return An instance of {@code FileLineReadingIOStream}.
+     * @return A ready stream.
      */
-    public static FileLineReadingIOStream fromFile(final File file)
+    public static FileLineIOStream fromFile(final File file)
     {
-        return FileLineReadingIOStream.fromFile(file.toPath(), Charset.defaultCharset());
+        return FileLineIOStream.fromFile(file.toPath(), Charset.defaultCharset());
     }
 
     private final Charset charset;
     private final Path file;
-    private int count = 0;
+    private final FileLine lastLine;
     private BufferedReader reader = null;
 
-    private FileLineReadingIOStream(final Path file, final Charset charset)
+    private FileLineIOStream(final Path file, final Charset charset)
     {
         this.file = file;
         this.charset = charset;
+        this.lastLine = new FileLine(file, -1, null);
+    }
+
+    /**
+     * The character set this stream is using to decode the file.
+     *
+     * @return The character set.
+     */
+    public Charset getCharset() {
+        return charset;
+    }
+
+    /**
+     * The file which this stream is reading.
+     *
+     * @return The path to the file.
+     */
+    public Path getFile() {
+        return file;
     }
 
     /**
@@ -109,13 +122,13 @@ public class FileLineReadingIOStream extends AbstractIOStream<NumberedLine>
      */
     public int getLineCount()
     {
-        return this.count;
+        return lastLine.number + 1;
     }
 
     @Override
     public String toString()
     {
-        return this.file + " (" + this.charset + "): " + this.count + (this.reader != null ? "+" : "") + "lines";
+        return this.file + " (" + this.charset + "): " + getLineCount() + (this.reader != null ? "+" : "") + "lines";
     }
 
     @Override
@@ -136,8 +149,7 @@ public class FileLineReadingIOStream extends AbstractIOStream<NumberedLine>
     }
 
     @Override
-    protected NumberedLine find() throws IOStreamReadException
-    {
+    protected FileLine find() throws IOStreamReadException {
         final String value;
         try
         {
@@ -149,9 +161,9 @@ public class FileLineReadingIOStream extends AbstractIOStream<NumberedLine>
         }
         if (value != null)
         {
-            int index = this.count;
-            this.count++;
-            return new NumberedLine(index, value);
+            lastLine.number++;
+            lastLine.text = value;
+            return lastLine;
         }
         return terminate();
     }
