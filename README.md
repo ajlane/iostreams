@@ -3,13 +3,13 @@ IOStreams
 
 Composable heavy-weight iterators for Java. Like Java 8 Streams that can throw checked exceptions.
 
-A `Stream` provides `hasNext` and `next` methods, just like an `Iterator`, but is also `Closeable` and throws predictable checked exceptions.
+An `IOStream` provides `hasNext` and `next` methods, just like an `Iterator`, but is also `Closeable` and throws predictable checked exceptions.
 
-Like `Iterable`, `Streamable` types can provide fresh instances of `Stream` to provide sequential access to a resource.
+Like `Iterable`, `IOStreamable` types can provide fresh instances of `Stream` to provide sequential access to a resource.
 
-Utility methods on `Streams` and `Streamables` allow streams to be transformed and composed.
+Utility methods on `IOStreams` and `IOStreamables` allow streams to be transformed and composed.
 
-Streams is provided under the [Apache License Version 2.0](http://www.apache.org/licenses/LICENSE-2.0).
+IOStreams is provided under the [Apache License Version 2.0](http://www.apache.org/licenses/LICENSE-2.0).
 
 Example
 -------
@@ -18,35 +18,23 @@ This example uses Streams to lazily read an arbitrary number of text files and o
 
 ```java
 
-public static void main(final String... args) throws StreamException
+public static void main(final String... args) throws IOStreamException
 {
-    final Stream<String> files = Streams.fromArray(args);
-
+    final IOStream<String> files = IOStreams.fromArray(args);
+    
     // Convert each file into a stream of lines.
-    final Stream<String> lines = Streams.flatten(
+    final IOStream<String> lines = IOStreams.flatten(
             files,
-            new AbstractStreamTransform<String, Stream<String>>()
-            {
-                @Override
-                protected Stream<String> transform(final String file)
-                {
-                    return FileLineReadingStream.fromFile(Paths.get(file), StandardCharsets.UTF_8);
-                }
-            }
+            file -> FileLineReadingIOStream.fromFile(Paths.get(file), StandardCharsets.UTF_8)
     );
 
     // Filter out any blank lines or lines starting with '#'.
-    final Stream<String> filteredLines = Streams.filter(
-            lines,
-            new AbstractStreamFilter<String>()
-            {
-                @Override
-                public boolean keep(final String line)
-                {
-                    return line != null && !line.isEmpty() && !line.matches("\\s*(#.*)?");
-                }
-            }
-    );
+    final IOStream<String> filteredLines = IOStreams.filter(lines, line -> {
+        if (line != null && !line.isEmpty() && !line.matches("\\s*(#.*)?")) {
+            return FilterDecision.KEEP_AND_CONTINUE;
+        }
+        return FilterDecision.SKIP_AND_CONTINUE;
+    });
 
     // Consume the stream of lines by printing to standard out.
     // We don't care about files or encoding here, the stream will handle all of that for us.

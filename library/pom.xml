@@ -9,13 +9,16 @@
     </parent>
     <modelVersion>4.0.0</modelVersion>
 
-    <artifactId>iostreams-examples</artifactId>
+    <artifactId>iostreams</artifactId>
 
     <dependencies>
         <dependency>
-            <groupId>au.id.ajlane.iostreams</groupId>
-            <artifactId>iostreams</artifactId>
+            <groupId>junit</groupId>
+            <artifactId>junit</artifactId>
+            <version>4.12</version>
+            <scope>test</scope>
         </dependency>
     </dependencies>
+
 
 </project>
