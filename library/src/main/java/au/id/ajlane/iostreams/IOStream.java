@@ -86,4 +86,21 @@ public interface IOStream<T> extends Closeable
      *         If there was any problem in reading from the underlying resource.
      */
     T next() throws IOStreamReadException;
+
+    default <R> IOStream<R> map(final IOStreamTransform<? super T, ? extends R> transform){
+        return IOStreams.transform(this, transform);
+    }
+
+    default <R> IOStream<R> flatMap(final IOStreamTransform<? super T, ? extends IOStream<? extends R>> transform){
+        return IOStreams.flatten(this, transform);
+    }
+
+    default IOStream<T> filter(final IOStreamFilter<? super T> filter){
+        return IOStreams.filter(this, filter);
+    }
+
+    default void foreach(final IOStreamConsumer<? super T> consumer)
+        throws IOStreamReadException, IOStreamCloseException {
+        IOStreams.foreach(this, consumer);
+    }
 }

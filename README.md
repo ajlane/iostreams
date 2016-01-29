@@ -14,39 +14,23 @@ IOStreams is provided under the [Apache License Version 2.0](http://www.apache.o
 Example
 -------
 
-This example uses Streams to lazily read an arbitrary number of text files and output their contents line-by-line.
+This example uses IOStreams to lazily read an arbitrary number of text files and output their contents line-by-line.
 
 ```java
-
 public static void main(final String... args) throws IOStreamException
 {
-    // Consume each file by printing uncommented lines to standard out.
-    // We don't care about files or encoding here, the stream will handle all of that for us.
-    try(final IOStream<String> lines = getFilteredLines(args))
-    {
-        while (lines.hasNext())
-        {
-            System.out.println(lines.next());
-        }
-    }
-}
-
-private static IOStream<String> getFilteredLines(final String... files){
-
-    // Convert each file into a stream of lines.
-    final IOStream<String> lines = IOStreams.flatten(
-        IOStreams.fromArray(files),
-        file -> FileLineReadingIOStream.fromFile(Paths.get(file), StandardCharsets.UTF_8)
-    );
-
-    // Filter out any blank lines or lines starting with '#'.
-    final IOStream<String> filteredLines = IOStreams.filter(lines, line -> {
-        if (line != null && !line.isEmpty() && !line.matches("\\s*(#.*)?")) {
-            return FilterDecision.KEEP_AND_CONTINUE;
-        }
-        return FilterDecision.SKIP_AND_CONTINUE;
-    });
-    
-    return filteredLines;
+    // Start with a list of file names
+    IOStreams.fromArray(args)
+        // Read each line from each file
+        .flatMap(file -> FileLineReadingIOStream.fromFile(Paths.get(file), StandardCharsets.UTF_8))
+        // Filter out empty lines or lines that start with a comment
+        .filter(line -> {
+            if (line != null && !line.isEmpty() && !line.matches("\\s*(#.*)?")) {
+                return FilterDecision.KEEP_AND_CONTINUE;
+            }
+            return FilterDecision.SKIP_AND_CONTINUE;
+        })
+        // Consume each file by printing uncommented lines to standard out.
+        .foreach(System.out::println);
 }
 ```

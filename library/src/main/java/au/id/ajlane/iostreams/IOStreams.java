@@ -261,7 +261,7 @@ public final class IOStreams
         };
     }
 
-    public static <T, R> IOStream<R> flatten(final IOStream<? extends T> stream, final IOStreamTransform<? super T, ? extends IOStream<R>> transform)
+    public static <T, R> IOStream<R> flatten(final IOStream<? extends T> stream, final IOStreamTransform<? super T, ? extends IOStream<? extends R>> transform)
     {
         return IOStreams.concat(IOStreams.transform(stream, transform));
     }
@@ -496,5 +496,16 @@ public final class IOStreams
     private IOStreams() throws InstantiationException
     {
         throw new InstantiationException("This class cannot be instantiated.");
+    }
+
+    public static <T> void foreach(final IOStream<T> stream, final IOStreamConsumer<? super T> consumer)
+        throws IOStreamReadException, IOStreamCloseException {
+        try{
+            while(stream.hasNext()) {
+                consumer.accept(stream.next());
+            }
+        }finally {
+            stream.close();
+        }
     }
 }
