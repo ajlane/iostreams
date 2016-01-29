@@ -5,7 +5,7 @@ Composable heavy-weight iterators for Java. Like Java 8 Streams that can throw c
 
 An `IOStream` provides `hasNext` and `next` methods, just like an `Iterator`, but is also `Closeable` and throws predictable checked exceptions.
 
-Like `Iterable`, `IOStreamable` types can provide fresh instances of `Stream` to provide sequential access to a resource.
+Like `Iterable`, `IOStreamable` types can provide fresh instances of `IOStream` to provide sequential access to a resource.
 
 Utility methods on `IOStreams` and `IOStreamables` allow streams to be transformed and composed.
 
