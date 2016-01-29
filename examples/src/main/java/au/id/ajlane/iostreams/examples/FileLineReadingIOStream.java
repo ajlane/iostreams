@@ -33,7 +33,7 @@ import au.id.ajlane.iostreams.IOStreamReadException;
  * The {@code IOStream} will open the file when either {@link #hasNext} or {@link #next} is first called. It will close
  * the file when {@link #close} is called.
  */
-public class FileLineReadingIOStream extends AbstractIOStream<String>
+public class FileLineReadingIOStream extends AbstractIOStream<NumberedLine>
 {
     /**
      * Provides a {@code FileLineReadingIOStream} for the given file, using the given
@@ -136,7 +136,7 @@ public class FileLineReadingIOStream extends AbstractIOStream<String>
     }
 
     @Override
-    protected String find() throws IOStreamReadException
+    protected NumberedLine find() throws IOStreamReadException
     {
         final String value;
         try
@@ -149,10 +149,11 @@ public class FileLineReadingIOStream extends AbstractIOStream<String>
         }
         if (value != null)
         {
+            int index = this.count;
             this.count++;
-            return value;
+            return new NumberedLine(index, value);
         }
-        return super.find();
+        return terminate();
     }
 
     @Override
