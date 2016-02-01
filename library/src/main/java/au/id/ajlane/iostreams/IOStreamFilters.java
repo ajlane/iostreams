@@ -170,13 +170,13 @@ public final class IOStreamFilters
         return new AbstractIOStreamFilter<T>()
         {
             @Override
-            public void close() throws IOStreamCloseException
+            public void close() throws Exception
             {
                 filter.close();
             }
 
             @Override
-            protected boolean keep(final T item) throws IOStreamFilterException
+            protected boolean keep(final T item) throws Exception
             {
                 final FilterDecision decision = filter.apply(item);
                 switch (decision)
@@ -190,7 +190,7 @@ public final class IOStreamFilters
                     case SKIP_AND_TERMINATE:
                         return !honourTermination || this.terminate(true);
                     default:
-                        throw new IllegalStateException(decision.name());
+                        throw new IllegalStateException("Unrecognised decision: " + decision.name());
                 }
             }
         };
@@ -249,13 +249,36 @@ public final class IOStreamFilters
     {
         return new AbstractIOStreamFilter<T>()
         {
-
             @Override
             public void close() throws IOStreamCloseException
             {
+                Exception lastException = null;
+                boolean runtimeException = false;
                 for (final IOStreamFilter<? super T> filter : filters)
                 {
-                    filter.close();
+                    try {
+                        filter.close();
+                    } catch( final RuntimeException ex) {
+                        runtimeException = true;
+                        if(lastException != null){
+                            ex.addSuppressed(lastException);
+                        }
+                        lastException = ex;
+                    } catch (final Exception ex){
+                        if(lastException != null){
+                            ex.addSuppressed(lastException);
+                        }
+                        lastException = ex;
+                    }
+                }
+                if(runtimeException){
+                    if(lastException instanceof RuntimeException){
+                        throw (RuntimeException)lastException;
+                    } else {
+                        throw new RuntimeException("Suppressed a runtime exception with a checked exception.", lastException);
+                    }
+                } else {
+                    throw new IOStreamCloseException("Could not close one or more of the filters.", lastException);
                 }
             }
 
@@ -266,7 +289,14 @@ public final class IOStreamFilters
 
                 for (final IOStreamFilter<? super T> filter : filters)
                 {
-                    final FilterDecision decision = filter.apply(item);
+                    final FilterDecision decision;
+                    try {
+                        decision = filter.apply(item);
+                    } catch(RuntimeException ex){
+                        throw ex;
+                    } catch (Exception ex) {
+                        throw new IOStreamFilterException("Could not decide whether to keep or skip the next item in the stream.", ex);
+                    }
                     switch (decision)
                     {
                         case SKIP_AND_TERMINATE:

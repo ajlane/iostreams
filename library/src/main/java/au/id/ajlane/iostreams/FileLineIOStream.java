@@ -18,9 +18,12 @@ package au.id.ajlane.iostreams;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.concurrent.Callable;
 
 /**
  * An {@link IOStream} which lazily reads each line of text from a file.
@@ -34,6 +37,52 @@ import java.nio.file.Path;
 public class FileLineIOStream extends AbstractIOStream<FileLine>
 {
     /**
+     * Provides a {@code FileLineIOStream} for the given classpath resource, using the given encoding.
+     *
+     * @param path    The path of the text file.
+     * @param charset The encoding of the text file.
+     * @return A ready stream.
+     */
+    public static FileLineIOStream fromClasspath(final String path, final Charset charset) {
+        return fromStream(path, () -> ClassLoader.getSystemClassLoader().getResourceAsStream(path), charset);
+    }
+
+    /**
+     * Provides a {@code FileLineIOStream} for the given classpath resource, using the system default encoding.
+     *
+     * @param path The path of the text file.
+     * @return A ready stream.
+     */
+    public static FileLineIOStream fromClasspath(final String path) {
+        return fromStream(path, () -> ClassLoader.getSystemClassLoader().getResourceAsStream(path),
+                          Charset.defaultCharset());
+    }
+
+    /**
+     * Provides a {@code FileLineIOStream} for the given classpath resource, using the given encoding.
+     *
+     * @param siblingClass A class loaded from the same {@link ClassLoader}, with the same package.
+     * @param path         The path of the text file.
+     * @param charset      The encoding of the text file.
+     * @return A ready stream.
+     */
+    public static FileLineIOStream fromClasspath(final Class<?> siblingClass, final String path,
+                                                 final Charset charset) {
+        return fromStream(path, () -> siblingClass.getResourceAsStream(path), charset);
+    }
+
+    /**
+     * Provides a {@code FileLineIOStream} for the given classpath resource, using the system default encoding.
+     *
+     * @param siblingClass A class loaded from the same {@link ClassLoader}, with the same package.
+     * @param path         The path of the text file.
+     * @return A ready stream.
+     */
+    public static FileLineIOStream fromClasspath(final Class<?> siblingClass, final String path) {
+        return fromClasspath(siblingClass, path, Charset.defaultCharset());
+    }
+
+    /**
      * Provides a {@code FileLineIOStream} for the given file, using the given encoding.
      *
      * @param file
@@ -44,7 +93,7 @@ public class FileLineIOStream extends AbstractIOStream<FileLine>
      */
     public static FileLineIOStream fromFile(final Path file, final Charset charset)
     {
-        return new FileLineIOStream(file, charset);
+        return new FileLineIOStream(file.toString(), () -> Files.newBufferedReader(file, charset));
     }
 
     /**
@@ -85,34 +134,40 @@ public class FileLineIOStream extends AbstractIOStream<FileLine>
         return FileLineIOStream.fromFile(file.toPath(), Charset.defaultCharset());
     }
 
-    private final Charset charset;
-    private final Path path;
+    /**
+     * Provides a {@code FileLineIOStream} for the data supplied by a function, using the given encoding.
+     *
+     * @param path     The path of the text file.
+     * @param supplier A function to fetch the data stream.
+     * @param charset  The encoding of the text file.
+     * @return A ready stream.
+     */
+    public static FileLineIOStream fromStream(final String path, final Callable<InputStream> supplier,
+                                              final Charset charset) {
+        return new FileLineIOStream(path, () -> new BufferedReader(new InputStreamReader(supplier.call(), charset)));
+    }
+
+    /**
+     * Provides a {@code FileLineIOStream} for the data supplied by a function, using the system default encoding.
+     *
+     * @param path     The path of the text file.
+     * @param supplier A function to fetch the data stream.
+     * @return A ready stream.
+     */
+    public static FileLineIOStream fromStream(final String path, final Callable<InputStream> supplier) {
+        return new FileLineIOStream(path, () -> new BufferedReader(
+            new InputStreamReader(supplier.call(), Charset.defaultCharset())));
+    }
     private final FileLine lastLine;
+    private final String path;
+    private final Callable<BufferedReader> supplier;
     private BufferedReader reader = null;
 
-    private FileLineIOStream(final Path path, final Charset charset)
+    private FileLineIOStream(final String path, final Callable<BufferedReader> supplier)
     {
         this.path = path;
-        this.charset = charset;
+        this.supplier = supplier;
         this.lastLine = new FileLine(path, -1, null);
-    }
-
-    /**
-     * The character set this stream is using to decode the file.
-     *
-     * @return The character set.
-     */
-    public Charset getCharset() {
-        return charset;
-    }
-
-    /**
-     * The path to the file that this stream is reading.
-     *
-     * @return The path to the file.
-     */
-    public Path getPath() {
-        return path;
     }
 
     /**
@@ -120,15 +175,22 @@ public class FileLineIOStream extends AbstractIOStream<FileLine>
      *
      * @return A positive integer, or zero.
      */
-    public int getLineCount()
-    {
+    public int getLineCount() {
         return lastLine.number + 1;
     }
 
+    /**
+     * The path to the file that this stream is reading.
+     *
+     * @return The path to the file.
+     */
+    public String getPath() {
+        return path;
+    }
+
     @Override
-    public String toString()
-    {
-        return this.path + " (" + this.charset + "): " + getLineCount() + (this.reader != null ? "+" : "") + "lines";
+    public String toString() {
+        return this.path + ": " + getLineCount() + (this.reader != null ? "+" : "") + "lines";
     }
 
     @Override
@@ -169,15 +231,13 @@ public class FileLineIOStream extends AbstractIOStream<FileLine>
     }
 
     @Override
-    protected void open() throws IOStreamReadException
-    {
-        try
-        {
-            this.reader = Files.newBufferedReader(this.path, this.charset);
-        }
-        catch (final IOException ex)
-        {
-            throw new IOStreamReadException("Could not open " + this.path.toString() + '.', ex);
+    protected void open() throws IOStreamReadException {
+        try {
+            this.reader = supplier.call();
+        } catch (final RuntimeException ex) {
+            throw ex;
+        } catch (final Exception ex) {
+            throw new IOStreamReadException("Could not open " + path + '.', ex);
         }
     }
 }

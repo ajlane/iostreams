@@ -29,7 +29,7 @@ public abstract class AbstractIOStreamTransform<T, R> implements IOStreamTransfo
     private boolean open = false;
 
     @Override
-    public final R apply(final T item) throws IOStreamTransformException
+    public final R apply(final T item) throws Exception
     {
         if (!this.open)
         {
@@ -40,7 +40,7 @@ public abstract class AbstractIOStreamTransform<T, R> implements IOStreamTransfo
     }
 
     @Override
-    public void close() throws IOStreamCloseException
+    public void close() throws Exception
     {
         // Do nothing by default
     }
@@ -50,10 +50,10 @@ public abstract class AbstractIOStreamTransform<T, R> implements IOStreamTransfo
      * <p>
      * This method is called once by the base class before the first item is transformed.
      *
-     * @throws IOStreamTransformException
+     * @throws Exception
      *         If there was any problem in preparing the transform.
      */
-    protected void open() throws IOStreamTransformException
+    protected void open() throws Exception
     {
         // Do nothing by default
     }
@@ -66,8 +66,8 @@ public abstract class AbstractIOStreamTransform<T, R> implements IOStreamTransfo
      * @param item
      *         The item to transform.
      * @return The transformed item.
-     * @throws IOStreamTransformException
+     * @throws Exception
      *         If the item cannot be transformed.
      */
-    protected abstract R transform(T item) throws IOStreamTransformException;
+    protected abstract R transform(T item) throws Exception;
 }

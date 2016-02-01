@@ -1,7 +1,5 @@
 package au.id.ajlane.iostreams;
 
-import java.nio.file.Path;
-
 /**
  * Represents a single line in a file.
  * <p>
@@ -23,7 +21,7 @@ public final class FileLine implements Cloneable {
      * <p>
      * Must not be null.
      */
-    public Path path;
+    public String path;
     /**
      * The text of the line.
      * <p>
@@ -38,7 +36,7 @@ public final class FileLine implements Cloneable {
      * @param number The number of the line. Numbering starts at zero.
      * @param text   The text of the line. May be empty, but must not be null.
      */
-    public FileLine(final Path path, final int number, final String text) {
+    public FileLine(final String path, final int number, final String text) {
         this.path = path;
         this.number = number;
         this.text = text;

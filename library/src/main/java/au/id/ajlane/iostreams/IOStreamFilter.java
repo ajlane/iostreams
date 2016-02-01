@@ -27,7 +27,7 @@ import java.io.Closeable;
  * @see IOStreamables#filter(IOStreamable, IOStreamFilter)
  */
 @FunctionalInterface
-public interface IOStreamFilter<T> extends Closeable
+public interface IOStreamFilter<T> extends AutoCloseable
 {
     /**
      * Tests the current item in the {@code IOStream}.
@@ -38,7 +38,7 @@ public interface IOStreamFilter<T> extends Closeable
      * @throws IOStreamFilterException
      *         If the filter cannot make a decision.
      */
-    FilterDecision apply(T item) throws IOStreamFilterException;
+    FilterDecision apply(T item) throws Exception;
 
     /**
      * Releases any resources held by the {@code IOStreamFilter}.
@@ -53,5 +53,5 @@ public interface IOStreamFilter<T> extends Closeable
      *         all resources if this is the case.
      */
     @Override
-    default void close() throws IOStreamCloseException{}
+    default void close() throws Exception {}
 }

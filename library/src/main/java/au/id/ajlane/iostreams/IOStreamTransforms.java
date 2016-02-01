@@ -74,9 +74,18 @@ public final class IOStreamTransforms
         return new AbstractIOStreamTransform<T, R>()
         {
             @Override
-            public R transform(final T item) throws IOStreamTransformException
+            public R transform(final T item) throws Exception
             {
                 return b.apply(a.apply(item));
+            }
+
+            @Override
+            public void close() throws Exception {
+                try{
+                    b.close();
+                } finally {
+                    a.close();
+                }
             }
         };
     }
@@ -107,9 +116,22 @@ public final class IOStreamTransforms
         return new AbstractIOStreamTransform<T, R>()
         {
             @Override
-            public R transform(final T item) throws IOStreamTransformException
+            public R transform(final T item) throws Exception
             {
                 return c.apply(b.apply(a.apply(item)));
+            }
+
+            @Override
+            public void close() throws Exception {
+                try{
+                    c.close();
+                } finally {
+                    try {
+                        b.close();
+                    } finally {
+                        c.close();
+                    }
+                }
             }
         };
     }
@@ -144,9 +166,26 @@ public final class IOStreamTransforms
         return new AbstractIOStreamTransform<T, R>()
         {
             @Override
-            public R transform(final T item) throws IOStreamTransformException
+            public R transform(final T item) throws Exception
             {
                 return d.apply(c.apply(b.apply(a.apply(item))));
+            }
+
+            @Override
+            public void close() throws Exception {
+                try{
+                    d.close();
+                } finally {
+                    try {
+                        c.close();
+                    } finally {
+                        try{
+                            b.close();
+                        } finally {
+                            a.close();
+                        }
+                    }
+                }
             }
         };
     }
@@ -187,9 +226,30 @@ public final class IOStreamTransforms
         return new AbstractIOStreamTransform<T, R>()
         {
             @Override
-            public R transform(final T item) throws IOStreamTransformException
+            public R transform(final T item) throws Exception
             {
                 return e.apply(d.apply(c.apply(b.apply(a.apply(item)))));
+            }
+
+            @Override
+            public void close() throws Exception {
+                try {
+                    e.close();
+                } finally {
+                    try{
+                        d.close();
+                    } finally {
+                        try {
+                            c.close();
+                        } finally {
+                            try{
+                                b.close();
+                            } finally {
+                                a.close();
+                            }
+                        }
+                    }
+                }
             }
         };
     }

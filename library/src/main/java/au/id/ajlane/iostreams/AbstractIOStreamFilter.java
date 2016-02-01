@@ -30,7 +30,7 @@ public abstract class AbstractIOStreamFilter<T> implements IOStreamFilter<T>
     private boolean terminate = false;
 
     @Override
-    public final FilterDecision apply(final T item) throws IOStreamFilterException
+    public final FilterDecision apply(final T item) throws Exception
     {
         if (!this.open)
         {
@@ -50,7 +50,7 @@ public abstract class AbstractIOStreamFilter<T> implements IOStreamFilter<T>
     }
 
     @Override
-    public void close() throws IOStreamCloseException
+    public void close() throws Exception
     {
     }
 
@@ -71,7 +71,7 @@ public abstract class AbstractIOStreamFilter<T> implements IOStreamFilter<T>
      *         If there was any problem in applying the filter.
      * @see #terminate(boolean)
      */
-    protected boolean keep(final T item) throws IOStreamFilterException
+    protected boolean keep(final T item) throws Exception
     {
         return true;
     }
@@ -82,7 +82,7 @@ public abstract class AbstractIOStreamFilter<T> implements IOStreamFilter<T>
      * @throws IOStreamFilterException
      *         If there was any problem in accessing the resources.
      */
-    protected void open() throws IOStreamFilterException
+    protected void open() throws Exception
     {
         // Do nothing by default
     }

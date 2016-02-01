@@ -35,10 +35,10 @@ public interface IOStreamTransform<T, R>
      * @param item
      *         The item to transform.
      * @return The transformed item.
-     * @throws IOStreamTransformException
+     * @throws Exception
      *         If the item cannot be transformed.
      */
-    R apply(T item) throws IOStreamTransformException;
+    R apply(T item) throws Exception;
 
     /**
      * Releases any resources held by the {@code IOStreamTransform}.
@@ -47,9 +47,9 @@ public interface IOStreamTransform<T, R>
      * <p>
      * The behaviour of a {@code IOStreamTransform} after its {@code close} method has been called is undefined.
      *
-     * @throws IOStreamCloseException
+     * @throws Exception
      *         If the {@code IOStreamFilter} could not be closed for some reason. The {@code IOStreamFilter} may not release
      *         all resources if this is the case.
      */
-    default void close() throws IOStreamCloseException {}
+    default void close() throws Exception {}
 }
