@@ -469,7 +469,7 @@ public final class IOStreams
 
     public static <T, R> IOStream<R> map(final IOStream<? extends T> stream,
                                          final IOStreamTransform<? super T, ? extends R> transform,
-                                         final IOStreamFilter<Exception> exceptionHandler) {
+                                         final IOStreamTransformExceptionHandler<? super T> exceptionHandler) {
         Objects.requireNonNull(stream, "The stream cannot be null.");
         Objects.requireNonNull(transform, "The transform cannot be null.");
         Objects.requireNonNull(exceptionHandler, "The exception handler cannot be null.");
@@ -506,25 +506,26 @@ public final class IOStreams
                             new InterruptedException("The thread was interrupted.")
                         );
                     }
+                    final T item = stream.next();
                     try {
-                        return transform.apply(stream.next());
+                        return transform.apply(item);
                     } catch (final RuntimeException ex){
                         throw ex;
                     } catch (final Exception ex) {
                         final FilterDecision decision;
                         try {
-                            decision = exceptionHandler.apply(ex);
+                            decision = exceptionHandler.handle(item, ex);
                         } catch (final RuntimeException ex2) {
                             ex2.addSuppressed(ex);
                             throw ex2;
                         } catch (final Exception ex2){
                             ex2.addSuppressed(ex);
-                            throw new IOStreamReadException("Could not handle a checked exception from the transform.", ex2);
+                            throw new IOStreamReadException("The exception handler was unable to handle an exception from the transform.", ex2);
                         }
                         switch (decision) {
                             case KEEP_AND_CONTINUE:
                             case KEEP_AND_TERMINATE:
-                                throw new IOStreamReadException("Could not transform the next item in the row, but the exception handler chose not to skip the item.", ex);
+                                throw new IOStreamReadException("Could not transform the next item in the stream, but the exception handler chose not to skip the item.", ex);
                             case SKIP_AND_CONTINUE:
                                 continue;
                             case SKIP_AND_TERMINATE:

@@ -91,7 +91,7 @@ public interface IOStream<T> extends Closeable
         return IOStreams.map(this, transform);
     }
 
-    default <R> IOStream<R> map(final IOStreamTransform<? super T, ? extends R> transform, final IOStreamFilter<Exception> exceptionHandler){
+    default <R> IOStream<R> map(final IOStreamTransform<? super T, ? extends R> transform, final IOStreamTransformExceptionHandler<? super T> exceptionHandler){
         return IOStreams.map(this, transform, exceptionHandler);
     }
 
