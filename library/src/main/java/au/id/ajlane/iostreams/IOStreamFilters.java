@@ -412,4 +412,18 @@ public final class IOStreamFilters
             }
         };
     }
+
+    public static <T> IOStreamFilter<T> limit(int size) {
+        return new IOStreamFilter<T>() {
+            private int count = 0;
+
+            @Override
+            public FilterDecision apply(T item) {
+                if(count > size) return FilterDecision.SKIP_AND_TERMINATE;
+                count++;
+                if(count >= size) return FilterDecision.KEEP_AND_TERMINATE;
+                return FilterDecision.KEEP_AND_CONTINUE;
+            }
+        };
+    }
 }

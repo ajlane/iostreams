@@ -107,4 +107,12 @@ public interface IOStream<T> extends Closeable
         throws IOStreamReadException, IOStreamCloseException {
         IOStreams.foreach(this, consumer);
     }
+
+    default IOStream<T> limit(final int size){
+        return IOStreams.limit(this, size);
+    }
+
+    default IOStream<IOStream<T>> grouped(final int size){
+        return IOStreams.group(this, size);
+    }
 }

@@ -488,7 +488,6 @@ public final class IOStreams
                 }
             }
 
-
             @Override
             public R find() throws IOStreamReadException {
                 while (!terminate && stream.hasNext()) {
@@ -590,5 +589,26 @@ public final class IOStreams
     private IOStreams() throws InstantiationException
     {
         throw new InstantiationException("This class cannot be instantiated.");
+    }
+
+    public static <T> IOStream<IOStream<T>> group(final IOStream<T> stream, int size) {
+        return new AbstractIOStream<IOStream<T>>() {
+            @Override
+            public void end() throws IOStreamCloseException {
+                stream.close();
+            }
+
+            @Override
+            public IOStream<T> find() throws IOStreamReadException {
+                if(stream.hasNext()) {
+                    return stream.limit(size);
+                }
+                return terminate();
+            }
+        };
+    }
+
+    public static <T> IOStream<T> limit(final IOStream<T> stream, final int size){
+        return filter(stream, IOStreamFilters.limit(size));
     }
 }
