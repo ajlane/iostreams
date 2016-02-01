@@ -22,7 +22,7 @@ package au.id.ajlane.iostreams;
  * For once-off streams, prefer to use {@link IOStream} directly.
  * <p>
  * Utility methods on {@link IOStreamables} can make working with {@code IOStreamable}s easier: Use {@link
- * IOStreamables#transform} to modify the items in the provided {@code IOStream}s, or {@link IOStreamables#filter} to remove
+ * IOStreamables#map} to modify the items in the provided {@code IOStream}s, or {@link IOStreamables#filter} to remove
  * particular items. Join the {@code IOStreams}s from multiple {@code IOStreamable}s together with {@link
  * IOStreamables#concat}.
  *
@@ -38,4 +38,20 @@ public interface IOStreamable<T>
      * @return An instance of {@link IOStream}.
      */
     IOStream<T> stream();
+
+    default <R> IOStreamable<R> map(final IOStreamTransform<? super T,? extends R> transform){
+        return IOStreamables.map(this, transform);
+    }
+
+    default <R> IOStreamable<R> flatMap(final IOStreamTransform<? super T, ? extends IOStreamable<? extends R>> transform){
+        return IOStreamables.flatMap(this, transform);
+    }
+
+    default IOStreamable<T> filter(final IOStreamFilter<? super T> filter){
+        return IOStreamables.filter(this, filter);
+    }
+
+    default void foreach(final IOStreamConsumer<? super T> consumer) throws IOStreamReadException, IOStreamCloseException {
+        IOStreamables.foreach(this, consumer);
+    }
 }

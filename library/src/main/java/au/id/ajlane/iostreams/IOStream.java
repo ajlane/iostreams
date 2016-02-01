@@ -42,7 +42,6 @@ import java.util.stream.Stream;
  */
 public interface IOStream<T> extends Closeable
 {
-
     /**
      * Releases any resources held by the {@code IOStream}.
      * <p>

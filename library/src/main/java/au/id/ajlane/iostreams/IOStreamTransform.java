@@ -24,7 +24,7 @@ package au.id.ajlane.iostreams;
  * @param <R>
  *         The type of the items in the transformed {@code IOStream}.
  * @see IOStreams#map(IOStream, IOStreamTransform)
- * @see IOStreamables#transform(IOStreamable, IOStreamTransform)
+ * @see IOStreamables#map(IOStreamable, IOStreamTransform)
  */
 @FunctionalInterface
 public interface IOStreamTransform<T, R>

@@ -24,8 +24,6 @@ package au.id.ajlane.iostreams;
  */
 public abstract class AbstractIOStreamFilter<T> implements IOStreamFilter<T>
 {
-
-    @SuppressWarnings("BooleanVariableAlwaysNegated")
     private boolean open = false;
     private boolean terminate = false;
 

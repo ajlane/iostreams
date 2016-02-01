@@ -61,7 +61,7 @@ public final class IOStreamables
      *         The original type of the items.
      * @param <R>
      *         The new type of of the items.
-     * @return A {@link IOStreamable} which is a transformed view of the given {@code IOStreamable}.
+     * @return An {@link IOStreamable} which is a transformed view of the given {@code IOStreamable}.
      * @see IOStreams#cast(IOStream)
      */
     public static <T, R> IOStreamable<R> cast(final IOStreamable<T> streamable)
@@ -91,9 +91,9 @@ public final class IOStreamables
      *         The series of {@link IOStreamable} instances to concatenate. Must not be {@code null}.
      * @param <T>
      *         The type of the items in the {@link IOStreamable} instances.
-     * @return A {@link IOStreamable} which is a concatenated view of the given {@code IOStreamable} instances.
+     * @return An {@link IOStreamable} which is a concatenated view of the given {@code IOStreamable} instances.
      */
-    public static <T> IOStreamable<T> concat(final IOStreamable<? extends IOStreamable<T>> streamables)
+    public static <T> IOStreamable<T> concat(final IOStreamable<? extends IOStreamable<? extends T>> streamables)
     {
         Objects.requireNonNull(streamables, "The streamable cannot be null.");
         return new IOStreamable<T>()
@@ -105,7 +105,7 @@ public final class IOStreamables
                 {
                     private IOStream<? extends T> current = null;
 
-                    private final IOStream<? extends IOStreamable<T>> streamablesStream = streamables.stream();
+                    private final IOStream<? extends IOStreamable<? extends T>> streamablesStream = streamables.stream();
 
                     @Override
                     protected void open() throws IOStreamReadException
@@ -161,7 +161,7 @@ public final class IOStreamables
      *         The series of {@link IOStreamable} instances to concatenate. Must not be {@code null}.
      * @param <T>
      *         The type of the items in the {@link IOStreamable} instances.
-     * @return A {@link IOStreamable} which is a concatenated view of the given {@code IOStreamable} instances.
+     * @return An {@link IOStreamable} which is a concatenated view of the given {@code IOStreamable} instances.
      */
     @SafeVarargs
     public static <T> IOStreamable<T> concat(final IOStreamable<T>... streamables)
@@ -231,7 +231,7 @@ public final class IOStreamables
      *
      * @param <T>
      *         The type of the items in the {@link IOStreamable}.
-     * @return A {@link IOStreamable}.
+     * @return An {@link IOStreamable}.
      */
     @SuppressWarnings("unchecked")
     public static <T> IOStreamable<T> empty()
@@ -248,7 +248,7 @@ public final class IOStreamables
      *         The filter to apply. Must not be {@code null}.
      * @param <T>
      *         The type of the items in the {@link IOStreamable}.
-     * @return A {@link IOStreamable} which is a filtered view of the given {@code IOStreamable}.
+     * @return An {@link IOStreamable} which is a filtered view of the given {@code IOStreamable}.
      */
     public static <T> IOStreamable<T> filter(final IOStreamable<T> streamable, final IOStreamFilter<? super T> filter)
     {
@@ -267,7 +267,7 @@ public final class IOStreamables
      *         The {@link IOStreamable} which will provide the arrays. Must not be {@code null}.
      * @param <T>
      *         The type of the items in the arrays.
-     * @return A {@link IOStreamable} which is a concatenated view of the arrays provided by the given {@code
+     * @return An {@link IOStreamable} which is a concatenated view of the arrays provided by the given {@code
      *         Streamable}.
      */
     public static <T> IOStreamable<T> flattenArrays(final IOStreamable<T[]> streamable)
@@ -285,7 +285,7 @@ public final class IOStreamables
      *         The {@link IOStreamable} which will provide the {@code Iterable} instances. Must not be {@code null}.
      * @param <T>
      *         The type of the items in the {@link Iterable} instances.
-     * @return A {@link IOStreamable} which is a concatenated view of the {@link Iterable} instances provided by the given
+     * @return An {@link IOStreamable} which is a concatenated view of the {@link Iterable} instances provided by the given
      *         {@code IOStreamable}.
      */
     public static <T> IOStreamable<T> flattenIterables(final IOStreamable<? extends Iterable<? extends T>> streamable)
@@ -305,13 +305,29 @@ public final class IOStreamables
      *         null}.
      * @param <T>
      *         The type of the items in the {@link IOStreamable} instances.
-     * @return A {@link IOStreamable} which is a concatenated view of the {@code IOStreamable} instances provided by the
+     * @return An {@link IOStreamable} which is a concatenated view of the {@code IOStreamable} instances provided by the
      *         given {@code IOStreamable}.
      */
     public static <T> IOStreamable<T> flattenStreamables(final IOStreamable<? extends IOStreamable<T>> streamable)
     {
         Objects.requireNonNull(streamable, "The streamable cannot be null.");
-        return () -> IOStreams.flatMap(streamable.stream(), IOStreamable::stream);
+        return () -> streamable.stream().flatMap(IOStreamable::stream);
+    }
+
+    /**
+     * Converts a single {@link IOStreamable} into a series of {@code IOStreamable} instances and concatenates all
+     * of their values.
+     *
+     * @param streamable The {@link IOStreamable} which will be transformed.
+     * @param transform The {@link IOStreamTransform} which will expand the original stream.
+     * @param <T> The type of the items in the original {@link IOStreamable}.
+     * @param <R> The type of the items in the transformed {@link IOStreamable}.
+     * @return An expanded {@link IOStreamable} with the new type.
+     */
+    public static <T, R> IOStreamable<R> flatMap(final IOStreamable<T> streamable, final IOStreamTransform<? super T, ? extends IOStreamable<? extends R>> transform){
+        Objects.requireNonNull(streamable, "The streamable cannot be null.");
+        Objects.requireNonNull(transform, "The transform cannot be null.");
+        return concat(streamable.map(transform));
     }
 
     /**
@@ -321,7 +337,7 @@ public final class IOStreamables
      *         The array which will underlie the {@link IOStreamable}. Must not be {@code null}.
      * @param <T>
      *         The type of the items in the array.
-     * @return A {@link IOStreamable} which is a view of the given array.
+     * @return An {@link IOStreamable} which is a view of the given array.
      */
     @SafeVarargs
     public static <T> IOStreamable<T> fromArray(final T... values)
@@ -426,7 +442,7 @@ public final class IOStreamables
      *         The type of the items in the new {@link IOStreamable}.
      * @return A {@link IOStreamable} which is a transformed view of the given {@code IOStreamable}.
      */
-    public static <T, R> IOStreamable<R> transform(final IOStreamable<T> streamable, final IOStreamTransform<? super T, ? extends R> transform)
+    public static <T, R> IOStreamable<R> map(final IOStreamable<T> streamable, final IOStreamTransform<? super T, ? extends R> transform)
     {
         return () -> IOStreams.map(streamable.stream(), transform);
     }
@@ -434,5 +450,9 @@ public final class IOStreamables
     private IOStreamables() throws InstantiationException
     {
         throw new InstantiationException("This class cannot be instantiated.");
+    }
+
+    public static <T> void foreach(IOStreamable<T> streamable, IOStreamConsumer<? super T> consumer) throws IOStreamReadException, IOStreamCloseException {
+        IOStreams.foreach(streamable.stream(), consumer);
     }
 }
