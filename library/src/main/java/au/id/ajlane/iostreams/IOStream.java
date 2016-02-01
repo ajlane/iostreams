@@ -19,6 +19,7 @@ package au.id.ajlane.iostreams;
 import java.io.Closeable;
 import java.util.Iterator;
 import java.util.NoSuchElementException;
+import java.util.function.Predicate;
 import java.util.stream.Stream;
 
 /**
@@ -101,6 +102,14 @@ public interface IOStream<T> extends Closeable
 
     default IOStream<T> filter(final IOStreamFilter<? super T> filter){
         return IOStreams.filter(this, filter);
+    }
+
+    default IOStream<T> keep(final Predicate<? super T> predicate){
+        return IOStreams.keep(this, predicate);
+    }
+
+    default IOStream<T> skip(final Predicate<? super T> predicate){
+        return IOStreams.skip(this, predicate);
     }
 
     default void foreach(final IOStreamConsumer<? super T> consumer)

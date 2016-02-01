@@ -24,6 +24,7 @@ import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.Objects;
 import java.util.Set;
+import java.util.function.Predicate;
 import java.util.stream.Stream;
 
 /**
@@ -223,6 +224,14 @@ public final class IOStreams
     public static <T> IOStream<T> empty()
     {
         return (IOStream<T>) IOStreams.EMPTY;
+    }
+
+    public static <T> IOStream<T> keep(final IOStream<? extends T> stream, final Predicate<? super T> predicate){
+        return filter(stream, IOStreamFilters.fromPredicate(predicate));
+    }
+
+    public static <T> IOStream<T> skip(final IOStream<? extends T> stream, final Predicate<? super T> predicate){
+        return filter(stream, IOStreamFilters.fromPredicate(predicate).invert());
     }
 
     public static <T> IOStream<T> filter(final IOStream<? extends T> stream, final IOStreamFilter<? super T> filter)

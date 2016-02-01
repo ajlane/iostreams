@@ -35,7 +35,7 @@ public interface IOStreamFilter<T> extends AutoCloseable
      * @param item
      *         The current item.
      * @return A {@link FilterDecision} declaring whether to keep the current value and whether to continue testing.
-     * @throws IOStreamFilterException
+     * @throws Exception
      *         If the filter cannot make a decision.
      */
     FilterDecision apply(T item) throws Exception;
@@ -54,4 +54,7 @@ public interface IOStreamFilter<T> extends AutoCloseable
      */
     @Override
     default void close() throws Exception {}
+
+    default IOStreamFilter<T> invert(){ return IOStreamFilters.invert(this); }
+    default IOStreamFilter<T> invert(final boolean honourTermination){ return IOStreamFilters.invert(this, honourTermination); }
 }

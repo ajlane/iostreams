@@ -283,20 +283,13 @@ public final class IOStreamFilters
             }
 
             @Override
-            protected boolean keep(final T item) throws IOStreamFilterException
+            protected boolean keep(final T item) throws Exception
             {
                 boolean terminate = false;
 
                 for (final IOStreamFilter<? super T> filter : filters)
                 {
-                    final FilterDecision decision;
-                    try {
-                        decision = filter.apply(item);
-                    } catch(RuntimeException ex){
-                        throw ex;
-                    } catch (Exception ex) {
-                        throw new IOStreamFilterException("Could not decide whether to keep or skip the next item in the stream.", ex);
-                    }
+                    final FilterDecision decision = filter.apply(item);
                     switch (decision)
                     {
                         case SKIP_AND_TERMINATE:
@@ -407,7 +400,7 @@ public final class IOStreamFilters
     public static <T> IOStreamFilter<T> fromPredicate(final Predicate<? super T> filter) {
         return new AbstractIOStreamFilter<T>() {
             @Override
-            protected boolean keep(T item) throws IOStreamFilterException {
+            protected boolean keep(T item) {
                 return filter.test(item);
             }
         };

@@ -67,7 +67,7 @@ public abstract class AbstractIOStreamFilter<T> implements IOStreamFilter<T>
      *         The item being considered.
      * @return {@code true} to keep the value, {@code false} to skip it. Wrap the return value with a call to {@link
      *         #terminate(boolean)} to terminate the {@code IOStream} early.
-     * @throws IOStreamFilterException
+     * @throws Exception
      *         If there was any problem in applying the filter.
      * @see #terminate(boolean)
      */
@@ -79,7 +79,7 @@ public abstract class AbstractIOStreamFilter<T> implements IOStreamFilter<T>
     /**
      * Prepares any resources required to filter the {@code IOStream}.
      *
-     * @throws IOStreamFilterException
+     * @throws Exception
      *         If there was any problem in accessing the resources.
      */
     protected void open() throws Exception
