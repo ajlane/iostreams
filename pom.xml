@@ -12,7 +12,14 @@
 
     <name>IOStreams</name>
     <description>Composable heavy-weight iterators for Java.</description>
-    <url>https://github.com/ajlane/streams</url>
+    <url>https://github.com/ajlane/iostreams</url>
+
+    <developers>
+        <developer>
+            <name>Aaron Lane</name>
+            <organizationUrl>http://www.ajlane.id.au</organizationUrl>
+        </developer>
+    </developers>
 
     <licenses>
         <license>
@@ -23,7 +30,10 @@
     </licenses>
 
     <scm>
-        <url>https://github.com/ajlane/streams</url>
+        <url>https://github.com/ajlane/iostreams</url>
+        <connection>scm:git:git://github.com/ajlane/iostreams.git</connection>
+        <developerConnection>scm:git:git@github.com:ajlane/iostreams.git</developerConnection>
+        <tag>HEAD</tag>
     </scm>
 
     <modules>
