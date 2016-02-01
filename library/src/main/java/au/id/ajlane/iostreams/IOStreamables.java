@@ -254,14 +254,7 @@ public final class IOStreamables
     {
         Objects.requireNonNull(streamable, "The streamable cannot be null.");
         Objects.requireNonNull(filter, "The filter cannot be null.");
-        return new IOStreamable<T>()
-        {
-            @Override
-            public IOStream<T> stream()
-            {
-                return IOStreams.filter(streamable.stream(), filter);
-            }
-        };
+        return () -> IOStreams.filter(streamable.stream(), filter);
     }
 
     /**
@@ -280,14 +273,7 @@ public final class IOStreamables
     public static <T> IOStreamable<T> flattenArrays(final IOStreamable<T[]> streamable)
     {
         Objects.requireNonNull(streamable, "The streamable cannot be null.");
-        return new IOStreamable<T>()
-        {
-            @Override
-            public IOStream<T> stream()
-            {
-                return IOStreams.flattenArrays(streamable.stream());
-            }
-        };
+        return () -> IOStreams.flattenArrays(streamable.stream());
     }
 
     /**
@@ -305,14 +291,7 @@ public final class IOStreamables
     public static <T> IOStreamable<T> flattenIterables(final IOStreamable<? extends Iterable<? extends T>> streamable)
     {
         Objects.requireNonNull(streamable, "The streamable cannot be null.");
-        return new IOStreamable<T>()
-        {
-            @Override
-            public IOStream<T> stream()
-            {
-                return IOStreams.flattenIterables(streamable.stream());
-            }
-        };
+        return () -> IOStreams.flattenIterables(streamable.stream());
     }
 
     /**
@@ -332,23 +311,7 @@ public final class IOStreamables
     public static <T> IOStreamable<T> flattenStreamables(final IOStreamable<? extends IOStreamable<T>> streamable)
     {
         Objects.requireNonNull(streamable, "The streamable cannot be null.");
-        return new IOStreamable<T>()
-        {
-            @Override
-            public IOStream<T> stream()
-            {
-                return IOStreams.flatten(
-                        streamable.stream(), new AbstractIOStreamTransform<IOStreamable<T>, IOStream<T>>()
-                {
-                    @Override
-                    protected IOStream<T> transform(final IOStreamable<T> item)
-                    {
-                        return item.stream();
-                    }
-                }
-                );
-            }
-        };
+        return () -> IOStreams.flatMap(streamable.stream(), IOStreamable::stream);
     }
 
     /**
@@ -365,14 +328,7 @@ public final class IOStreamables
     {
         Objects.requireNonNull(values, "The array cannot be null.");
         if (values.length == 0) return IOStreamables.empty();
-        return new IOStreamable<T>()
-        {
-            @Override
-            public IOStream<T> stream()
-            {
-                return IOStreams.fromArray(values);
-            }
-        };
+        return () -> IOStreams.fromArray(values);
     }
 
     /**
@@ -387,14 +343,7 @@ public final class IOStreamables
     public static <T> IOStreamable<T> fromIterable(final Iterable<T> iterable)
     {
         Objects.requireNonNull(iterable, "The iterable cannot be null.");
-        return new IOStreamable<T>()
-        {
-            @Override
-            public IOStream<T> stream()
-            {
-                return IOStreams.fromIterator(iterable.iterator());
-            }
-        };
+        return () -> IOStreams.fromIterator(iterable.iterator());
     }
 
     /**
@@ -408,14 +357,7 @@ public final class IOStreamables
      */
     public static <T> IOStreamable<T> singleton(final T item)
     {
-        return new IOStreamable<T>()
-        {
-            @Override
-            public IOStream<T> stream()
-            {
-                return IOStreams.singleton(item);
-            }
-        };
+        return () -> IOStreams.singleton(item);
     }
 
     /**
@@ -475,9 +417,9 @@ public final class IOStreamables
      * use {@link #filter(IOStreamable, IOStreamFilter)}.
      *
      * @param streamable
-     *         The {@link IOStreamable} to transform.
+     *         The {@link IOStreamable} to map.
      * @param transform
-     *         The transform to apply to each item in the {@link IOStreamable}.
+     *         The map to apply to each item in the {@link IOStreamable}.
      * @param <T>
      *         The type of the items in the original {@link IOStreamable}.
      * @param <R>
@@ -486,14 +428,7 @@ public final class IOStreamables
      */
     public static <T, R> IOStreamable<R> transform(final IOStreamable<T> streamable, final IOStreamTransform<? super T, ? extends R> transform)
     {
-        return new IOStreamable<R>()
-        {
-            @Override
-            public IOStream<R> stream()
-            {
-                return IOStreams.transform(streamable.stream(), transform);
-            }
-        };
+        return () -> IOStreams.map(streamable.stream(), transform);
     }
 
     private IOStreamables() throws InstantiationException

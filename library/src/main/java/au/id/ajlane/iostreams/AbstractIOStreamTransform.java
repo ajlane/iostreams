@@ -26,7 +26,6 @@ package au.id.ajlane.iostreams;
  */
 public abstract class AbstractIOStreamTransform<T, R> implements IOStreamTransform<T, R>
 {
-    @SuppressWarnings("BooleanVariableAlwaysNegated")
     private boolean open = false;
 
     @Override

@@ -77,7 +77,7 @@ public final class IOStreams
 
     public static <T, R> IOStream<R> cast(final IOStream<T> stream)
     {
-        return IOStreams.transform(
+        return IOStreams.map(
                 stream, new AbstractIOStreamTransform<T, R>()
         {
             @Override
@@ -223,11 +223,14 @@ public final class IOStreams
             @Override
             protected void end() throws IOStreamCloseException
             {
-                filter.close();
+                try {
+                    filter.close();
+                } finally {
+                    stream.close();
+                }
             }
 
-            @SuppressWarnings("BooleanVariableAlwaysNegated")
-            private boolean terminate = false;
+            private volatile boolean terminate = false;
 
             @Override
             protected T find() throws IOStreamReadException
@@ -242,7 +245,8 @@ public final class IOStreams
                         );
                     }
                     final T next = stream.next();
-                    switch (filter.apply(next))
+                    final FilterDecision decision = filter.apply(next);
+                    switch (decision)
                     {
                         case KEEP_AND_CONTINUE:
                             return next;
@@ -252,75 +256,39 @@ public final class IOStreams
                             this.terminate = true;
                             return next;
                         case SKIP_AND_TERMINATE:
+                            return terminate();
                         default:
-                            break;
+                            throw new IllegalStateException("Unrecognised decision: " + decision);
                     }
                 }
-                return super.find();
+                return terminate();
             }
         };
     }
 
-    public static <T, R> IOStream<R> flatten(final IOStream<? extends T> stream, final IOStreamTransform<? super T, ? extends IOStream<? extends R>> transform)
+    public static <T, R> IOStream<R> flatMap(final IOStream<? extends T> stream, final IOStreamTransform<? super T, ? extends IOStream<? extends R>> transform)
     {
-        return IOStreams.concat(IOStreams.transform(stream, transform));
+        return IOStreams.concat(IOStreams.map(stream, transform));
     }
 
     public static <T> IOStream<T> flattenArrays(final IOStream<? extends T[]> stream)
     {
-        return IOStreams.flatten(
-                stream, new AbstractIOStreamTransform<T[], IOStream<T>>()
-        {
-            @SafeVarargs
-            @Override
-            public final IOStream<T> transform(final T... item)
-            {
-                return IOStreams.fromArray(item);
-            }
-        }
-        );
+        return IOStreams.flatMap(stream, IOStreams::fromArray);
     }
 
     public static <T> IOStream<T> flattenIterables(final IOStream<? extends Iterable<? extends T>> stream)
     {
-        return IOStreams.flatten(
-                stream, new AbstractIOStreamTransform<Iterable<? extends T>, IOStream<T>>()
-        {
-            @Override
-            public IOStream<T> transform(final Iterable<? extends T> item)
-            {
-                return IOStreams.fromIterable(item);
-            }
-        }
-        );
+        return IOStreams.flatMap(stream, IOStreams::fromIterable);
     }
 
     public static <T> IOStream<T> flattenIterators(final IOStream<? extends Iterator<? extends T>> stream)
     {
-        return IOStreams.flatten(
-                stream, new AbstractIOStreamTransform<Iterator<? extends T>, IOStream<T>>()
-        {
-            @Override
-            public IOStream<T> transform(final Iterator<? extends T> item)
-            {
-                return IOStreams.fromIterator(item);
-            }
-        }
-        );
+        return IOStreams.flatMap(stream, IOStreams::fromIterator);
     }
 
     public static <T> IOStream<T> flattenStreams(final IOStream<? extends Stream<? extends T>> stream)
     {
-        return IOStreams.flatten(
-            stream, new AbstractIOStreamTransform<Stream<? extends T>, IOStream<T>>()
-            {
-                @Override
-                public IOStream<T> transform(final Stream<? extends T> item)
-                {
-                    return IOStreams.fromStream(item);
-                }
-            }
-        );
+        return IOStreams.flatMap(stream, IOStreams::fromStream);
     }
 
     public static <T> IOStream<T> flattenIOStreams(final IOStream<? extends IOStream<? extends T>> stream)
@@ -460,7 +428,7 @@ public final class IOStreams
         return IOStreams.addToCollection(set, stream);
     }
 
-    public static <T, R> IOStream<R> transform(final IOStream<? extends T> stream, final IOStreamTransform<? super T, ? extends R> transform)
+    public static <T, R> IOStream<R> map(final IOStream<? extends T> stream, final IOStreamTransform<? super T, ? extends R> transform)
     {
         Objects.requireNonNull(stream, "The stream cannot be null.");
         Objects.requireNonNull(transform, "The transform cannot be null.");
@@ -493,6 +461,62 @@ public final class IOStreams
         };
     }
 
+    public static <T,R> IOStream<R> map(final IOStream<? extends T> stream, final IOStreamTransform<? super T, ? extends R> transform, final IOStreamFilter<IOStreamTransformException> exceptionHandler){
+        Objects.requireNonNull(stream, "The stream cannot be null.");
+        Objects.requireNonNull(transform, "The transform cannot be null.");
+        Objects.requireNonNull(exceptionHandler, "The exception handler cannot be null.");
+        return new AbstractIOStream<R>() {
+            @Override
+            public void end() throws IOStreamCloseException {
+                try{
+                    exceptionHandler.close();
+                } finally {
+                    try{
+                        transform.close();
+                    } finally {
+                        stream.close();
+                    }
+                }
+            }
+
+            private volatile boolean terminate = false;
+
+            @Override
+            public R find() throws IOStreamReadException {
+                while(!terminate && stream.hasNext()){
+                    if (Thread.interrupted())
+                    {
+                        throw new IOStreamReadException(
+                            "The thread was interrupted while transforming the stream.",
+                            new InterruptedException("The thread was interrupted.")
+                        );
+                    }
+                    try {
+                        return transform.apply(stream.next());
+                    } catch(final IOStreamTransformException ex) {
+                        final FilterDecision decision = exceptionHandler.apply(ex);
+                        switch (decision) {
+                            case KEEP_AND_CONTINUE:
+                            case KEEP_AND_TERMINATE:
+                                throw ex;
+                            case SKIP_AND_CONTINUE:
+                                continue;
+                            case SKIP_AND_TERMINATE:
+                                this.terminate = true;
+                                continue;
+                            default:
+                                final IllegalStateException unrecognised =
+                                    new IllegalStateException("Unrecognised decision: " + decision);
+                                unrecognised.addSuppressed(ex);
+                                throw unrecognised;
+                        }
+                    }
+                }
+                return terminate();
+            }
+        };
+    }
+
     private IOStreams() throws InstantiationException
     {
         throw new InstantiationException("This class cannot be instantiated.");
@@ -505,7 +529,11 @@ public final class IOStreams
                 consumer.accept(stream.next());
             }
         }finally {
-            stream.close();
+            try{
+                consumer.close();
+            } finally {
+                stream.close();
+            }
         }
     }
 }

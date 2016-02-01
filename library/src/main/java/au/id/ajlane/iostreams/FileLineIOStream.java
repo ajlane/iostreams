@@ -86,15 +86,15 @@ public class FileLineIOStream extends AbstractIOStream<FileLine>
     }
 
     private final Charset charset;
-    private final Path file;
+    private final Path path;
     private final FileLine lastLine;
     private BufferedReader reader = null;
 
-    private FileLineIOStream(final Path file, final Charset charset)
+    private FileLineIOStream(final Path path, final Charset charset)
     {
-        this.file = file;
+        this.path = path;
         this.charset = charset;
-        this.lastLine = new FileLine(file, -1, null);
+        this.lastLine = new FileLine(path, -1, null);
     }
 
     /**
@@ -107,16 +107,16 @@ public class FileLineIOStream extends AbstractIOStream<FileLine>
     }
 
     /**
-     * The file which this stream is reading.
+     * The path to the file that this stream is reading.
      *
      * @return The path to the file.
      */
-    public Path getFile() {
-        return file;
+    public Path getPath() {
+        return path;
     }
 
     /**
-     * Provides the number of lines which have been read from this {@code IOStream} so far.
+     * Provides the number of lines which have been read from this {@code FileLineIOStream} so far.
      *
      * @return A positive integer, or zero.
      */
@@ -128,7 +128,7 @@ public class FileLineIOStream extends AbstractIOStream<FileLine>
     @Override
     public String toString()
     {
-        return this.file + " (" + this.charset + "): " + getLineCount() + (this.reader != null ? "+" : "") + "lines";
+        return this.path + " (" + this.charset + "): " + getLineCount() + (this.reader != null ? "+" : "") + "lines";
     }
 
     @Override
@@ -173,11 +173,11 @@ public class FileLineIOStream extends AbstractIOStream<FileLine>
     {
         try
         {
-            this.reader = Files.newBufferedReader(this.file, this.charset);
+            this.reader = Files.newBufferedReader(this.path, this.charset);
         }
         catch (final IOException ex)
         {
-            throw new IOStreamReadException("Could not open " + this.file.toString() + '.', ex);
+            throw new IOStreamReadException("Could not open " + this.path.toString() + '.', ex);
         }
     }
 }

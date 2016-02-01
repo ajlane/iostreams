@@ -30,7 +30,7 @@ import java.util.stream.Stream;
  * <p>
  * Consider the easier-to-use {@link AbstractIOStream} when implementing a new {@code IOStream}.
  * <p>
- * Utility methods on {@link IOStreams} can make working with {@code IOStream}s easier: Use {@link IOStreams#transform} to
+ * Utility methods on {@link IOStreams} can make working with {@code IOStream}s easier: Use {@link IOStreams#map} to
  * modify the items in a {@code IOStream}, or {@link IOStreams#filter} to remove particular items. Join multiple {@code
  * Stream}s together with {@link IOStreams#concat}.
  * <p>
@@ -88,11 +88,15 @@ public interface IOStream<T> extends Closeable
     T next() throws IOStreamReadException;
 
     default <R> IOStream<R> map(final IOStreamTransform<? super T, ? extends R> transform){
-        return IOStreams.transform(this, transform);
+        return IOStreams.map(this, transform);
+    }
+
+    default <R> IOStream<R> map(final IOStreamTransform<? super T, ? extends R> transform, final IOStreamFilter<IOStreamTransformException> exceptionHandler){
+        return IOStreams.map(this, transform, exceptionHandler);
     }
 
     default <R> IOStream<R> flatMap(final IOStreamTransform<? super T, ? extends IOStream<? extends R>> transform){
-        return IOStreams.flatten(this, transform);
+        return IOStreams.flatMap(this, transform);
     }
 
     default IOStream<T> filter(final IOStreamFilter<? super T> filter){

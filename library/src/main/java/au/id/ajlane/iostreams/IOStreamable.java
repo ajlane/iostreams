@@ -29,6 +29,7 @@ package au.id.ajlane.iostreams;
  * @param <T>
  *         The type of the items in the {@code IOStreamable}.
  */
+@FunctionalInterface
 public interface IOStreamable<T>
 {
     /**
