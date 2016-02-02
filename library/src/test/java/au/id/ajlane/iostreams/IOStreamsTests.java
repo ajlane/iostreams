@@ -30,6 +30,16 @@ public class IOStreamsTests
     private static final String[] EMPTY = {};
 
     @Test
+    public void testGroup() throws IOStreamException{
+        final IOStream<String> a = IOStreams.fromArray("a1", "a2", "a3", "a4", "a5");
+        final IOStream<? extends IOStream<String>> groups = IOStreams.group(a, 2);
+        Assert.assertArrayEquals(new String[]{ "a1", "a2" }, IOStreams.toArray(groups.next()));
+        Assert.assertArrayEquals(new String[]{ "a3", "a4" }, IOStreams.toArray(groups.next()));
+        Assert.assertArrayEquals(new String[]{ "a5" }, IOStreams.toArray(groups.next()));
+        Assert.assertFalse(groups.hasNext());
+    }
+
+    @Test
     public void testConcatArrayOfStreams() throws IOStreamException
     {
         final IOStream<String> a = IOStreams.fromArray("a1");

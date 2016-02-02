@@ -87,6 +87,10 @@ public interface IOStream<T> extends Closeable
      */
     T next() throws IOStreamReadException;
 
+    default IOStream<T> observe(final IOStreamConsumer<? super T> observer){
+        return IOStreams.observe(this, observer);
+    }
+
     default <R> IOStream<R> map(final IOStreamTransform<? super T, ? extends R> transform){
         return IOStreams.map(this, transform);
     }

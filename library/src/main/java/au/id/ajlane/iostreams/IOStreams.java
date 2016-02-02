@@ -24,6 +24,8 @@ import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.Objects;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Predicate;
 import java.util.stream.Stream;
 
@@ -70,17 +72,7 @@ public final class IOStreams
     {
         Objects.requireNonNull(collection, "The collection cannot be null.");
         Objects.requireNonNull(stream, "The stream cannot be null.");
-        try
-        {
-            while (stream.hasNext())
-            {
-                collection.add(stream.next());
-            }
-        }
-        finally
-        {
-            stream.close();
-        }
+        foreach(stream, collection::add);
         return collection;
     }
 
@@ -611,7 +603,26 @@ public final class IOStreams
             @Override
             public IOStream<T> find() throws IOStreamReadException {
                 if(stream.hasNext()) {
-                    return stream.limit(size);
+                    return new IOStream<T>() {
+                        private int count = 0;
+
+                        @Override
+                        public void close() {
+                            // Ignore - we'll close the underlying stream in the parent
+                        }
+
+                        @Override
+                        public boolean hasNext() throws IOStreamReadException {
+                            return count < size && stream.hasNext();
+                        }
+
+                        @Override
+                        public T next() throws IOStreamReadException {
+                            if(count >= size) throw new NoSuchElementException();
+                            count++;
+                            return stream.next();
+                        }
+                    };
                 }
                 return terminate();
             }
@@ -619,6 +630,13 @@ public final class IOStreams
     }
 
     public static <T> IOStream<T> limit(final IOStream<T> stream, final int size){
-        return filter(stream, IOStreamFilters.limit(size));
+        return stream.filter(IOStreamFilters.limit(size));
+    }
+
+    public static <T> IOStream<T> observe(IOStream<T> stream, IOStreamConsumer<? super T> observer) {
+        return stream.map(item -> {
+            observer.accept(item);
+            return item;
+        });
     }
 }
