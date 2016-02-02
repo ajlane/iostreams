@@ -58,4 +58,13 @@ public interface IOStreamable<T>
     default void consume(final IOStreamConsumer<? super T> consumer) throws IOStreamReadException, IOStreamCloseException {
         IOStreamables.consume(this, consumer);
     }
+
+    default IOStreamable<T> keep(final IOStreamPredicate<? super T> predicate){
+        return IOStreamables.keep(this, predicate);
+    }
+
+    default IOStreamable<T> skip(final IOStreamPredicate<? super T> predicate){
+        return IOStreamables.skip(this, predicate);
+    }
+
 }

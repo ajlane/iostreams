@@ -107,11 +107,11 @@ public interface IOStream<T> extends Closeable
         return IOStreams.filter(this, filter);
     }
 
-    default IOStream<T> keep(final Predicate<? super T> predicate){
+    default IOStream<T> keep(final IOStreamPredicate<? super T> predicate){
         return IOStreams.keep(this, predicate);
     }
 
-    default IOStream<T> skip(final Predicate<? super T> predicate){
+    default IOStream<T> skip(final IOStreamPredicate<? super T> predicate){
         return IOStreams.skip(this, predicate);
     }
 

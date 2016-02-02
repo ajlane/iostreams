@@ -30,18 +30,14 @@ import java.util.stream.Stream;
 /**
  * Utilities for working with instances of {@link IOStream}.
  */
-public final class IOStreams
-{
-    private static final IOStream<?> EMPTY = new IOStream<Object>()
-    {
+public final class IOStreams {
+    private static final IOStream<?> EMPTY = new IOStream<Object>() {
         @Override
-        public void close()
-        {
+        public void close() {
         }
 
         @Override
-        public int hashCode()
-        {
+        public int hashCode() {
             return 1;
         }
 
@@ -51,65 +47,57 @@ public final class IOStreams
         }
 
         @Override
-        public boolean hasNext()
-        {
+        public boolean hasNext() {
             return false;
         }
 
 
-
         @Override
-        public Object next()
-        {
+        public Object next() {
             throw new NoSuchElementException("There is no next item in the stream.");
         }
     };
 
+    private IOStreams() throws InstantiationException {
+        throw new InstantiationException("This class cannot be instantiated.");
+    }
+
     public static <T, TCollection extends Collection<T>> TCollection addToCollection(final TCollection collection, final IOStream<T> stream)
-        throws IOStreamException
-    {
+            throws IOStreamException {
         Objects.requireNonNull(collection, "The collection cannot be null.");
         Objects.requireNonNull(stream, "The stream cannot be null.");
         consume(stream, collection::add);
         return collection;
     }
 
-    public static <T, R> IOStream<R> cast(final IOStream<T> stream)
-    {
+    public static <T, R> IOStream<R> cast(final IOStream<T> stream) {
         return IOStreams.map(
-                stream, new AbstractIOStreamTransform<T, R>()
-        {
-            @Override
-            @SuppressWarnings("unchecked")
-            protected R transform(final T item)
-            {
-                return (R) item;
-            }
-        }
+                stream, new AbstractIOStreamTransform<T, R>() {
+                    @Override
+                    @SuppressWarnings("unchecked")
+                    protected R transform(final T item) {
+                        return (R) item;
+                    }
+                }
         );
     }
 
-    public static <T> IOStream<T> concat(final Iterable<? extends IOStream<? extends T>> streams)
-    {
+    public static <T> IOStream<T> concat(final Iterable<? extends IOStream<? extends T>> streams) {
         return IOStreams.concat(IOStreams.fromIterable(streams));
     }
 
-    public static <T> IOStream<T> concat(final Iterator<? extends IOStream<? extends T>> streams)
-    {
+    public static <T> IOStream<T> concat(final Iterator<? extends IOStream<? extends T>> streams) {
         return IOStreams.concat(IOStreams.fromIterator(streams));
     }
 
-    public static <T> IOStream<T> concat(final IOStreamable<? extends IOStream<? extends T>> streams)
-    {
+    public static <T> IOStream<T> concat(final IOStreamable<? extends IOStream<? extends T>> streams) {
         Objects.requireNonNull(streams, "The streamable cannot be null.");
         return concat(streams.stream());
     }
 
-    public static <T> IOStream<T> concat(final IOStream<? extends IOStream<? extends T>> streams)
-    {
+    public static <T> IOStream<T> concat(final IOStream<? extends IOStream<? extends T>> streams) {
         Objects.requireNonNull(streams, "The stream of streams cannot be null.");
-        return new AbstractIOStream<T>()
-        {
+        return new AbstractIOStream<T>() {
             private IOStream<? extends T> current = null;
 
             @Override
@@ -121,31 +109,21 @@ public final class IOStreams
             }
 
             @Override
-            protected void open() throws IOStreamReadException
-            {
-                if (streams.hasNext())
-                {
+            protected void open() throws IOStreamReadException {
+                if (streams.hasNext()) {
                     current = Objects.requireNonNull(streams.next(), "The first concatenated stream was null");
                 }
             }
 
             @Override
-            protected T find() throws IOStreamReadException
-            {
-                while (current != null)
-                {
-                    if (current.hasNext())
-                    {
+            protected T find() throws IOStreamReadException {
+                while (current != null) {
+                    if (current.hasNext()) {
                         return current.next();
-                    }
-                    else
-                    {
-                        try
-                        {
+                    } else {
+                        try {
                             current.close();
-                        }
-                        catch (final IOStreamCloseException ex)
-                        {
+                        } catch (final IOStreamCloseException ex) {
                             throw new IOStreamReadException("Could not close one of the concatenated streams.", ex);
                         }
                         current = streams.hasNext() ? Objects.requireNonNull(
@@ -162,35 +140,25 @@ public final class IOStreams
     }
 
     @SafeVarargs
-    public static <T> IOStream<T> concat(final IOStream<? extends T>... streams)
-    {
+    public static <T> IOStream<T> concat(final IOStream<? extends T>... streams) {
         Objects.requireNonNull(streams);
 
-        return new AbstractIOStream<T>()
-        {
+        return new AbstractIOStream<T>() {
             private int index = 0;
 
             @Override
-            protected T find() throws IOStreamReadException
-            {
-                while (index < streams.length)
-                {
+            protected T find() throws IOStreamReadException {
+                while (index < streams.length) {
                     final IOStream<? extends T> stream = Objects.requireNonNull(
                             streams[index],
                             "One of the concatenated streams was null."
                     );
-                    if (stream.hasNext())
-                    {
+                    if (stream.hasNext()) {
                         return stream.next();
-                    }
-                    else
-                    {
-                        try
-                        {
+                    } else {
+                        try {
                             stream.close();
-                        }
-                        catch (final IOStreamCloseException ex)
-                        {
+                        } catch (final IOStreamCloseException ex) {
                             throw new IOStreamReadException("Could not close one of the concatenated streams.", ex);
                         }
                         index += 1;
@@ -200,10 +168,8 @@ public final class IOStreams
             }
 
             @Override
-            protected void end() throws IOStreamCloseException
-            {
-                if (index < streams.length)
-                {
+            protected void end() throws IOStreamCloseException {
+                if (index < streams.length) {
                     if (streams[index] != null) streams[index].close();
                 }
             }
@@ -221,7 +187,7 @@ public final class IOStreams
     }
 
     public static <T> void consume(final IOStream<T> stream, final IOStreamConsumer<? super T> consumer)
-        throws IOStreamReadException, IOStreamCloseException {
+            throws IOStreamReadException, IOStreamCloseException {
         try {
             while (stream.hasNext()) {
                 try {
@@ -246,27 +212,31 @@ public final class IOStreams
     }
 
     @SuppressWarnings("unchecked")
-    public static <T> IOStream<T> empty()
-    {
+    public static <T> IOStream<T> empty() {
         return (IOStream<T>) IOStreams.EMPTY;
     }
 
-    public static <T> IOStream<T> filter(final IOStream<? extends T> stream, final IOStreamFilter<? super T> filter)
-    {
+    public static <T> IOStream<T> keep(final IOStream<? extends T> stream, final IOStreamPredicate<? super T> predicate) {
+        return filter(stream, IOStreamFilters.fromPredicate(predicate));
+    }
+
+    public static <T> IOStream<T> skip(final IOStream<? extends T> stream, final IOStreamPredicate<? super T> predicate) {
+        return filter(stream, IOStreamFilters.fromPredicate(predicate).invert());
+    }
+
+    public static <T> IOStream<T> filter(final IOStream<? extends T> stream, final IOStreamFilter<? super T> filter) {
         Objects.requireNonNull(stream, "The stream cannot be null.");
         Objects.requireNonNull(filter, "The filter cannot be null.");
-        return new AbstractIOStream<T>()
-        {
+        return new AbstractIOStream<T>() {
             private volatile boolean terminate = false;
 
             @Override
-            protected void end() throws IOStreamCloseException
-            {
+            protected void end() throws IOStreamCloseException {
                 try {
                     filter.close();
-                } catch (final RuntimeException ex){
+                } catch (final RuntimeException ex) {
                     throw ex;
-                } catch(final Exception ex) {
+                } catch (final Exception ex) {
                     throw new IOStreamCloseException("Could not close the filter.", ex);
                 } finally {
                     stream.close();
@@ -274,12 +244,9 @@ public final class IOStreams
             }
 
             @Override
-            protected T find() throws IOStreamReadException
-            {
-                while (!terminate && stream.hasNext())
-                {
-                    if (Thread.interrupted())
-                    {
+            protected T find() throws IOStreamReadException {
+                while (!terminate && stream.hasNext()) {
+                    if (Thread.interrupted()) {
                         throw new IOStreamReadException(
                                 "The thread was interrupted while filtering the stream.",
                                 new InterruptedException("The thread was interrupted.")
@@ -291,11 +258,10 @@ public final class IOStreams
                         decision = filter.apply(next);
                     } catch (final RuntimeException ex) {
                         throw ex;
-                    } catch (final Exception ex){
+                    } catch (final Exception ex) {
                         throw new IOStreamReadException("Could not decide whether to keep or skip the next item in the stream.", ex);
                     }
-                    switch (decision)
-                    {
+                    switch (decision) {
                         case KEEP_AND_CONTINUE:
                             return next;
                         case SKIP_AND_CONTINUE:
@@ -314,13 +280,11 @@ public final class IOStreams
         };
     }
 
-    public static <T, R> IOStream<R> flatMap(final IOStream<? extends T> stream, final IOStreamTransform<? super T, ? extends IOStream<? extends R>> transform)
-    {
+    public static <T, R> IOStream<R> flatMap(final IOStream<? extends T> stream, final IOStreamTransform<? super T, ? extends IOStream<? extends R>> transform) {
         return IOStreams.concat(IOStreams.map(stream, transform));
     }
 
-    public static <T> IOStream<T> flattenArrays(final IOStream<? extends T[]> stream)
-    {
+    public static <T> IOStream<T> flattenArrays(final IOStream<? extends T[]> stream) {
         return IOStreams.flatMap(stream, IOStreams::fromArray);
     }
 
@@ -328,45 +292,36 @@ public final class IOStreams
         return IOStreams.concat(stream);
     }
 
-    public static <T> IOStream<T> flattenIterables(final IOStream<? extends Iterable<? extends T>> stream)
-    {
+    public static <T> IOStream<T> flattenIterables(final IOStream<? extends Iterable<? extends T>> stream) {
         return IOStreams.flatMap(stream, IOStreams::fromIterable);
     }
 
-    public static <T> IOStream<T> flattenIterators(final IOStream<? extends Iterator<? extends T>> stream)
-    {
+    public static <T> IOStream<T> flattenIterators(final IOStream<? extends Iterator<? extends T>> stream) {
         return IOStreams.flatMap(stream, IOStreams::fromIterator);
     }
 
-    public static <T> IOStream<T> flattenStreams(final IOStream<? extends Stream<? extends T>> stream)
-    {
+    public static <T> IOStream<T> flattenStreams(final IOStream<? extends Stream<? extends T>> stream) {
         return IOStreams.flatMap(stream, IOStreams::fromStream);
     }
 
     @SafeVarargs
-    public static <T> IOStream<T> fromArray(final T... values)
-    {
+    public static <T> IOStream<T> fromArray(final T... values) {
         Objects.requireNonNull(values, "The array cannot be null. Use an empty array instead.");
-        return new IOStream<T>()
-        {
+        return new IOStream<T>() {
             private int index = 0;
 
             @Override
-            public void close()
-            {
+            public void close() {
             }
 
             @Override
-            public boolean hasNext()
-            {
+            public boolean hasNext() {
                 return index < values.length;
             }
 
             @Override
-            public T next()
-            {
-                if (index < values.length)
-                {
+            public T next() {
+                if (index < values.length) {
                     final T next = values[index];
                     index += 1;
                     return next;
@@ -376,40 +331,30 @@ public final class IOStreams
         };
     }
 
-    public static <T> IOStream<T> fromIterable(final Iterable<? extends T> iterable)
-    {
+    public static <T> IOStream<T> fromIterable(final Iterable<? extends T> iterable) {
         Objects.requireNonNull(iterable, "The iterable cannot be null.");
         return IOStreams.fromIterator(iterable.iterator());
     }
 
-    public static <T> IOStream<T> fromIterator(final Iterator<? extends T> iterator)
-    {
+    public static <T> IOStream<T> fromIterator(final Iterator<? extends T> iterator) {
         Objects.requireNonNull(iterator, "The iterator cannot be null.");
-        return new IOStream<T>()
-        {
+        return new IOStream<T>() {
             @Override
-            public boolean hasNext()
-            {
+            public boolean hasNext() {
                 return iterator.hasNext();
             }
 
             @Override
-            public T next()
-            {
+            public T next() {
                 return iterator.next();
             }
 
             @Override
-            public void close() throws IOStreamCloseException
-            {
-                if (iterator instanceof AutoCloseable)
-                {
-                    try
-                    {
+            public void close() throws IOStreamCloseException {
+                if (iterator instanceof AutoCloseable) {
+                    try {
                         ((AutoCloseable) iterator).close();
-                    }
-                    catch (final Exception ex)
-                    {
+                    } catch (final Exception ex) {
                         throw new IOStreamCloseException("Could not close underlying iterator.", ex);
                     }
                 }
@@ -417,54 +362,14 @@ public final class IOStreams
         };
     }
 
-    public static <T> IOStream<T> fromStream(final Stream<? extends T> stream){
+    public static <T> IOStream<T> fromStream(final Stream<? extends T> stream) {
         Objects.requireNonNull(stream, "The stream cannot be null.");
         // TODO: Do a deeper translation to preserve some of the stream's concurrent features.
         return fromIterator(stream.iterator());
     }
 
-    public static <T> IOStream<IOStream<T>> group(final IOStream<T> stream, int size) {
-        return new AbstractIOStream<IOStream<T>>() {
-            @Override
-            public void end() throws IOStreamCloseException {
-                stream.close();
-            }
-
-            @Override
-            public IOStream<T> find() throws IOStreamReadException {
-                if(stream.hasNext()) {
-                    return new IOStream<T>() {
-                        private int count = 0;
-
-                        @Override
-                        public void close() {
-                            // Ignore - we'll close the underlying stream in the parent
-                        }
-
-                        @Override
-                        public boolean hasNext() throws IOStreamReadException {
-                            return count < size && stream.hasNext();
-                        }
-
-                        @Override
-                        public T next() throws IOStreamReadException {
-                            if(count >= size) throw new NoSuchElementException();
-                            count++;
-                            return stream.next();
-                        }
-                    };
-                }
-                return terminate();
-            }
-        };
-    }
-
-    public static <T> IOStream<T> keep(final IOStream<? extends T> stream, final Predicate<? super T> predicate){
+    public static <T> IOStream<T> keep(final IOStream<? extends T> stream, final Predicate<? super T> predicate) {
         return filter(stream, IOStreamFilters.fromPredicate(predicate));
-    }
-
-    public static <T> IOStream<T> limit(final IOStream<T> stream, final int size){
-        return stream.filter(IOStreamFilters.limit(size));
     }
 
     public static <T, R> IOStream<R> map(final IOStream<? extends T> stream,
@@ -494,7 +399,7 @@ public final class IOStreams
             public R next() throws IOStreamReadException {
                 try {
                     return transform.apply(stream.next());
-                } catch (final RuntimeException ex){
+                } catch (final RuntimeException ex) {
                     throw ex;
                 } catch (final Exception ex) {
                     throw new IOStreamReadException("Could not transform the next item the in the stream.", ex);
@@ -516,16 +421,16 @@ public final class IOStreams
             public void end() throws IOStreamCloseException {
                 try {
                     exceptionHandler.close();
-                } catch(final RuntimeException ex) {
+                } catch (final RuntimeException ex) {
                     throw ex;
-                } catch (final Exception ex){
+                } catch (final Exception ex) {
                     throw new IOStreamCloseException("Could not close the exception handler.", ex);
                 } finally {
                     try {
                         transform.close();
                     } catch (final RuntimeException ex) {
                         throw ex;
-                    } catch (final Exception ex){
+                    } catch (final Exception ex) {
                         throw new IOStreamCloseException("Could not close the transform.", ex);
                     } finally {
                         stream.close();
@@ -538,14 +443,14 @@ public final class IOStreams
                 while (!terminate && stream.hasNext()) {
                     if (Thread.interrupted()) {
                         throw new IOStreamReadException(
-                            "The thread was interrupted while transforming the stream.",
-                            new InterruptedException("The thread was interrupted.")
+                                "The thread was interrupted while transforming the stream.",
+                                new InterruptedException("The thread was interrupted.")
                         );
                     }
                     final T item = stream.next();
                     try {
                         return transform.apply(item);
-                    } catch (final RuntimeException ex){
+                    } catch (final RuntimeException ex) {
                         throw ex;
                     } catch (final Exception ex) {
                         final FilterDecision decision;
@@ -554,7 +459,7 @@ public final class IOStreams
                         } catch (final RuntimeException ex2) {
                             ex2.addSuppressed(ex);
                             throw ex2;
-                        } catch (final Exception ex2){
+                        } catch (final Exception ex2) {
                             ex2.addSuppressed(ex);
                             throw new IOStreamReadException("The exception handler was unable to handle an exception from the transform.", ex2);
                         }
@@ -569,7 +474,7 @@ public final class IOStreams
                                 continue;
                             default:
                                 final IllegalStateException unrecognised =
-                                    new IllegalStateException("Unrecognised decision: " + decision);
+                                        new IllegalStateException("Unrecognised decision: " + decision);
                                 unrecognised.addSuppressed(ex);
                                 throw unrecognised;
                         }
@@ -580,35 +485,22 @@ public final class IOStreams
         };
     }
 
-    public static <T> IOStream<T> observe(IOStream<T> stream, IOStreamConsumer<? super T> observer) {
-        return stream.map(item -> {
-            observer.accept(item);
-            return item;
-        });
-    }
-
-    public static <T> IOStream<T> singleton(final T item)
-    {
-        return new IOStream<T>()
-        {
+    public static <T> IOStream<T> singleton(final T item) {
+        return new IOStream<T>() {
             private boolean hasNext = true;
 
             @Override
-            public void close()
-            {
+            public void close() {
             }
 
             @Override
-            public boolean hasNext()
-            {
+            public boolean hasNext() {
                 return hasNext;
             }
 
             @Override
-            public T next()
-            {
-                if (hasNext)
-                {
+            public T next() {
+                if (hasNext) {
                     hasNext = false;
                     return item;
                 }
@@ -617,34 +509,77 @@ public final class IOStreams
         };
     }
 
-    public static <T> IOStream<T> skip(final IOStream<? extends T> stream, final Predicate<? super T> predicate){
+    public static <T> IOStream<T> skip(final IOStream<? extends T> stream, final Predicate<? super T> predicate) {
         return filter(stream, IOStreamFilters.fromPredicate(predicate).invert());
     }
 
     @SuppressWarnings("unchecked")
-    public static <T> T[] toArray(final IOStream<T> stream) throws IOStreamException
-    {
+    public static <T> T[] toArray(final IOStream<T> stream) throws IOStreamException {
         Objects.requireNonNull(stream, "The stream cannot be null.");
         final List<T> list = new ArrayList<>();
         return (T[]) IOStreams.addToCollection(list, stream).toArray();
     }
 
-    public static <T> List<T> toList(final IOStream<T> stream) throws IOStreamException
-    {
+    public static <T> List<T> toList(final IOStream<T> stream) throws IOStreamException {
         Objects.requireNonNull("The stream cannot be null.");
         final List<T> list = new ArrayList<>();
         return IOStreams.addToCollection(list, stream);
     }
 
-    public static <T> Set<T> toSet(final IOStream<T> stream) throws IOStreamException
-    {
+    public static <T> Set<T> toSet(final IOStream<T> stream) throws IOStreamException {
         Objects.requireNonNull("The stream cannot be null.");
         final Set<T> set = new HashSet<>();
         return IOStreams.addToCollection(set, stream);
     }
 
-    private IOStreams() throws InstantiationException
-    {
-        throw new InstantiationException("This class cannot be instantiated.");
+    public static <T> IOStream<IOStream<T>> group(final IOStream<T> stream, int size) {
+        Objects.requireNonNull(stream, "The stream cannot be null.");
+        if (size <= 0) {
+            throw new IllegalArgumentException("The size must be positive and non-zero.");
+        }
+        return new AbstractIOStream<IOStream<T>>() {
+            @Override
+            public void end() throws IOStreamCloseException {
+                stream.close();
+            }
+
+            @Override
+            public IOStream<T> find() throws IOStreamReadException {
+                if (stream.hasNext()) {
+                    return new IOStream<T>() {
+                        private int count = 0;
+
+                        @Override
+                        public void close() {
+                            // Ignore - we'll close the underlying stream in the parent
+                        }
+
+                        @Override
+                        public boolean hasNext() throws IOStreamReadException {
+                            return count < size && stream.hasNext();
+                        }
+
+                        @Override
+                        public T next() throws IOStreamReadException {
+                            if (count >= size) throw new NoSuchElementException();
+                            count++;
+                            return stream.next();
+                        }
+                    };
+                }
+                return terminate();
+            }
+        };
+    }
+
+    public static <T> IOStream<T> limit(final IOStream<T> stream, final int size) {
+        return stream.filter(IOStreamFilters.limit(size));
+    }
+
+    public static <T> IOStream<T> observe(IOStream<T> stream, IOStreamConsumer<? super T> observer) {
+        return stream.map(item -> {
+            observer.accept(item);
+            return item;
+        });
     }
 }

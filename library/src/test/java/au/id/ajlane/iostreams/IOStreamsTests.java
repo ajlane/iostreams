@@ -32,11 +32,37 @@ public class IOStreamsTests
     @Test
     public void testGroup() throws IOStreamException{
         final IOStream<String> a = IOStreams.fromArray("a1", "a2", "a3", "a4", "a5");
-        final IOStream<? extends IOStream<String>> groups = IOStreams.group(a, 2);
-        Assert.assertArrayEquals(new String[]{ "a1", "a2" }, IOStreams.toArray(groups.next()));
-        Assert.assertArrayEquals(new String[]{ "a3", "a4" }, IOStreams.toArray(groups.next()));
-        Assert.assertArrayEquals(new String[]{ "a5" }, IOStreams.toArray(groups.next()));
-        Assert.assertFalse(groups.hasNext());
+        final IOStream<? extends IOStream<String>> aGroups = IOStreams.group(a, 2);
+        Assert.assertArrayEquals(new String[]{ "a1", "a2" }, IOStreams.toArray(aGroups.next()));
+        Assert.assertArrayEquals(new String[]{ "a3", "a4" }, IOStreams.toArray(aGroups.next()));
+        Assert.assertArrayEquals(new String[]{ "a5" }, IOStreams.toArray(aGroups.next()));
+        Assert.assertFalse(aGroups.hasNext());
+
+        final IOStream<String> b = IOStreams.fromArray("b1", "b2", "b3");
+        final IOStream<? extends IOStream<String>> bGroups = IOStreams.group(b, 5);
+        Assert.assertArrayEquals(new String[]{"b1", "b2", "b3"}, IOStreams.toArray(bGroups.next()));
+        Assert.assertFalse(bGroups.hasNext());
+
+        try{
+            IOStreams.group(null, 1);
+            Assert.fail();
+        } catch (NullPointerException ex){
+            // Expected
+        }
+
+        try {
+            IOStreams.group(b, 0);
+            Assert.fail();
+        } catch (IllegalArgumentException ex){
+            // Expected
+        }
+
+        try {
+            IOStreams.group(b, -10);
+            Assert.fail();
+        } catch (IllegalArgumentException ex){
+            // Expected
+        }
     }
 
     @Test

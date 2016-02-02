@@ -459,4 +459,12 @@ public final class IOStreamables
     public static <T> void consume(IOStreamable<T> streamable) throws IOStreamReadException, IOStreamCloseException {
         IOStreams.consume(streamable.stream());
     }
+
+    public static <T> IOStreamable<T> keep(IOStreamable<T> streamable, IOStreamPredicate<? super T> predicate) {
+        return () -> streamable.stream().keep(predicate);
+    }
+
+    public static <T> IOStreamable<T> skip(IOStreamable<T> streamable, IOStreamPredicate<? super T> predicate) {
+        return () -> streamable.stream().skip(predicate);
+    }
 }

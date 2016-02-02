@@ -397,11 +397,20 @@ public final class IOStreamFilters
         throw new InstantiationException("This class cannot be instantiated.");
     }
 
-    public static <T> IOStreamFilter<T> fromPredicate(final Predicate<? super T> filter) {
+    public static <T> IOStreamFilter<T> fromPredicate(final IOStreamPredicate<? super T> keep) {
+        return new AbstractIOStreamFilter<T>() {
+            @Override
+            protected boolean keep(T item) throws Exception {
+                return keep.test(item);
+            }
+        };
+    }
+
+    public static <T> IOStreamFilter<T> fromPredicate(final Predicate<? super T> keep) {
         return new AbstractIOStreamFilter<T>() {
             @Override
             protected boolean keep(T item) {
-                return filter.test(item);
+                return keep.test(item);
             }
         };
     }
