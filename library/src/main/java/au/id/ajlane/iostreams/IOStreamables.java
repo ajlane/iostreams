@@ -452,7 +452,11 @@ public final class IOStreamables
         throw new InstantiationException("This class cannot be instantiated.");
     }
 
-    public static <T> void foreach(IOStreamable<T> streamable, IOStreamConsumer<? super T> consumer) throws IOStreamReadException, IOStreamCloseException {
-        IOStreams.foreach(streamable.stream(), consumer);
+    public static <T> void consume(IOStreamable<T> streamable, IOStreamConsumer<? super T> consumer) throws IOStreamReadException, IOStreamCloseException {
+        IOStreams.consume(streamable.stream(), consumer);
+    }
+
+    public static <T> void consume(IOStreamable<T> streamable) throws IOStreamReadException, IOStreamCloseException {
+        IOStreams.consume(streamable.stream());
     }
 }

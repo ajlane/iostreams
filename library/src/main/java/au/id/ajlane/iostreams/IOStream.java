@@ -115,9 +115,12 @@ public interface IOStream<T> extends Closeable
         return IOStreams.skip(this, predicate);
     }
 
-    default void foreach(final IOStreamConsumer<? super T> consumer)
+    default void consume() throws IOStreamReadException, IOStreamCloseException {
+        IOStreams.consume(this);
+    }
+    default void consume(final IOStreamConsumer<? super T> consumer)
         throws IOStreamReadException, IOStreamCloseException {
-        IOStreams.foreach(this, consumer);
+        IOStreams.consume(this, consumer);
     }
 
     default IOStream<T> limit(final int size){

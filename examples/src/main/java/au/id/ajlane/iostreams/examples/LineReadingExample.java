@@ -26,7 +26,7 @@ public final class LineReadingExample
             // Prefix with the path and line number, and trim whitespace and comments from the lines that are left
             .map(line -> line.path + "\t" + line.number + "\t" + line.text.replaceAll("^\\s+|\\s*#.*$", ""))
             // Consume each file by printing uncommented lines to standard out.
-            .foreach(System.out::println);
+            .consume(System.out::println);
     }
 
     private LineReadingExample(){}

@@ -51,7 +51,11 @@ public interface IOStreamable<T>
         return IOStreamables.filter(this, filter);
     }
 
-    default void foreach(final IOStreamConsumer<? super T> consumer) throws IOStreamReadException, IOStreamCloseException {
-        IOStreamables.foreach(this, consumer);
+    default void consume() throws IOStreamReadException, IOStreamCloseException{
+        IOStreamables.consume(this);
+    }
+
+    default void consume(final IOStreamConsumer<? super T> consumer) throws IOStreamReadException, IOStreamCloseException {
+        IOStreamables.consume(this, consumer);
     }
 }
