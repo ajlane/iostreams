@@ -29,6 +29,10 @@ import java.util.stream.Stream;
 
 /**
  * Utilities for working with instances of {@link IOStream}.
+ * <p>
+ *     Where a function duplicates a capability that is on the {@code IOStream} interface, prefer to use that version
+ *     instead - specific implementations may be more efficient.
+ * </p>
  */
 public final class IOStreams {
     private static final IOStream<?> EMPTY = new IOStream<Object>() {

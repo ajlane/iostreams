@@ -22,6 +22,10 @@ import java.util.Set;
 
 /**
  * Utilities for working with instances of {@link IOStreamable}.
+ * <p>
+ *     Where a function duplicates a capability that is on the {@code IOStreamable} interface, prefer to use that
+ *     version instead - specific implementations may be more efficient.
+ * </p>
  */
 public final class IOStreamables
 {
