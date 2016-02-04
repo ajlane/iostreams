@@ -4,7 +4,7 @@
 
     <groupId>au.id.ajlane.iostreams</groupId>
     <artifactId>iostreams-parent</artifactId>
-    <version>0.0.3-SNAPSHOT</version>
+    <version>0.0.2-SNAPSHOT</version>
 
     <packaging>pom</packaging>
 
@@ -76,7 +76,7 @@
                     </execution>
                 </executions>
             </plugin>
-            <!--<plugin>
+            <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-gpg-plugin</artifactId>
                 <version>1.5</version>
@@ -111,7 +111,7 @@
                     <releaseProfiles>release</releaseProfiles>
                     <goals>deploy</goals>
                 </configuration>
-            </plugin>-->
+            </plugin>
         </plugins>
     </build>
 
