@@ -37,6 +37,38 @@ public static void main(final String... args) throws IOStreamException
 }
 ```
 
+**Why not just write a couple of loops?**
+
+Sure, let's have a look at that version.
+```java
+public static void main(final String... args) throws IOException{
+    // Start with a list of file names
+    for(String file : args){
+        // Read each line from each file
+        try(final BufferedReader reader = Files.newBufferedReader(Paths.get(file), StandardCharsets.UTF_8)){
+            int lineNumber = 0;
+            for(String lineText = reader.readLine(); lineText != null; lineText = reader.readLine(), lineNumber++){
+                // Filter out empty lines or lines that start with a comment
+                if(lineText.matches("\\s*(#.*)?")) {
+                    // Prefix with the path and line number, and trim whitespace and comments from the lines that are left
+                    String result = file + "\t" + lineNumber + "\t" + lineText.replaceAll("^\\s+|\\s*#.*$", "");
+                    // Consume each file by printing uncommented lines to standard out
+                    System.out.println(result)
+                }
+            }
+        }
+    }
+}
+```
+
+It's just as concise, and doesn't use any libraries. But! Notice that there are three independent bits of logic here:
+* Opening and closing files
+* Filtering and transforming lines of text
+* Displaying results
+
+In the IOStreams example, these are all independent - you could swap out the call to `System.out.println` with something that writes results to another file, _without changing the reading or filtering code at all_. IOStreams allows you to better encapsulate and modularise your data processing code.
+
+
 Maven
 -----
 
