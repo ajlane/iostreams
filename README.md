@@ -61,7 +61,7 @@ public static void main(final String... args) throws IOException{
 }
 ```
 
-It's just as concise, and doesn't use any libraries. But! Notice that there are three independent bits of logic here:
+It's just as concise, and doesn't use any libraries. If this is all you need, use this instead. But! Notice that there are three independent bits of logic here:
 * Opening and closing files
 * Filtering and transforming lines of text
 * Displaying results
