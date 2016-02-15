@@ -399,17 +399,14 @@ public final class IOStreamFilters
 
     public static <T> IOStreamFilter<T> fromPredicate(final IOStreamPredicate<? super T> keep) {
         return new AbstractIOStreamFilter<T>() {
+
+            @Override
+            public void close() throws Exception {
+                keep.close();
+            }
+
             @Override
             protected boolean keep(T item) throws Exception {
-                return keep.test(item);
-            }
-        };
-    }
-
-    public static <T> IOStreamFilter<T> fromPredicate(final Predicate<? super T> keep) {
-        return new AbstractIOStreamFilter<T>() {
-            @Override
-            protected boolean keep(T item) {
                 return keep.test(item);
             }
         };

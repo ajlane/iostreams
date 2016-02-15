@@ -1,5 +1,7 @@
 package au.id.ajlane.iostreams;
 
-public interface IOStreamPredicate<T> {
+@FunctionalInterface
+public interface IOStreamPredicate<T> extends AutoCloseable {
      boolean test(final T item) throws Exception;
+     default void close() throws Exception{}
 }

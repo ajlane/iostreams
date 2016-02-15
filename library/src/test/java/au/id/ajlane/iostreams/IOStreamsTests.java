@@ -30,6 +30,24 @@ public class IOStreamsTests
     private static final String[] EMPTY = {};
 
     @Test
+    public void testFold() throws IOStreamException{
+        final IOStream<Integer> a = IOStreams.fromArray(1,2,3,4,5,6,7,8,9,10);
+        final Long aFolded = a.fold(0L, (sum, i) -> sum + i);
+        Assert.assertEquals(55L, aFolded.longValue());
+    }
+
+    @Test
+    public void testReduce() throws IOStreamException{
+        final IOStream<String> a = IOStreams.fromArray("a1", "a2", "a3", "a4", "a5");
+        final String aReduced = a.reduce(values -> {
+            final StringBuilder builder = new StringBuilder();
+            values.consume(builder::append);
+            return builder.toString();
+        });
+        Assert.assertEquals("a1a2a3a4a5", aReduced);
+    }
+
+    @Test
     public void testSplit() throws IOStreamException{
         final IOStream<String> a = IOStreams.fromArray("a-a1", "a-a2", "a-a3", "a-b1", "a-b2", "a-a4", "a-c1", "a-d1", "a-d2");
         final IOStream<IOStream<String>> aSplits = a.split((l, r)-> l.charAt(2) == r.charAt(2));

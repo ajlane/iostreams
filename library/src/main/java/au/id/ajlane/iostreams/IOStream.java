@@ -18,6 +18,7 @@ package au.id.ajlane.iostreams;
 
 import java.io.Closeable;
 import java.util.Iterator;
+import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.stream.Stream;
 
@@ -56,6 +57,32 @@ public interface IOStream<T> extends Closeable
     @Override
     void close() throws IOStreamCloseException;
 
+    default void consume() throws IOStreamReadException, IOStreamCloseException {
+        IOStreams.consume(this);
+    }
+
+    default void consume(final IOStreamConsumer<? super T> consumer)
+        throws IOStreamReadException, IOStreamCloseException {
+        IOStreams.consume(this, consumer);
+    }
+
+    default IOStream<T> filter(final IOStreamFilter<? super T> filter){
+        return IOStreams.filter(this, filter);
+    }
+
+    default <R> IOStream<R> flatMap(final IOStreamTransform<? super T, ? extends IOStream<? extends R>> transform){
+        return IOStreams.flatMap(this, transform);
+    }
+
+    default <R> R fold(final R initial, final IOStreamAccumulator<R, T> accumulator)
+        throws IOStreamReadException, IOStreamCloseException {
+        return IOStreams.fold(this, initial, accumulator);
+    }
+
+    default IOStream<IOStream<T>> grouped(final int size){
+        return IOStreams.group(this, size);
+    }
+
     /**
      * Checks if there are any more items in the {@code IOStream}.
      * <p>
@@ -70,6 +97,22 @@ public interface IOStream<T> extends Closeable
      *         If there was any problem in reading from the underlying resource.
      */
     boolean hasNext() throws IOStreamReadException;
+
+    default IOStream<T> keep(final IOStreamPredicate<? super T> predicate){
+        return IOStreams.keep(this, predicate);
+    }
+
+    default IOStream<T> limit(final int size){
+        return IOStreams.limit(this, size);
+    }
+
+    default <R> IOStream<R> map(final IOStreamTransform<? super T, ? extends R> transform){
+        return IOStreams.map(this, transform);
+    }
+
+    default <R> IOStream<R> map(final IOStreamTransform<? super T, ? extends R> transform, final IOStreamTransformExceptionHandler<? super T> exceptionHandler){
+        return IOStreams.map(this, transform, exceptionHandler);
+    }
 
     /**
      * Returns the next item in the {@code IOStream}.
@@ -90,47 +133,20 @@ public interface IOStream<T> extends Closeable
         return IOStreams.observe(this, observer);
     }
 
-    default <R> IOStream<R> map(final IOStreamTransform<? super T, ? extends R> transform){
-        return IOStreams.map(this, transform);
-    }
-
-    default <R> IOStream<R> map(final IOStreamTransform<? super T, ? extends R> transform, final IOStreamTransformExceptionHandler<? super T> exceptionHandler){
-        return IOStreams.map(this, transform, exceptionHandler);
-    }
-
-    default <R> IOStream<R> flatMap(final IOStreamTransform<? super T, ? extends IOStream<? extends R>> transform){
-        return IOStreams.flatMap(this, transform);
-    }
-
-    default IOStream<T> filter(final IOStreamFilter<? super T> filter){
-        return IOStreams.filter(this, filter);
-    }
-
-    default IOStream<T> keep(final IOStreamPredicate<? super T> predicate){
-        return IOStreams.keep(this, predicate);
+    default <R> R reduce(final IOStreamTransform<? super IOStream<T>, R> reducer)
+        throws IOStreamReadException, IOStreamCloseException {
+        return IOStreams.reduce(this, reducer);
     }
 
     default IOStream<T> skip(final IOStreamPredicate<? super T> predicate){
         return IOStreams.skip(this, predicate);
     }
 
-    default void consume() throws IOStreamReadException, IOStreamCloseException {
-        IOStreams.consume(this);
-    }
-    default void consume(final IOStreamConsumer<? super T> consumer)
-        throws IOStreamReadException, IOStreamCloseException {
-        IOStreams.consume(this, consumer);
-    }
-
-    default IOStream<T> limit(final int size){
-        return IOStreams.limit(this, size);
-    }
-
-    default IOStream<IOStream<T>> grouped(final int size){
-        return IOStreams.group(this, size);
-    }
-
     default IOStream<IOStream<T>> split(final IOStreamBiPredicate<? super T, ? super T> predicate){
         return IOStreams.split(this, predicate);
+    }
+
+    default List<T> toList() throws IOStreamReadException, IOStreamCloseException {
+        return IOStreams.toList(this);
     }
 }

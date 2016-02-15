@@ -17,14 +17,12 @@
 package au.id.ajlane.iostreams;
 
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.Objects;
 import java.util.Set;
-import java.util.function.Predicate;
 import java.util.stream.Stream;
 
 /**
@@ -61,14 +59,6 @@ public final class IOStreams {
             throw new NoSuchElementException("There is no next item in the stream.");
         }
     };
-
-    public static <T, TCollection extends Collection<T>> TCollection addToCollection(final TCollection collection, final IOStream<T> stream)
-            throws IOStreamException {
-        Objects.requireNonNull(collection, "The collection cannot be null.");
-        Objects.requireNonNull(stream, "The stream cannot be null.");
-        consume(stream, collection::add);
-        return collection;
-    }
 
     public static <T, R> IOStream<R> cast(final IOStream<T> stream) {
         return IOStreams.map(
@@ -346,6 +336,8 @@ public final class IOStreams {
                 if (iterator instanceof AutoCloseable) {
                     try {
                         ((AutoCloseable) iterator).close();
+                    } catch (final RuntimeException ex){
+                        throw ex;
                     } catch (final Exception ex) {
                         throw new IOStreamCloseException("Could not close underlying iterator.", ex);
                     }
@@ -401,10 +393,6 @@ public final class IOStreams {
     }
 
     public static <T> IOStream<T> keep(final IOStream<? extends T> stream, final IOStreamPredicate<? super T> predicate) {
-        return filter(stream, IOStreamFilters.fromPredicate(predicate));
-    }
-
-    public static <T> IOStream<T> keep(final IOStream<? extends T> stream, final Predicate<? super T> predicate) {
         return filter(stream, IOStreamFilters.fromPredicate(predicate));
     }
 
@@ -526,10 +514,30 @@ public final class IOStreams {
     }
 
     public static <T> IOStream<T> observe(IOStream<T> stream, IOStreamConsumer<? super T> observer) {
-        return stream.map(item -> {
-            observer.accept(item);
-            return item;
-        });
+        return new IOStream<T>() {
+            @Override
+            public void close() throws IOStreamCloseException {
+                try {
+                    observer.close();
+                } catch (RuntimeException ex) {
+                    throw ex;
+                } catch (Exception ex){
+                    throw new IOStreamCloseException("Could not close the observer.", ex);
+                } finally {
+                    stream.close();
+                }
+            }
+
+            @Override
+            public boolean hasNext() throws IOStreamReadException {
+                return stream.hasNext();
+            }
+
+            @Override
+            public T next() throws IOStreamReadException {
+                return stream.next();
+            }
+        };
     }
 
     public static <T> IOStream<IOStream<T>> split(final IOStream<T> stream,
@@ -540,7 +548,15 @@ public final class IOStreams {
         return new AbstractIOStream<IOStream<T>>() {
             @Override
             public void end() throws IOStreamCloseException {
-                stream.close();
+                try {
+                    predicate.close();
+                } catch(RuntimeException ex) {
+                    throw ex;
+                } catch (Exception ex) {
+                    throw new IOStreamCloseException("Could not close the predicate.", ex);
+                } finally {
+                    stream.close();
+                }
             }
 
             private boolean hasPrevious = false;
@@ -606,7 +622,9 @@ public final class IOStreams {
 
             private boolean samePartition(final T a, final T b) throws IOStreamReadException {
                 try {
-                    return predicate.test(a,b);
+                    return predicate.test(a, b);
+                } catch (final RuntimeException ex){
+                    throw ex;
                 } catch (final Exception ex) {
                     throw new IOStreamReadException("Could not determine whether two items were in the same split.", ex);
                 }
@@ -642,30 +660,73 @@ public final class IOStreams {
         return filter(stream, IOStreamFilters.fromPredicate(predicate).invert());
     }
 
-    public static <T> IOStream<T> skip(final IOStream<? extends T> stream, final Predicate<? super T> predicate) {
-        return filter(stream, IOStreamFilters.fromPredicate(predicate).invert());
-    }
-
     @SuppressWarnings("unchecked")
-    public static <T> T[] toArray(final IOStream<T> stream) throws IOStreamException {
+    public static <T> T[] toArray(final IOStream<T> stream) throws IOStreamReadException, IOStreamCloseException{
         Objects.requireNonNull(stream, "The stream cannot be null.");
         final List<T> list = new ArrayList<>();
-        return (T[]) IOStreams.addToCollection(list, stream).toArray();
+        stream.consume(list::add);
+        return (T[]) list.toArray();
     }
 
-    public static <T> List<T> toList(final IOStream<T> stream) throws IOStreamException {
+    public static <T> List<T> toList(final IOStream<T> stream) throws IOStreamReadException, IOStreamCloseException {
         Objects.requireNonNull("The stream cannot be null.");
         final List<T> list = new ArrayList<>();
-        return IOStreams.addToCollection(list, stream);
+        stream.consume(list::add);
+        return list;
     }
 
-    public static <T> Set<T> toSet(final IOStream<T> stream) throws IOStreamException {
+    public static <T> Set<T> toSet(final IOStream<T> stream) throws IOStreamReadException, IOStreamCloseException {
         Objects.requireNonNull("The stream cannot be null.");
         final Set<T> set = new HashSet<>();
-        return IOStreams.addToCollection(set, stream);
+        stream.consume(set::add);
+        return set;
     }
 
     private IOStreams() throws InstantiationException {
         throw new InstantiationException("This class cannot be instantiated.");
+    }
+
+    public static <R, T> R reduce(final IOStream<T> stream, final IOStreamTransform<? super IOStream<T>, R> reducer)
+        throws IOStreamReadException, IOStreamCloseException {
+        try{
+            return reducer.apply(stream);
+        } catch(final RuntimeException ex){
+            throw ex;
+        } catch (final Exception ex) {
+            throw new IOStreamReadException("Could not reduce the stream to a single value.", ex);
+        } finally {
+            try{
+                reducer.close();
+            } catch(RuntimeException ex){
+                throw ex;
+            } catch(Exception ex){
+                throw new IOStreamCloseException("Could not close the reducer.", ex);
+            }
+            stream.close();
+        }
+    }
+
+    public static <T,R> R fold(final IOStream<T> stream, R initial, final IOStreamAccumulator<R,T> accumulator)
+        throws IOStreamReadException, IOStreamCloseException {
+        try{
+            while(stream.hasNext()){
+                initial = accumulator.add(initial, stream.next());
+            }
+            return initial;
+        } catch(final RuntimeException ex){
+            throw ex;
+        } catch (final Exception ex) {
+            throw new IOStreamReadException("Could not reduce the stream to a single value.", ex);
+        } finally {
+            try {
+                accumulator.close();
+            } catch(RuntimeException ex){
+                throw ex;
+            } catch(Exception ex){
+                throw new IOStreamCloseException("Could not close the combiner.", ex);
+            } finally {
+                stream.close();
+            }
+        }
     }
 }

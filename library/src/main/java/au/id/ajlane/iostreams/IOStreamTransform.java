@@ -48,7 +48,7 @@ public interface IOStreamTransform<T, R>
      * The behaviour of a {@code IOStreamTransform} after its {@code close} method has been called is undefined.
      *
      * @throws Exception
-     *         If the {@code IOStreamFilter} could not be closed for some reason. The {@code IOStreamFilter} may not release
+     *         If the {@code IOStreamTransform} could not be closed for some reason. The {@code IOStreamTransform} may not release
      *         all resources if this is the case.
      */
     default void close() throws Exception {}
