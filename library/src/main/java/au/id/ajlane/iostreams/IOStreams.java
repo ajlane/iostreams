@@ -62,10 +62,6 @@ public final class IOStreams {
         }
     };
 
-    private IOStreams() throws InstantiationException {
-        throw new InstantiationException("This class cannot be instantiated.");
-    }
-
     public static <T, TCollection extends Collection<T>> TCollection addToCollection(final TCollection collection, final IOStream<T> stream)
             throws IOStreamException {
         Objects.requireNonNull(collection, "The collection cannot be null.");
@@ -220,14 +216,6 @@ public final class IOStreams {
         return (IOStream<T>) IOStreams.EMPTY;
     }
 
-    public static <T> IOStream<T> keep(final IOStream<? extends T> stream, final IOStreamPredicate<? super T> predicate) {
-        return filter(stream, IOStreamFilters.fromPredicate(predicate));
-    }
-
-    public static <T> IOStream<T> skip(final IOStream<? extends T> stream, final IOStreamPredicate<? super T> predicate) {
-        return filter(stream, IOStreamFilters.fromPredicate(predicate).invert());
-    }
-
     public static <T> IOStream<T> filter(final IOStream<? extends T> stream, final IOStreamFilter<? super T> filter) {
         Objects.requireNonNull(stream, "The stream cannot be null.");
         Objects.requireNonNull(filter, "The filter cannot be null.");
@@ -372,8 +360,56 @@ public final class IOStreams {
         return fromIterator(stream.iterator());
     }
 
+    public static <T> IOStream<IOStream<T>> group(final IOStream<T> stream, int size) {
+        Objects.requireNonNull(stream, "The stream cannot be null.");
+        if (size <= 0) {
+            throw new IllegalArgumentException("The size must be positive and non-zero.");
+        }
+        return new AbstractIOStream<IOStream<T>>() {
+            @Override
+            public void end() throws IOStreamCloseException {
+                stream.close();
+            }
+
+            @Override
+            public IOStream<T> find() throws IOStreamReadException {
+                if (stream.hasNext()) {
+                    return new IOStream<T>() {
+                        private int count = 0;
+
+                        @Override
+                        public void close() {
+                            // Ignore - we'll close the underlying stream in the parent
+                        }
+
+                        @Override
+                        public boolean hasNext() throws IOStreamReadException {
+                            return count < size && stream.hasNext();
+                        }
+
+                        @Override
+                        public T next() throws IOStreamReadException {
+                            if (count >= size) throw new NoSuchElementException();
+                            count++;
+                            return stream.next();
+                        }
+                    };
+                }
+                return terminate();
+            }
+        };
+    }
+
+    public static <T> IOStream<T> keep(final IOStream<? extends T> stream, final IOStreamPredicate<? super T> predicate) {
+        return filter(stream, IOStreamFilters.fromPredicate(predicate));
+    }
+
     public static <T> IOStream<T> keep(final IOStream<? extends T> stream, final Predicate<? super T> predicate) {
         return filter(stream, IOStreamFilters.fromPredicate(predicate));
+    }
+
+    public static <T> IOStream<T> limit(final IOStream<T> stream, final int size) {
+        return stream.filter(IOStreamFilters.limit(size));
     }
 
     public static <T, R> IOStream<R> map(final IOStream<? extends T> stream,
@@ -489,6 +525,94 @@ public final class IOStreams {
         };
     }
 
+    public static <T> IOStream<T> observe(IOStream<T> stream, IOStreamConsumer<? super T> observer) {
+        return stream.map(item -> {
+            observer.accept(item);
+            return item;
+        });
+    }
+
+    public static <T> IOStream<IOStream<T>> partition(final IOStream<T> stream,
+                                                      final IOStreamBiPredicate<? super T, ? super T> predicate) {
+        Objects.requireNonNull(stream, "The stream cannot be null.");
+        Objects.requireNonNull(predicate, "The predicate cannot be null.");
+
+        return new AbstractIOStream<IOStream<T>>() {
+            @Override
+            public void end() throws IOStreamCloseException {
+                stream.close();
+            }
+
+            private boolean hasPrevious = false;
+            private T previous;
+
+            private boolean hasNext = false;
+            private T next;
+
+            @Override
+            public IOStream<T> find() throws IOStreamReadException {
+                if(!hasPrevious){
+                    if(stream.hasNext()) {
+                        previous = stream.next();
+                        hasPrevious = true;
+                    } else {
+                        return terminate();
+                    }
+                }
+                if(!hasNext){
+                    if(stream.hasNext()) {
+                        next = stream.next();
+                        hasNext = true;
+                    } else {
+                        return IOStreams.singleton(previous);
+                    }
+                }
+                return new AbstractIOStream<T>() {
+
+                    private boolean partitionEnd = false;
+
+                    @Override
+                    public void end() throws IOStreamCloseException {
+                        // Ignore - we'll close the underlying stream in the parent
+                    }
+
+                    @Override
+                    protected T find() throws IOStreamReadException {
+                        if(partitionEnd) return terminate();
+                        if(!hasPrevious){
+                            if(stream.hasNext()) {
+                                previous = stream.next();
+                                hasPrevious = true;
+                            } else {
+                                return terminate();
+                            }
+                        }
+                        if(!hasNext){
+                            if(stream.hasNext()) {
+                                next = stream.next();
+                                hasNext = true;
+                            }
+                        }
+                        final T result = previous;
+                        partitionEnd = !hasNext || hasPrevious && !samePartition(previous, next);
+                        hasPrevious = hasNext;
+                        previous = next;
+                        hasNext = false;
+                        return result;
+                    }
+                };
+            }
+
+            private boolean samePartition(final T a, final T b) throws IOStreamReadException {
+                try {
+                    return predicate.test(a,b);
+                } catch (final Exception ex) {
+                    throw new IOStreamReadException("Could not determine whether two items were in the same partition.", ex);
+                }
+            }
+        };
+    }
+
     public static <T> IOStream<T> singleton(final T item) {
         return new IOStream<T>() {
             private boolean hasNext = true;
@@ -511,6 +635,10 @@ public final class IOStreams {
                 throw new NoSuchElementException("There is no next item in the stream.");
             }
         };
+    }
+
+    public static <T> IOStream<T> skip(final IOStream<? extends T> stream, final IOStreamPredicate<? super T> predicate) {
+        return filter(stream, IOStreamFilters.fromPredicate(predicate).invert());
     }
 
     public static <T> IOStream<T> skip(final IOStream<? extends T> stream, final Predicate<? super T> predicate) {
@@ -536,54 +664,7 @@ public final class IOStreams {
         return IOStreams.addToCollection(set, stream);
     }
 
-    public static <T> IOStream<IOStream<T>> group(final IOStream<T> stream, int size) {
-        Objects.requireNonNull(stream, "The stream cannot be null.");
-        if (size <= 0) {
-            throw new IllegalArgumentException("The size must be positive and non-zero.");
-        }
-        return new AbstractIOStream<IOStream<T>>() {
-            @Override
-            public void end() throws IOStreamCloseException {
-                stream.close();
-            }
-
-            @Override
-            public IOStream<T> find() throws IOStreamReadException {
-                if (stream.hasNext()) {
-                    return new IOStream<T>() {
-                        private int count = 0;
-
-                        @Override
-                        public void close() {
-                            // Ignore - we'll close the underlying stream in the parent
-                        }
-
-                        @Override
-                        public boolean hasNext() throws IOStreamReadException {
-                            return count < size && stream.hasNext();
-                        }
-
-                        @Override
-                        public T next() throws IOStreamReadException {
-                            if (count >= size) throw new NoSuchElementException();
-                            count++;
-                            return stream.next();
-                        }
-                    };
-                }
-                return terminate();
-            }
-        };
-    }
-
-    public static <T> IOStream<T> limit(final IOStream<T> stream, final int size) {
-        return stream.filter(IOStreamFilters.limit(size));
-    }
-
-    public static <T> IOStream<T> observe(IOStream<T> stream, IOStreamConsumer<? super T> observer) {
-        return stream.map(item -> {
-            observer.accept(item);
-            return item;
-        });
+    private IOStreams() throws InstantiationException {
+        throw new InstantiationException("This class cannot be instantiated.");
     }
 }

@@ -30,6 +30,43 @@ public class IOStreamsTests
     private static final String[] EMPTY = {};
 
     @Test
+    public void testPartition() throws IOStreamException{
+        final IOStream<String> a = IOStreams.fromArray("a-a1", "a-a2", "a-a3", "a-b1", "a-b2", "a-a4", "a-c1", "a-d1", "a-d2");
+        final IOStream<IOStream<String>> aPartitions = a.partition((l,r)->l.charAt(2)==r.charAt(2));
+
+        Assert.assertArrayEquals(new String [] { "a-a1", "a-a2", "a-a3" }, IOStreams.toArray(aPartitions.next()));
+        Assert.assertArrayEquals(new String [] { "a-b1", "a-b2" }, IOStreams.toArray(aPartitions.next()));
+        Assert.assertArrayEquals(new String [] { "a-a4" }, IOStreams.toArray(aPartitions.next()));
+        Assert.assertArrayEquals(new String [] { "a-c1" }, IOStreams.toArray(aPartitions.next()));
+        Assert.assertArrayEquals(new String[] { "a-d1", "a-d2" }, IOStreams.toArray(aPartitions.next()));
+        Assert.assertFalse(aPartitions.hasNext());
+
+        final IOStream<String> b = IOStreams.fromArray("b-a1", "b-a2", "b-a3", "b-b1", "b-b2");
+        final IOStream<IOStream<String>> bPartitions = b.partition((l,r)->l.charAt(2)==r.charAt(2));
+
+        try(final IOStream<String> bOrphan = bPartitions.next()) {
+            Assert.assertEquals("b-a1", bOrphan.next());
+        }
+        Assert.assertArrayEquals(new String [] { "b-a2", "b-a3" }, IOStreams.toArray(bPartitions.next()));
+        Assert.assertArrayEquals(new String [] { "b-b1", "b-b2" }, IOStreams.toArray(bPartitions.next()));
+        Assert.assertFalse(bPartitions.hasNext());
+
+        try{
+            IOStreams.partition(null, (l,r)->false);
+            Assert.fail();
+        } catch (NullPointerException ex){
+            // Expected
+        }
+
+        try{
+            IOStreams.partition(a, null);
+            Assert.fail();
+        } catch (NullPointerException ex){
+            // Expected
+        }
+    }
+
+    @Test
     public void testGroup() throws IOStreamException{
         final IOStream<String> a = IOStreams.fromArray("a1", "a2", "a3", "a4", "a5");
         final IOStream<? extends IOStream<String>> aGroups = IOStreams.group(a, 2);

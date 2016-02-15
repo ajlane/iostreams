@@ -130,4 +130,8 @@ public interface IOStream<T> extends Closeable
     default IOStream<IOStream<T>> grouped(final int size){
         return IOStreams.group(this, size);
     }
+
+    default IOStream<IOStream<T>> partition(final IOStreamBiPredicate<? super T, ? super T> predicate){
+        return IOStreams.partition(this, predicate);
+    }
 }
