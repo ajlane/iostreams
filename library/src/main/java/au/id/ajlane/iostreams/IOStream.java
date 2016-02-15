@@ -19,7 +19,6 @@ package au.id.ajlane.iostreams;
 import java.io.Closeable;
 import java.util.Iterator;
 import java.util.NoSuchElementException;
-import java.util.function.Predicate;
 import java.util.stream.Stream;
 
 /**
@@ -131,7 +130,7 @@ public interface IOStream<T> extends Closeable
         return IOStreams.group(this, size);
     }
 
-    default IOStream<IOStream<T>> partition(final IOStreamBiPredicate<? super T, ? super T> predicate){
-        return IOStreams.partition(this, predicate);
+    default IOStream<IOStream<T>> split(final IOStreamBiPredicate<? super T, ? super T> predicate){
+        return IOStreams.split(this, predicate);
     }
 }

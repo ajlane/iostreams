@@ -30,36 +30,46 @@ public class IOStreamsTests
     private static final String[] EMPTY = {};
 
     @Test
-    public void testPartition() throws IOStreamException{
+    public void testSplit() throws IOStreamException{
         final IOStream<String> a = IOStreams.fromArray("a-a1", "a-a2", "a-a3", "a-b1", "a-b2", "a-a4", "a-c1", "a-d1", "a-d2");
-        final IOStream<IOStream<String>> aPartitions = a.partition((l,r)->l.charAt(2)==r.charAt(2));
+        final IOStream<IOStream<String>> aSplits = a.split((l, r)-> l.charAt(2) == r.charAt(2));
 
-        Assert.assertArrayEquals(new String [] { "a-a1", "a-a2", "a-a3" }, IOStreams.toArray(aPartitions.next()));
-        Assert.assertArrayEquals(new String [] { "a-b1", "a-b2" }, IOStreams.toArray(aPartitions.next()));
-        Assert.assertArrayEquals(new String [] { "a-a4" }, IOStreams.toArray(aPartitions.next()));
-        Assert.assertArrayEquals(new String [] { "a-c1" }, IOStreams.toArray(aPartitions.next()));
-        Assert.assertArrayEquals(new String[] { "a-d1", "a-d2" }, IOStreams.toArray(aPartitions.next()));
-        Assert.assertFalse(aPartitions.hasNext());
+        Assert.assertArrayEquals(new String [] { "a-a1", "a-a2", "a-a3" }, IOStreams.toArray(aSplits.next()));
+        Assert.assertArrayEquals(new String [] { "a-b1", "a-b2" }, IOStreams.toArray(aSplits.next()));
+        Assert.assertArrayEquals(new String [] { "a-a4" }, IOStreams.toArray(aSplits.next()));
+        Assert.assertArrayEquals(new String [] { "a-c1" }, IOStreams.toArray(aSplits.next()));
+        Assert.assertArrayEquals(new String[] { "a-d1", "a-d2" }, IOStreams.toArray(aSplits.next()));
+        Assert.assertFalse(aSplits.hasNext());
 
         final IOStream<String> b = IOStreams.fromArray("b-a1", "b-a2", "b-a3", "b-b1", "b-b2");
-        final IOStream<IOStream<String>> bPartitions = b.partition((l,r)->l.charAt(2)==r.charAt(2));
+        final IOStream<IOStream<String>> bSplits = b.split((l, r)-> l.charAt(2) == r.charAt(2));
 
-        try(final IOStream<String> bOrphan = bPartitions.next()) {
+        try(final IOStream<String> bOrphan = bSplits.next()) {
             Assert.assertEquals("b-a1", bOrphan.next());
         }
-        Assert.assertArrayEquals(new String [] { "b-a2", "b-a3" }, IOStreams.toArray(bPartitions.next()));
-        Assert.assertArrayEquals(new String [] { "b-b1", "b-b2" }, IOStreams.toArray(bPartitions.next()));
-        Assert.assertFalse(bPartitions.hasNext());
+        Assert.assertArrayEquals(new String [] { "b-a2", "b-a3" }, IOStreams.toArray(bSplits.next()));
+        Assert.assertArrayEquals(new String [] { "b-b1", "b-b2" }, IOStreams.toArray(bSplits.next()));
+        Assert.assertFalse(bSplits.hasNext());
+
+        final IOStream<String> c = IOStreams.fromArray("c-a1");
+        final IOStream<IOStream<String>> cSplits = c.split((l, r)->false);
+        Assert.assertArrayEquals(new String[] { "c-a1" }, IOStreams.toArray(cSplits.next()));
+        Assert.assertFalse(cSplits.hasNext());
+
+        final IOStream<String> d = IOStreams.empty();
+        try(final IOStream<IOStream<String>> dSplits = d.split((l, r)->false)){
+            Assert.assertFalse(dSplits.hasNext());
+        }
 
         try{
-            IOStreams.partition(null, (l,r)->false);
+            IOStreams.split(null, (l, r)->false);
             Assert.fail();
         } catch (NullPointerException ex){
             // Expected
         }
 
         try{
-            IOStreams.partition(a, null);
+            IOStreams.split(a, null);
             Assert.fail();
         } catch (NullPointerException ex){
             // Expected

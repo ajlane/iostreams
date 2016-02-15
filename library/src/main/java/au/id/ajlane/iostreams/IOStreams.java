@@ -532,8 +532,8 @@ public final class IOStreams {
         });
     }
 
-    public static <T> IOStream<IOStream<T>> partition(final IOStream<T> stream,
-                                                      final IOStreamBiPredicate<? super T, ? super T> predicate) {
+    public static <T> IOStream<IOStream<T>> split(final IOStream<T> stream,
+                                                  final IOStreamBiPredicate<? super T, ? super T> predicate) {
         Objects.requireNonNull(stream, "The stream cannot be null.");
         Objects.requireNonNull(predicate, "The predicate cannot be null.");
 
@@ -564,6 +564,7 @@ public final class IOStreams {
                         next = stream.next();
                         hasNext = true;
                     } else {
+                        hasPrevious = false;
                         return IOStreams.singleton(previous);
                     }
                 }
@@ -607,7 +608,7 @@ public final class IOStreams {
                 try {
                     return predicate.test(a,b);
                 } catch (final Exception ex) {
-                    throw new IOStreamReadException("Could not determine whether two items were in the same partition.", ex);
+                    throw new IOStreamReadException("Could not determine whether two items were in the same split.", ex);
                 }
             }
         };
