@@ -21,6 +21,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.Set;
+import java.util.function.IntFunction;
 import java.util.stream.Stream;
 
 /**
@@ -185,7 +186,7 @@ public interface IOStream<T> extends Closeable
         return IOStreams.toSet(this);
     }
 
-    default T[] toArray() throws IOStreamReadException, IOStreamCloseException {
-        return IOStreams.toArray(this);
+    default T[] toArray(IntFunction<T[]> supplier) throws IOStreamReadException, IOStreamCloseException {
+        return IOStreams.toArray(this, supplier);
     }
 }

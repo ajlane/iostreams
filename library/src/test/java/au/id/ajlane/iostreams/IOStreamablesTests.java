@@ -16,10 +16,15 @@
 
 package au.id.ajlane.iostreams;
 
-import java.util.*;
-
 import org.junit.Assert;
 import org.junit.Test;
+
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
+import java.util.NoSuchElementException;
 
 /**
  * Tests {@link IOStreamables}.
@@ -43,11 +48,11 @@ public class IOStreamablesTests
 
         Assert.assertArrayEquals(
             new String[]{"a1", "b1"},
-            IOStreamables.toArray(IOStreamables.concat(a, b))
+            IOStreamables.toArray(IOStreamables.concat(a, b), String[]::new)
         );
         Assert.assertArrayEquals(
             new String[]{"a1", "b1"},
-            IOStreamables.toArray(IOStreamables.concat(a, b))
+            IOStreamables.toArray(IOStreamables.concat(a, b), String[]::new)
         );
 
         final IOStreamable<String> c = IOStreamables.fromArray("c1", "c2", "c3");
@@ -56,7 +61,7 @@ public class IOStreamablesTests
 
         Assert.assertArrayEquals(
             new String[]{"c1", "c2", "c3", "d1", "d2", "e1", "e2", "e3", "e4"},
-            IOStreamables.toArray(IOStreamables.concat(c, d, e))
+            IOStreamables.toArray(IOStreamables.concat(c, d, e), String[]::new)
         );
 
         try
@@ -95,11 +100,11 @@ public class IOStreamablesTests
 
         Assert.assertArrayEquals(
             new String[]{"a1", "b1"},
-            IOStreamables.toArray(IOStreamables.concat(IOStreamables.fromArray(a, b)))
+            IOStreamables.toArray(IOStreamables.concat(IOStreamables.fromArray(a, b)), String[]::new)
         );
         Assert.assertArrayEquals(
             new String[]{"a1", "b1"},
-            IOStreamables.toArray(IOStreamables.concat(IOStreamables.fromArray(a, b)))
+            IOStreamables.toArray(IOStreamables.concat(IOStreamables.fromArray(a, b)), String[]::new)
         );
 
         final IOStreamable<String> c = IOStreamables.fromArray("c1", "c2", "c3");
@@ -108,7 +113,7 @@ public class IOStreamablesTests
 
         Assert.assertArrayEquals(
             new String[]{"c1", "c2", "c3", "d1", "d2", "e1", "e2", "e3", "e4"},
-            IOStreamables.toArray(IOStreamables.concat(IOStreamables.fromArray(c, d, e)))
+            IOStreamables.toArray(IOStreamables.concat(IOStreamables.fromArray(c, d, e)), String[]::new)
         );
 
         try
@@ -173,7 +178,7 @@ public class IOStreamablesTests
                 IOStreamables.filter(
                     IOStreamables.fromArray("a1", "a2", "a3"),
                     IOStreamFilters.<String>all()
-                        )
+                ), String[]::new
                 )
         );
         Assert.assertArrayEquals(
@@ -182,7 +187,7 @@ public class IOStreamablesTests
                 IOStreamables.filter(
                     IOStreamables.fromArray("b1", "b2", "b3"),
                     IOStreamFilters.<String>none()
-                        )
+                ), String[]::new
                 )
         );
         Assert.assertArrayEquals(
@@ -191,7 +196,7 @@ public class IOStreamablesTests
                 IOStreamables.filter(
                     IOStreamables.fromArray("c1", "c2", "c3", "c4"),
                     IOStreamFilters.whitelist("c2", "c3")
-                        )
+                ), String[]::new
                 )
         );
 
@@ -201,7 +206,7 @@ public class IOStreamablesTests
                 IOStreamables.filter(
                     IOStreamables.<String>empty(),
                     IOStreamFilters.whitelist("c2", "c3")
-                        )
+                ), String[]::new
                 )
         );
 
@@ -253,7 +258,7 @@ public class IOStreamablesTests
                                                 "a2"
                                         }, new String[]{"b1", "b2", "b3"}, new String[]{"c1"}
                                 )
-                        )
+                ), String[]::new
                 )
         );
         Assert.assertArrayEquals(
@@ -266,7 +271,7 @@ public class IOStreamablesTests
                                                 "d2"
                                         }, IOStreamablesTests.EMPTY
                                 )
-                        )
+                ), String[]::new
                 )
         );
         Assert.assertArrayEquals(
@@ -277,7 +282,7 @@ public class IOStreamablesTests
                         IOStreamablesTests.EMPTY,
                         new String[]{"e1", "e2"}
                                 )
-                        )
+                ), String[]::new
                 )
         );
         Assert.assertArrayEquals(
@@ -288,7 +293,7 @@ public class IOStreamablesTests
                         IOStreamablesTests.EMPTY,
                         IOStreamablesTests.EMPTY
                                 )
-                        )
+                ), String[]::new
                 )
         );
 
@@ -305,7 +310,7 @@ public class IOStreamablesTests
         final IOStreamable<String> f = IOStreamables.flattenArrays(IOStreamables.<String[]>fromArray(null, null));
         try
         {
-            IOStreamables.toArray(f);
+            IOStreamables.toArray(f, String[]::new);
             Assert.fail();
         }
         catch (final NullPointerException ex)
@@ -333,7 +338,7 @@ public class IOStreamablesTests
                                                 "a2"
                                         ), Arrays.asList("b1", "b2", "b3"), Collections.singletonList("c1")
                                 )
-                        )
+                ), String[]::new
                 )
         );
         Assert.assertArrayEquals(
@@ -346,7 +351,7 @@ public class IOStreamablesTests
                                                 "d2"
                                         ), Collections.emptyList()
                                 )
-                        )
+                ), String[]::new
                 )
         );
         Assert.assertArrayEquals(
@@ -357,7 +362,7 @@ public class IOStreamablesTests
                                         Collections.emptyList(),
                                         Arrays.asList("e1", "e2")
                                 )
-                        )
+                ), String[]::new
                 )
         );
         Assert.assertArrayEquals(
@@ -368,7 +373,7 @@ public class IOStreamablesTests
                                         Collections.emptyList(),
                                         Collections.emptyList()
                                 )
-                        )
+                ), String[]::new
                 )
         );
 
@@ -386,7 +391,7 @@ public class IOStreamablesTests
             .flattenIterables(IOStreamables.<Iterable<String>>fromArray(null, null));
         try
         {
-            IOStreamables.toArray(f);
+            IOStreamables.toArray(f, String[]::new);
             Assert.fail();
         }
         catch (final NullPointerException ex)
@@ -416,7 +421,7 @@ public class IOStreamablesTests
                         IOStreamables.fromArray("b1", "b2", "b3"),
                         IOStreamables.fromArray("c1")
                                 )
-                        )
+                ), String[]::new
                 )
         );
         Assert.assertArrayEquals(
@@ -429,7 +434,7 @@ public class IOStreamablesTests
                                                 "d2"
                                         ), IOStreamables.<String>fromArray()
                                 )
-                        )
+                ), String[]::new
                 )
         );
         Assert.assertArrayEquals(
@@ -440,7 +445,7 @@ public class IOStreamablesTests
                         IOStreamables.<String>fromArray(),
                         IOStreamables.fromArray("e1", "e2")
                                 )
-                        )
+                ), String[]::new
                 )
         );
         Assert.assertArrayEquals(
@@ -451,7 +456,7 @@ public class IOStreamablesTests
                         IOStreamables.fromArray(),
                         IOStreamables.fromArray()
                                 )
-                        )
+                ), String[]::new
                 )
         );
 
@@ -473,7 +478,7 @@ public class IOStreamablesTests
         );
         try
         {
-            IOStreamables.toArray(f);
+            IOStreamables.toArray(f, String[]::new);
             Assert.fail();
         }
         catch (final NullPointerException ex)
@@ -541,7 +546,7 @@ public class IOStreamablesTests
     }
 
     /**
-     * Tests {@link IOStreamables#toArray(IOStreamable)}.
+     * Tests {@link IOStreamables#toArray(IOStreamable, java.util.function.IntFunction)}.
      *
      * @throws IOStreamException
      *         If a {@link IOStream} fails. Should not occur.
@@ -550,10 +555,10 @@ public class IOStreamablesTests
     public void testToArray() throws IOStreamException
     {
         final IOStreamable<String> a = IOStreamables.fromArray();
-        Assert.assertArrayEquals(IOStreamablesTests.EMPTY, IOStreamables.toArray(a));
+        Assert.assertArrayEquals(IOStreamablesTests.EMPTY, IOStreamables.toArray(a, String[]::new));
 
         final IOStreamable<String> b = IOStreamables.fromArray("b1", "b2", "b3");
-        Assert.assertArrayEquals(new String[]{"b1", "b2", "b3"}, IOStreamables.toArray(b));
+        Assert.assertArrayEquals(new String[]{"b1", "b2", "b3"}, IOStreamables.toArray(b, String[]::new));
     }
 
     /**
