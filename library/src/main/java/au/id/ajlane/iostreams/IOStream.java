@@ -20,6 +20,7 @@ import java.io.Closeable;
 import java.util.Iterator;
 import java.util.List;
 import java.util.NoSuchElementException;
+import java.util.Set;
 import java.util.stream.Stream;
 
 /**
@@ -172,7 +173,19 @@ public interface IOStream<T> extends Closeable
         return IOStreams.split(this, predicate);
     }
 
+    default PeekableIOStream<T> peekable(){
+        return IOStreams.peekable(this);
+    }
+
     default List<T> toList() throws IOStreamReadException, IOStreamCloseException {
         return IOStreams.toList(this);
+    }
+
+    default Set<T> toSet() throws IOStreamReadException, IOStreamCloseException {
+        return IOStreams.toSet(this);
+    }
+
+    default T[] toArray() throws IOStreamReadException, IOStreamCloseException {
+        return IOStreams.toArray(this);
     }
 }

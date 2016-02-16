@@ -400,6 +400,57 @@ public final class IOStreams {
         return stream.filter(IOStreamFilters.limit(size));
     }
 
+    public static <T> PeekableIOStream<T> peekable(final IOStream<T> stream){
+        Objects.requireNonNull(stream, "The stream cannot be null.");
+        return new PeekableIOStream<T>() {
+
+            private final ArrayList<T> buffer = new ArrayList<>(1);
+            private int cursor = 0;
+
+            @Override
+            public PeekableIOStream<T> peekable() {
+                return this;
+            }
+
+            @Override
+            public Iterable<T> peek(int n) throws IOStreamReadException {
+                buffer.ensureCapacity(n);
+                int extra = n - buffer.size();
+                for(int i = 0; i < extra && stream.hasNext(); i++){
+                    buffer.add(stream.next());
+                }
+                return buffer.subList(0, Integer.min(n, buffer.size()));
+            }
+
+            @Override
+            public void close() throws IOStreamCloseException {
+                try {
+                    buffer.clear();
+                } finally {
+                    stream.close();
+                }
+            }
+
+            @Override
+            public boolean hasNext() throws IOStreamReadException {
+                return cursor < buffer.size() || stream.hasNext();
+            }
+
+            @Override
+            public T next() throws IOStreamReadException {
+                if(cursor < buffer.size()) {
+                    final T next = buffer.get(cursor);
+                    cursor++;
+                    return next;
+                } else {
+                    buffer.clear();
+                    cursor = 0;
+                    return stream.next();
+                }
+            }
+        };
+    }
+
     public static <T, R> IOStream<R> map(final IOStream<? extends T> stream,
                                          final IOStreamTransform<? super T, ? extends R> transform) {
         Objects.requireNonNull(stream, "The stream cannot be null.");

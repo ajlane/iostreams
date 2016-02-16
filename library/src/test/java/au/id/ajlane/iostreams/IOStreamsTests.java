@@ -17,6 +17,7 @@
 package au.id.ajlane.iostreams;
 
 import java.util.*;
+import java.util.stream.StreamSupport;
 
 import org.junit.Assert;
 import org.junit.Test;
@@ -45,6 +46,32 @@ public class IOStreamsTests
             return builder.toString();
         });
         Assert.assertEquals("a1a2a3a4a5", aReduced);
+    }
+
+    @Test
+    public void testPeekable() throws IOStreamException{
+        final IOStream<String> a = IOStreams.fromArray("a1", "a2", "a3", "a4", "a5");
+        final PeekableIOStream<String> aPeekable = IOStreams.peekable(a);
+        final String[] aPeeked = StreamSupport.stream(aPeekable.peek(3).spliterator(), false).toArray(String[]::new);
+
+        Assert.assertArrayEquals(new String[] { "a1", "a2", "a3" }, aPeeked);
+        Assert.assertArrayEquals(new String [] { "a1", "a2", "a3", "a4", "a5" }, IOStreams.toArray(aPeekable));
+        Assert.assertFalse(aPeekable.hasNext());
+        Assert.assertFalse(aPeekable.peek(1).iterator().hasNext());
+
+        try{
+            aPeekable.peek();
+            Assert.fail();
+        } catch (NoSuchElementException ex){
+            // Expected
+        }
+
+        try{
+            IOStreams.peekable(null);
+            Assert.fail();
+        } catch (NullPointerException ex){
+            // Expected
+        }
     }
 
     @Test
