@@ -540,7 +540,7 @@ public final class IOStreams {
         };
     }
 
-    public static <T> IOStream<IOStream<T>> split(final IOStream<T> stream,
+    public static <T> IOStream<IOStream<T>> group(final IOStream<T> stream,
                                                   final IOStreamBiPredicate<? super T, ? super T> predicate) {
         Objects.requireNonNull(stream, "The stream cannot be null.");
         Objects.requireNonNull(predicate, "The predicate cannot be null.");
@@ -626,7 +626,7 @@ public final class IOStreams {
                 } catch (final RuntimeException ex){
                     throw ex;
                 } catch (final Exception ex) {
-                    throw new IOStreamReadException("Could not determine whether two items were in the same split.", ex);
+                    throw new IOStreamReadException("Could not determine whether two items were in the same group.", ex);
                 }
             }
         };
@@ -728,5 +728,9 @@ public final class IOStreams {
                 stream.close();
             }
         }
+    }
+
+    public static <T> IOStream<IOStream<T>> split(final IOStream<T> stream, final IOStreamBiPredicate<? super T, ? super T> predicate) {
+        return stream.group(predicate.invert());
     }
 }

@@ -79,8 +79,12 @@ public interface IOStream<T> extends Closeable
         return IOStreams.fold(this, initial, accumulator);
     }
 
-    default IOStream<IOStream<T>> grouped(final int size){
+    default IOStream<IOStream<T>> group(final int size) {
         return IOStreams.group(this, size);
+    }
+
+    default IOStream<IOStream<T>> group(final IOStreamBiPredicate<? super T, ? super T> predicate) {
+        return IOStreams.group(this, predicate);
     }
 
     /**
@@ -106,10 +110,32 @@ public interface IOStream<T> extends Closeable
         return IOStreams.limit(this, size);
     }
 
+    /**
+     * Transform each item in the stream.
+     *
+     * @param transform The function to apply to transform each item.
+     * @param <R>       The type of the transformed items.
+     * @return A new {@code IOStream} which will apply the function as each item is read.
+     */
     default <R> IOStream<R> map(final IOStreamTransform<? super T, ? extends R> transform){
         return IOStreams.map(this, transform);
     }
 
+    /**
+     * Transforms each item in the stream.
+     *
+     * <p>Allows exceptions to be handled during the transform, rather than terminating the stream. If the exception
+     * handler returns {@link FilterDecision#KEEP_AND_CONTINUE} or {@link FilterDecision#KEEP_AND_TERMINATE},
+     * the stream will terminate with the original exception. Otherwise, the stream will skip the item and either
+     * continue ({@link FilterDecision#SKIP_AND_CONTINUE}) or terminate quietly
+     * ({@link FilterDecision#SKIP_AND_TERMINATE}).</p>
+     *
+     * @param transform The function to apply to transform each item.
+     * @param exceptionHandler The function to handle any exceptions from the transform and retroactively filter
+     *                         problematic items.
+     * @param <R> The type of the transformed items.
+     * @return A new {@code IOStream} which will apply the function as each item is read.
+     */
     default <R> IOStream<R> map(final IOStreamTransform<? super T, ? extends R> transform, final IOStreamTransformExceptionHandler<? super T> exceptionHandler){
         return IOStreams.map(this, transform, exceptionHandler);
     }
@@ -142,7 +168,7 @@ public interface IOStream<T> extends Closeable
         return IOStreams.skip(this, predicate);
     }
 
-    default IOStream<IOStream<T>> split(final IOStreamBiPredicate<? super T, ? super T> predicate){
+    default IOStream<IOStream<T>> split(final IOStreamBiPredicate<T, T> predicate) {
         return IOStreams.split(this, predicate);
     }
 
