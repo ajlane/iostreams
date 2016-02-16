@@ -148,9 +148,9 @@ public final class IOStreamFilters
      *         The type of the items in the {@code IOStream}.
      * @return An instance of {@code IOStreamFilter}.
      */
-    public static <T> IOStreamFilter<T> invert(final IOStreamFilter<? super T> filter)
+    public static <T> IOStreamFilter<T> invert(final IOStreamFilter<T> filter)
     {
-        return IOStreamFilters.invert(filter, false);
+        return filter.invert(false);
     }
 
     /**
@@ -165,7 +165,7 @@ public final class IOStreamFilters
      *         The type of the items in the {@code IOStream}.
      * @return An instance of {@code IOStreamFilter}.
      */
-    public static <T> IOStreamFilter<T> invert(final IOStreamFilter<? super T> filter, final boolean honourTermination)
+    public static <T> IOStreamFilter<T> invert(final IOStreamFilter<T> filter, final boolean honourTermination)
     {
         return new AbstractIOStreamFilter<T>()
         {
