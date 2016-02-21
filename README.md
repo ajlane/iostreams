@@ -77,6 +77,6 @@ IOStreams is available in Maven Central.
 <dependency>
   <groupId>au.id.ajlane.iostreams</groupId>
   <artifactId>iostreams</artifactId>
-  <version>0.0.4</version>
+  <version>0.0.5</version>
 </dependency>
 ```
