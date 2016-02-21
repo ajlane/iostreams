@@ -39,8 +39,8 @@ public class IOStreamsTests
     @Test
     public void testConcatArrayOfStreams() throws IOStreamException
     {
-        final IOStream<String> a = IOStreams.fromArray("a1");
-        final IOStream<String> b = IOStreams.fromArray("b1");
+        final TestStream<String> a = TestStream.of("a1");
+        final TestStream<String> b = TestStream.of("b1");
 
         Assert.assertArrayEquals(
             new String[]{"a1", "b1"},
@@ -53,15 +53,21 @@ public class IOStreamsTests
                 .toArray(String[]::new)
         );
 
-        final IOStream<String> c = IOStreams.fromArray("c1", "c2", "c3");
-        final IOStream<String> d = IOStreams.fromArray("d1", "d2");
-        final IOStream<String> e = IOStreams.fromArray("e1", "e2", "e3", "e4");
+        final TestStream<String> c = TestStream.of("c1", "c2", "c3");
+        final TestStream<String> d = TestStream.of("d1", "d2");
+        final TestStream<String> e = TestStream.of("e1", "e2", "e3", "e4");
 
         Assert.assertArrayEquals(
             new String[]{"c1", "c2", "c3", "d1", "d2", "e1", "e2", "e3", "e4"},
             IOStreams.concat(c, d, e)
                 .toArray(String[]::new)
         );
+
+        Assert.assertTrue(a.isClosed());
+        Assert.assertTrue(b.isClosed());
+        Assert.assertTrue(c.isClosed());
+        Assert.assertTrue(d.isClosed());
+        Assert.assertTrue(e.isClosed());
 
         try
         {
@@ -86,8 +92,8 @@ public class IOStreamsTests
     @Test
     public void testConcatStreamOfStreams() throws IOStreamException
     {
-        final IOStream<String> a = IOStreams.fromArray("a1");
-        final IOStream<String> b = IOStreams.fromArray("b1");
+        final TestStream<String> a = TestStream.of("a1");
+        final TestStream<String> b = TestStream.of("b1");
 
         Assert.assertArrayEquals(
             new String[]{"a1", "b1"},
@@ -100,15 +106,21 @@ public class IOStreamsTests
                 .toArray(String[]::new)
         );
 
-        final IOStream<String> c = IOStreams.fromArray("c1", "c2", "c3");
-        final IOStream<String> d = IOStreams.fromArray("d1", "d2");
-        final IOStream<String> e = IOStreams.fromArray("e1", "e2", "e3", "e4");
+        final TestStream<String> c = TestStream.of("c1", "c2", "c3");
+        final TestStream<String> d = TestStream.of("d1", "d2");
+        final TestStream<String> e = TestStream.of("e1", "e2", "e3", "e4");
 
         Assert.assertArrayEquals(
             new String[]{"c1", "c2", "c3", "d1", "d2", "e1", "e2", "e3", "e4"},
             IOStreams.concat(IOStreams.fromArray(c, d, e))
                 .toArray(String[]::new)
         );
+
+        Assert.assertTrue(a.isClosed());
+        Assert.assertTrue(b.isClosed());
+        Assert.assertTrue(c.isClosed());
+        Assert.assertTrue(d.isClosed());
+        Assert.assertTrue(e.isClosed());
 
         try
         {
@@ -422,33 +434,40 @@ public class IOStreamsTests
     @Test
     public void testGroup() throws IOStreamException
     {
-        final IOStream<String> a = IOStreams.fromArray("a1", "a2", "a3", "a4", "a5");
-        final IOStream<? extends IOStream<String>> aGroups = IOStreams.group(a, 2);
-        Assert.assertArrayEquals(
-            new String[]{"a1", "a2"},
-            aGroups.next()
-                .toArray(String[]::new)
-        );
-        Assert.assertArrayEquals(
-            new String[]{"a3", "a4"},
-            aGroups.next()
-                .toArray(String[]::new)
-        );
-        Assert.assertArrayEquals(
-            new String[]{"a5"},
-            aGroups.next()
-                .toArray(String[]::new)
-        );
-        Assert.assertFalse(aGroups.hasNext());
+        final TestStream<String> a = TestStream.of("a1", "a2", "a3", "a4", "a5");
+        try(final IOStream<? extends IOStream<String>> aGroups = IOStreams.group(a, 2))
+        {
+            Assert.assertArrayEquals(
+                new String[]{"a1", "a2"},
+                aGroups.next()
+                    .toArray(String[]::new)
+            );
+            Assert.assertArrayEquals(
+                new String[]{"a3", "a4"},
+                aGroups.next()
+                    .toArray(String[]::new)
+            );
+            Assert.assertArrayEquals(
+                new String[]{"a5"},
+                aGroups.next()
+                    .toArray(String[]::new)
+            );
+            Assert.assertFalse(aGroups.hasNext());
+        }
 
-        final IOStream<String> b = IOStreams.fromArray("b1", "b2", "b3");
-        final IOStream<? extends IOStream<String>> bGroups = IOStreams.group(b, 5);
-        Assert.assertArrayEquals(
-            new String[]{"b1", "b2", "b3"},
-            bGroups.next()
-                .toArray(String[]::new)
-        );
-        Assert.assertFalse(bGroups.hasNext());
+        final TestStream<String> b = TestStream.of("b1", "b2", "b3");
+        try(final IOStream<? extends IOStream<String>> bGroups = IOStreams.group(b, 5))
+        {
+            Assert.assertArrayEquals(
+                new String[]{"b1", "b2", "b3"},
+                bGroups.next()
+                    .toArray(String[]::new)
+            );
+            Assert.assertFalse(bGroups.hasNext());
+        }
+
+        Assert.assertTrue(a.isClosed());
+        Assert.assertTrue(b.isClosed());
 
         try
         {

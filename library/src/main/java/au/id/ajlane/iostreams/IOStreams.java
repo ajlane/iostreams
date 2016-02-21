@@ -252,27 +252,29 @@ public final class IOStreams
                         lastException = ex;
                     }
                 }
-                if(lastException != null)
-                if (runtimeException)
+                if (lastException != null)
                 {
-                    if (lastException instanceof RuntimeException)
+                    if (runtimeException)
                     {
-                        throw (RuntimeException) lastException;
+                        if (lastException instanceof RuntimeException)
+                        {
+                            throw (RuntimeException) lastException;
+                        }
+                        else
+                        {
+                            throw new RuntimeException(
+                                "Suppressed a runtime exception with a checked exception.",
+                                lastException
+                            );
+                        }
                     }
                     else
                     {
-                        throw new RuntimeException(
-                            "Suppressed a runtime exception with a checked exception.",
+                        throw new IOStreamCloseException(
+                            "Could not close one or more of the concatenated streams.",
                             lastException
                         );
                     }
-                }
-                else
-                {
-                    throw new IOStreamCloseException(
-                        "Could not close one or more of the concatenated streams.",
-                        lastException
-                    );
                 }
             }
         };
@@ -836,7 +838,7 @@ public final class IOStreams
 
     /**
      * Groups adjacent items in the stream together.
-     *
+     * <p>
      * This is the dual of {@link #split(IOStream, IOStreamBiPredicate)}
      *
      * @param stream
@@ -1475,7 +1477,7 @@ public final class IOStreams
 
     /**
      * Splits a stream into groups of items.
-     *
+     * <p>
      * This is the dual of {@link #group(IOStream, IOStreamBiPredicate)}.
      *
      * @param stream
