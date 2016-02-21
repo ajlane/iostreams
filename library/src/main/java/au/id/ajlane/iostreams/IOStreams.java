@@ -252,6 +252,7 @@ public final class IOStreams
                         lastException = ex;
                     }
                 }
+                if(lastException != null)
                 if (runtimeException)
                 {
                     if (lastException instanceof RuntimeException)

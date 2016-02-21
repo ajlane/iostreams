@@ -294,23 +294,26 @@ public final class IOStreamFilters
                         lastException = ex;
                     }
                 }
-                if (runtimeException)
+                if (lastException != null)
                 {
-                    if (lastException instanceof RuntimeException)
+                    if (runtimeException)
                     {
-                        throw (RuntimeException) lastException;
+                        if (lastException instanceof RuntimeException)
+                        {
+                            throw (RuntimeException) lastException;
+                        }
+                        else
+                        {
+                            throw new RuntimeException(
+                                "Suppressed a runtime exception with a checked exception.",
+                                lastException
+                            );
+                        }
                     }
                     else
                     {
-                        throw new RuntimeException(
-                            "Suppressed a runtime exception with a checked exception.",
-                            lastException
-                        );
+                        throw new IOStreamCloseException("Could not close one or more of the filters.", lastException);
                     }
-                }
-                else
-                {
-                    throw new IOStreamCloseException("Could not close one or more of the filters.", lastException);
                 }
             }
 
@@ -434,8 +437,11 @@ public final class IOStreamFilters
     /**
      * Creates a filter from a predicate.
      *
-     * @param keep The predicate which will determine which items to keep.
-     * @param <T> The type of the items.
+     * @param keep
+     *     The predicate which will determine which items to keep.
+     * @param <T>
+     *     The type of the items.
+     *
      * @return An instance of {@code IOStreamFilter}.
      */
     public static <T> IOStreamFilter<T> fromPredicate(final IOStreamPredicate<? super T> keep)
@@ -459,8 +465,11 @@ public final class IOStreamFilters
     /**
      * Creates a filter which will terminate after it has kept a fixed number of items.
      *
-     * @param size The maximum number of items to keep.
-     * @param <T> The type of the items.
+     * @param size
+     *     The maximum number of items to keep.
+     * @param <T>
+     *     The type of the items.
+     *
      * @return An instance of {@code IOStreamFilter}.
      */
     public static <T> IOStreamFilter<T> limit(final int size)
