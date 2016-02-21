@@ -1,5 +1,5 @@
 /*
- * Copyright 2013 Aaron Lane
+ * Copyright 2016 Aaron Lane
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,8 +16,11 @@
 
 package au.id.ajlane.iostreams;
 
-import java.util.*;
-import java.util.function.Predicate;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Set;
 
 /**
  * Utilities for working with instances of {@link IOStreamFilter}.
@@ -46,7 +49,8 @@ public final class IOStreamFilters
      * Provides a {@link IOStreamFilter} that keeps all items.
      *
      * @param <T>
-     *         The type of the items in the {@code IOStream}.
+     *     The type of the items in the {@code IOStream}.
+     *
      * @return An instance of {@code IOStreamFilter}.
      */
     @SuppressWarnings("unchecked")
@@ -59,9 +63,10 @@ public final class IOStreamFilters
      * Provides a {@link IOStreamFilter} which skips the given items.
      *
      * @param values
-     *         The values to black-list.
+     *     The values to black-list.
      * @param <T>
-     *         The type of the values in the {@code IOStream}.
+     *     The type of the values in the {@code IOStream}.
+     *
      * @return An instance of {@code IOStreamFilter}.
      */
     @SafeVarargs
@@ -76,9 +81,10 @@ public final class IOStreamFilters
      * Provides a {@link IOStreamFilter} which skips the given items.
      *
      * @param values
-     *         The values to black-list.
+     *     The values to black-list.
      * @param <T>
-     *         The type of the values in the {@code IOStream}.
+     *     The type of the values in the {@code IOStream}.
+     *
      * @return An instance of {@code IOStreamFilter}.
      */
     public static <T> IOStreamFilter<T> blacklist(final Iterable<? extends T> values)
@@ -90,7 +96,10 @@ public final class IOStreamFilters
             return IOStreamFilters.blacklist(set);
         }
         final Set<T> set = new HashSet<>();
-        for (final T value : values) set.add(value);
+        for (final T value : values)
+        {
+            set.add(value);
+        }
         return IOStreamFilters.blacklist(set);
     }
 
@@ -98,9 +107,10 @@ public final class IOStreamFilters
      * Provides a {@link IOStreamFilter} which skips the given items.
      *
      * @param values
-     *         The values to black-list.
+     *     The values to black-list.
      * @param <T>
-     *         The type of the values in the {@code IOStream}.
+     *     The type of the values in the {@code IOStream}.
+     *
      * @return An instance of {@code IOStreamFilter}.
      */
     public static <T> IOStreamFilter<T> blacklist(final Collection<? extends T> values)
@@ -119,9 +129,10 @@ public final class IOStreamFilters
      * Provides a {@link IOStreamFilter} which skips the given items.
      *
      * @param values
-     *         The values to black-list.
+     *     The values to black-list.
      * @param <T>
-     *         The type of the values in the {@code IOStream}.
+     *     The type of the values in the {@code IOStream}.
+     *
      * @return An instance of {@code IOStreamFilter}.
      */
     public static <T> IOStreamFilter<T> blacklist(final Set<? extends T> values)
@@ -143,9 +154,10 @@ public final class IOStreamFilters
      * termination condition, use {@link #invert(IOStreamFilter, boolean)}.
      *
      * @param filter
-     *         The original filter to invert.
+     *     The original filter to invert.
      * @param <T>
-     *         The type of the items in the {@code IOStream}.
+     *     The type of the items in the {@code IOStream}.
+     *
      * @return An instance of {@code IOStreamFilter}.
      */
     public static <T> IOStreamFilter<T> invert(final IOStreamFilter<T> filter)
@@ -157,12 +169,13 @@ public final class IOStreamFilters
      * Provides a {@link IOStreamFilter} which keeps the opposite set of values to another filter.
      *
      * @param filter
-     *         The original filter to invert.
+     *     The original filter to invert.
      * @param honourTermination
-     *         {@code true} if the inverted filter should honour the termination condition set by the original filter.
-     *         If {@code false}, the entire {@code IOStream} will be processed.
+     *     {@code true} if the inverted filter should honour the termination condition set by the original filter. If
+     *     {@code false}, the entire {@code IOStream} will be processed.
      * @param <T>
-     *         The type of the items in the {@code IOStream}.
+     *     The type of the items in the {@code IOStream}.
+     *
      * @return An instance of {@code IOStreamFilter}.
      */
     public static <T> IOStreamFilter<T> invert(final IOStreamFilter<T> filter, final boolean honourTermination)
@@ -200,7 +213,8 @@ public final class IOStreamFilters
      * Provides a filter which removes all values from the {@code IOStream}.
      *
      * @param <T>
-     *         The type of the items in the {@code IOStream}.
+     *     The type of the items in the {@code IOStream}.
+     *
      * @return An instance of {@code IOStreamFilter}.
      */
     @SuppressWarnings("unchecked")
@@ -219,9 +233,10 @@ public final class IOStreamFilters
      * <i>after</i> the pipeline has decided whether to keep/skip the item.
      *
      * @param filters
-     *         The filters to apply, in order.
+     *     The filters to apply, in order.
      * @param <T>
-     *         The type of the items in the {@code IOStream}.
+     *     The type of the items in the {@code IOStream}.
+     *
      * @return An instance of @{link StreamFilter}.
      */
     @SafeVarargs
@@ -240,9 +255,10 @@ public final class IOStreamFilters
      * <i>after</i> the pipeline has decided whether to keep/skip the item.
      *
      * @param filters
-     *         The filters to apply, in order.
+     *     The filters to apply, in order.
      * @param <T>
-     *         The type of the items in the {@code IOStream}.
+     *     The type of the items in the {@code IOStream}.
+     *
      * @return An instance of @{link StreamFilter}.
      */
     public static <T> IOStreamFilter<T> pipe(final Iterable<? extends IOStreamFilter<? super T>> filters)
@@ -256,28 +272,44 @@ public final class IOStreamFilters
                 boolean runtimeException = false;
                 for (final IOStreamFilter<? super T> filter : filters)
                 {
-                    try {
+                    try
+                    {
                         filter.close();
-                    } catch( final RuntimeException ex) {
+                    }
+                    catch (final RuntimeException ex)
+                    {
                         runtimeException = true;
-                        if(lastException != null){
+                        if (lastException != null)
+                        {
                             ex.addSuppressed(lastException);
                         }
                         lastException = ex;
-                    } catch (final Exception ex){
-                        if(lastException != null){
+                    }
+                    catch (final Exception ex)
+                    {
+                        if (lastException != null)
+                        {
                             ex.addSuppressed(lastException);
                         }
                         lastException = ex;
                     }
                 }
-                if(runtimeException){
-                    if(lastException instanceof RuntimeException){
-                        throw (RuntimeException)lastException;
-                    } else {
-                        throw new RuntimeException("Suppressed a runtime exception with a checked exception.", lastException);
+                if (runtimeException)
+                {
+                    if (lastException instanceof RuntimeException)
+                    {
+                        throw (RuntimeException) lastException;
                     }
-                } else {
+                    else
+                    {
+                        throw new RuntimeException(
+                            "Suppressed a runtime exception with a checked exception.",
+                            lastException
+                        );
+                    }
+                }
+                else
+                {
                     throw new IOStreamCloseException("Could not close one or more of the filters.", lastException);
                 }
             }
@@ -315,9 +347,10 @@ public final class IOStreamFilters
      * Provides a {@link IOStreamFilter} which keeps only items in the given set.
      *
      * @param values
-     *         The values to white-list.
+     *     The values to white-list.
      * @param <T>
-     *         The type of the values in the {@code IOStream}.
+     *     The type of the values in the {@code IOStream}.
+     *
      * @return An instance of {@code IOStreamFilter}.
      */
     @SafeVarargs
@@ -332,9 +365,10 @@ public final class IOStreamFilters
      * Provides a {@link IOStreamFilter} which keeps only items in the given set.
      *
      * @param values
-     *         The values to white-list.
+     *     The values to white-list.
      * @param <T>
-     *         The type of the values in the {@code IOStream}.
+     *     The type of the values in the {@code IOStream}.
+     *
      * @return An instance of {@code IOStreamFilter}.
      */
     public static <T> IOStreamFilter<T> whitelist(final Iterable<? extends T> values)
@@ -346,7 +380,10 @@ public final class IOStreamFilters
             return IOStreamFilters.whitelist(set);
         }
         final Set<T> set = new HashSet<>();
-        for (final T value : values) set.add(value);
+        for (final T value : values)
+        {
+            set.add(value);
+        }
         return IOStreamFilters.whitelist(set);
     }
 
@@ -354,9 +391,10 @@ public final class IOStreamFilters
      * Provides a {@link IOStreamFilter} which keeps only items in the given set.
      *
      * @param values
-     *         The values to white-list.
+     *     The values to white-list.
      * @param <T>
-     *         The type of the values in the {@code IOStream}.
+     *     The type of the values in the {@code IOStream}.
+     *
      * @return An instance of {@code IOStreamFilter}.
      */
     public static <T> IOStreamFilter<T> whitelist(final Collection<? extends T> values)
@@ -375,9 +413,10 @@ public final class IOStreamFilters
      * Provides a {@link IOStreamFilter} which keeps only items in the given set.
      *
      * @param values
-     *         The values to white-list.
+     *     The values to white-list.
      * @param <T>
-     *         The type of the values in the {@code IOStream}.
+     *     The type of the values in the {@code IOStream}.
+     *
      * @return An instance of {@code IOStreamFilter}.
      */
     public static <T> IOStreamFilter<T> whitelist(final Set<? extends T> values)
@@ -392,37 +431,63 @@ public final class IOStreamFilters
         };
     }
 
-    private IOStreamFilters() throws InstantiationException
+    /**
+     * Creates a filter from a predicate.
+     *
+     * @param keep The predicate which will determine which items to keep.
+     * @param <T> The type of the items.
+     * @return An instance of {@code IOStreamFilter}.
+     */
+    public static <T> IOStreamFilter<T> fromPredicate(final IOStreamPredicate<? super T> keep)
     {
-        throw new InstantiationException("This class cannot be instantiated.");
-    }
-
-    public static <T> IOStreamFilter<T> fromPredicate(final IOStreamPredicate<? super T> keep) {
-        return new AbstractIOStreamFilter<T>() {
-
+        return new AbstractIOStreamFilter<T>()
+        {
             @Override
-            public void close() throws Exception {
+            public void close() throws Exception
+            {
                 keep.close();
             }
 
             @Override
-            protected boolean keep(T item) throws Exception {
+            protected boolean keep(final T item) throws Exception
+            {
                 return keep.test(item);
             }
         };
     }
 
-    public static <T> IOStreamFilter<T> limit(int size) {
-        return new IOStreamFilter<T>() {
+    /**
+     * Creates a filter which will terminate after it has kept a fixed number of items.
+     *
+     * @param size The maximum number of items to keep.
+     * @param <T> The type of the items.
+     * @return An instance of {@code IOStreamFilter}.
+     */
+    public static <T> IOStreamFilter<T> limit(final int size)
+    {
+        return new IOStreamFilter<T>()
+        {
             private int count = 0;
 
             @Override
-            public FilterDecision apply(T item) {
-                if(count > size) return FilterDecision.SKIP_AND_TERMINATE;
+            public FilterDecision apply(T item)
+            {
+                if (count > size)
+                {
+                    return FilterDecision.SKIP_AND_TERMINATE;
+                }
                 count++;
-                if(count >= size) return FilterDecision.KEEP_AND_TERMINATE;
+                if (count >= size)
+                {
+                    return FilterDecision.KEEP_AND_TERMINATE;
+                }
                 return FilterDecision.KEEP_AND_CONTINUE;
             }
         };
+    }
+
+    private IOStreamFilters() throws InstantiationException
+    {
+        throw new InstantiationException("This class cannot be instantiated.");
     }
 }

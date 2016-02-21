@@ -1,5 +1,5 @@
 /*
- * Copyright 2013 Aaron Lane
+ * Copyright 2016 Aaron Lane
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,11 +20,12 @@ package au.id.ajlane.iostreams;
  * Transforms the items in a {@link IOStream} from one type to another.
  *
  * @param <T>
- *         The type of the items in the original {@code IOStream}.
+ *     The type of the items in the original {@code IOStream}.
  * @param <R>
- *         The type of the items in the transformed {@code IOStream}.
+ *     The type of the items in the transformed {@code IOStream}.
+ *
  * @see IOStreams#map(IOStream, IOStreamTransform)
- * @see IOStreamables#map(IOStreamable, IOStreamTransform)
+ * @see IOStreamables#map(IOStreamable, java.util.function.Supplier)
  */
 @FunctionalInterface
 public interface IOStreamTransform<T, R>
@@ -33,10 +34,12 @@ public interface IOStreamTransform<T, R>
      * Transforms a single item in the {@link IOStream}.
      *
      * @param item
-     *         The item to transform.
+     *     The item to transform.
+     *
      * @return The transformed item.
+     *
      * @throws Exception
-     *         If the item cannot be transformed.
+     *     If the item cannot be transformed.
      */
     R apply(T item) throws Exception;
 
@@ -48,8 +51,10 @@ public interface IOStreamTransform<T, R>
      * The behaviour of a {@code IOStreamTransform} after its {@code close} method has been called is undefined.
      *
      * @throws Exception
-     *         If the {@code IOStreamTransform} could not be closed for some reason. The {@code IOStreamTransform} may not release
-     *         all resources if this is the case.
+     *     If the {@code IOStreamTransform} could not be closed for some reason. The {@code IOStreamTransform} may not
+     *     release all resources if this is the case.
      */
-    default void close() throws Exception {}
+    default void close() throws Exception
+    {
+    }
 }

@@ -14,30 +14,8 @@
  * limitations under the License.
  */
 
-package au.id.ajlane.iostreams;
-
 /**
- * A function which recieves/consumes items.
- *
- * @param <T>
- *     The type of the items.
+ * Classes and interfaces for the core of the IOStreams library. <p>Includes the central {@link
+ * au.id.ajlane.iostreams.IOStream} interface.</p>
  */
-@FunctionalInterface
-public interface IOStreamConsumer<T> extends AutoCloseable
-{
-    /**
-     * Provides an item for the consumer to consume.
-     *
-     * @param item
-     *     The item to consume.
-     *
-     * @throws Exception
-     *     If there was a problem with consuming the item.
-     */
-    void accept(T item) throws Exception;
-
-    @Override
-    default void close() throws Exception
-    {
-    }
-}
+package au.id.ajlane.iostreams;

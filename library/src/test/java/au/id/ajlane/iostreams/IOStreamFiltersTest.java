@@ -1,5 +1,5 @@
 /*
- * Copyright 2013 Aaron Lane
+ * Copyright 2016 Aaron Lane
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,10 +16,14 @@
 
 package au.id.ajlane.iostreams;
 
-import java.util.*;
-
 import org.junit.Assert;
 import org.junit.Test;
+
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.NoSuchElementException;
+import java.util.Set;
 
 /**
  * Tests {@link IOStreamFilters}.
@@ -30,7 +34,7 @@ public class IOStreamFiltersTest
      * Tests {@link IOStreamFilters#all()}.
      *
      * @throws IOStreamException
-     *         If a {@code IOStream} fails unexpectedly.
+     *     If a {@code IOStream} fails unexpectedly.
      */
     @Test
     public void testAllFilter() throws IOStreamException
@@ -61,7 +65,7 @@ public class IOStreamFiltersTest
      * Tests {@link IOStreamFilters#blacklist(Object[])}.
      *
      * @throws IOStreamException
-     *         If a {@link IOStream} fails unexpectedly.
+     *     If a {@link IOStream} fails unexpectedly.
      */
     @Test
     public void testArrayBlacklistFilter() throws IOStreamException
@@ -88,7 +92,7 @@ public class IOStreamFiltersTest
      * Tests {@link IOStreamFilters#whitelist(Object[])}.
      *
      * @throws IOStreamException
-     *         If a {@link IOStream} fails unexpectedly.
+     *     If a {@link IOStream} fails unexpectedly.
      */
     @Test
     public void testArrayWhitelistFilter() throws IOStreamException
@@ -117,7 +121,7 @@ public class IOStreamFiltersTest
      * Tests {@link IOStreamFilters#blacklist(Collection)}.
      *
      * @throws IOStreamException
-     *         If a {@code IOStream} fails unexpectedly.
+     *     If a {@code IOStream} fails unexpectedly.
      */
     @Test
     public void testCollectionBlacklistFilter() throws IOStreamException
@@ -149,7 +153,7 @@ public class IOStreamFiltersTest
      * Tests {@link IOStreamFilters#whitelist(Object[])}.
      *
      * @throws IOStreamException
-     *         If a {@link IOStream} fails unexpectedly.
+     *     If a {@link IOStream} fails unexpectedly.
      */
     @Test
     public void testCollectionWhitelistFilter() throws IOStreamException
@@ -182,7 +186,7 @@ public class IOStreamFiltersTest
      * Tests {@link IOStreamFilters#blacklist(Iterable)}.
      *
      * @throws IOStreamException
-     *         If a {@code IOStream} fails unexpectedly.
+     *     If a {@code IOStream} fails unexpectedly.
      */
     @Test
     public void testIterableBlacklistFilter() throws IOStreamException
@@ -213,7 +217,7 @@ public class IOStreamFiltersTest
      * Tests {@link IOStreamFilters#whitelist(Object[])}.
      *
      * @throws IOStreamException
-     *         If a {@link IOStream} fails unexpectedly.
+     *     If a {@link IOStream} fails unexpectedly.
      */
     @Test
     public void testIterableWhitelistFilter() throws IOStreamException
@@ -246,7 +250,7 @@ public class IOStreamFiltersTest
      * Tests {@link IOStreamFilters#none()}.
      *
      * @throws IOStreamException
-     *         If a {@link IOStream} fails unexpectedly.
+     *     If a {@link IOStream} fails unexpectedly.
      */
     @Test
     public void testNoneFilter() throws IOStreamException
@@ -271,14 +275,14 @@ public class IOStreamFiltersTest
      * Tests {@link IOStreamFilters#blacklist(Collection)}.
      *
      * @throws IOStreamException
-     *         If a {@code IOStream} fails unexpectedly.
+     *     If a {@code IOStream} fails unexpectedly.
      */
     @Test
     public void testSetBlacklistFilter() throws IOStreamException
     {
         final IOStream<String> original = IOStreams.fromArray("a", "b", "c");
         final Set<String> set = new HashSet<>(
-                Arrays.asList("a", "c")
+            Arrays.asList("a", "c")
         );
         try (final IOStream<String> stream = IOStreams.filter(
             original,
@@ -304,14 +308,14 @@ public class IOStreamFiltersTest
      * Tests {@link IOStreamFilters#whitelist(Set)}.
      *
      * @throws IOStreamException
-     *         If a {@link IOStream} fails unexpectedly.
+     *     If a {@link IOStream} fails unexpectedly.
      */
     @Test
     public void testSetWhitelistFilter() throws IOStreamException
     {
         final IOStream<String> original = IOStreams.fromArray("a", "b", "c");
         final Set<String> set = new HashSet<>(
-                Arrays.asList("b", "c")
+            Arrays.asList("b", "c")
         );
         try (final IOStream<String> stream = IOStreams.filter(
             original,

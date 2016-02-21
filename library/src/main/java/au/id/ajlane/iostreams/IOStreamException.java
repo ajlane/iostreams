@@ -1,5 +1,5 @@
 /*
- * Copyright 2013 Aaron Lane
+ * Copyright 2016 Aaron Lane
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,11 +32,9 @@ public abstract class IOStreamException extends IOException
     {
         if (cause == null)
         {
-            final NullPointerException error = new NullPointerException(
+            throw new NullPointerException(
                 "The cause of a " + IOStreamException.class.getSimpleName() + " cannot be null."
             );
-            error.addSuppressed(cause);
-            throw error;
         }
         return cause;
     }
@@ -46,8 +44,8 @@ public abstract class IOStreamException extends IOException
         if (message == null)
         {
             final NullPointerException error = new NullPointerException(
-                "The message of a " + IOStreamException.class.getSimpleName() +
-                " cannot be null. Try to describe the cause of the exception in terms of what the stream is doing."
+                "The message cannot be null."
+                    + " Try to describe the cause of the exception in terms of what the stream is doing."
             );
             error.addSuppressed(cause);
             throw error;
@@ -55,8 +53,8 @@ public abstract class IOStreamException extends IOException
         if (message.isEmpty())
         {
             final IllegalArgumentException error = new IllegalArgumentException(
-                "The message of a " + IOStreamException.class.getSimpleName() +
-                " cannot empty. Try to describe the cause of the exception in terms of what the stream is doing."
+                "The message cannot be empty."
+                    + " Try to describe the cause of the exception in terms of what the stream is doing."
             );
             error.addSuppressed(cause);
             throw error;
@@ -68,13 +66,14 @@ public abstract class IOStreamException extends IOException
      * Constructs a new {@code IOStreamException} with the given message and cause.
      *
      * @param message
-     *         A message describing the exception in terms of the {@link IOStream}. Must not be empty or {@code null}.
+     *     A message describing the exception in terms of the {@link IOStream}. Must not be empty or {@code null}.
      * @param cause
-     *         The underlying cause of the issue. Must not be {@code null}.
+     *     The underlying cause of the issue. Must not be {@code null}.
+     *
      * @throws IllegalArgumentException
-     *         If the message is empty.
+     *     If the message is empty.
      * @throws NullPointerException
-     *         If either the message or the cause is {@code null}.
+     *     If either the message or the cause is {@code null}.
      */
     protected IOStreamException(final String message, final Exception cause)
     {

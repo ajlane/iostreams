@@ -1,5 +1,5 @@
 /*
- * Copyright 2013 Aaron Lane
+ * Copyright 2016 Aaron Lane
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -38,7 +38,7 @@ public class IOStreamablesTests
      * Tests {@link IOStreamables#concat(IOStreamable[])}.
      *
      * @throws IOStreamException
-     *         If any {@link IOStream} fails. Should not occur.
+     *     If any {@link IOStream} fails. Should not occur.
      */
     @Test
     public void testConcatArrayOfStreamables() throws IOStreamException
@@ -90,7 +90,7 @@ public class IOStreamablesTests
      * Tests {@link IOStreamables#concat(IOStreamable)}.
      *
      * @throws IOStreamException
-     *         If any {@link IOStream} fails. Should not occur.
+     *     If any {@link IOStream} fails. Should not occur.
      */
     @Test
     public void testConcatStreamableOfStreamables() throws IOStreamException
@@ -142,7 +142,7 @@ public class IOStreamablesTests
      * Tests {@link IOStreamables#empty()}.
      *
      * @throws IOStreamException
-     *         If a {@link IOStream} fails. Should not occur.
+     *     If a {@link IOStream} fails. Should not occur.
      */
     @Test
     public void testEmptyStreamable() throws IOStreamException
@@ -164,10 +164,10 @@ public class IOStreamablesTests
     }
 
     /**
-     * Tests {@link IOStreamables#filter(IOStreamable, IOStreamFilter)}.
+     * Tests {@link IOStreamables#filter(IOStreamable, java.util.function.Supplier)}.
      *
      * @throws IOStreamException
-     *         If a {@code IOStream} fails. Should not occur.
+     *     If a {@code IOStream} fails. Should not occur.
      */
     @Test
     public void testFilter() throws IOStreamException
@@ -177,27 +177,27 @@ public class IOStreamablesTests
             IOStreamables.toArray(
                 IOStreamables.filter(
                     IOStreamables.fromArray("a1", "a2", "a3"),
-                    IOStreamFilters.<String>all()
+                    IOStreamFilters::<String>all
                 ), String[]::new
-                )
+            )
         );
         Assert.assertArrayEquals(
             IOStreamablesTests.EMPTY,
             IOStreamables.toArray(
                 IOStreamables.filter(
                     IOStreamables.fromArray("b1", "b2", "b3"),
-                    IOStreamFilters.<String>none()
+                    IOStreamFilters::<String>none
                 ), String[]::new
-                )
+            )
         );
         Assert.assertArrayEquals(
             new String[]{"c2", "c3"},
             IOStreamables.toArray(
                 IOStreamables.filter(
                     IOStreamables.fromArray("c1", "c2", "c3", "c4"),
-                    IOStreamFilters.whitelist("c2", "c3")
+                    () -> IOStreamFilters.whitelist("c2", "c3")
                 ), String[]::new
-                )
+            )
         );
 
         Assert.assertArrayEquals(
@@ -205,14 +205,14 @@ public class IOStreamablesTests
             IOStreamables.toArray(
                 IOStreamables.filter(
                     IOStreamables.<String>empty(),
-                    IOStreamFilters.whitelist("c2", "c3")
+                    () -> IOStreamFilters.whitelist("c2", "c3")
                 ), String[]::new
-                )
+            )
         );
 
         try
         {
-            IOStreamables.filter(null, IOStreamFilters.all());
+            IOStreamables.filter(null, IOStreamFilters::all);
             Assert.fail();
         }
         catch (final NullPointerException ex)
@@ -243,7 +243,7 @@ public class IOStreamablesTests
      * Tests {@link IOStreamables#flattenArrays(IOStreamable)}.
      *
      * @throws IOStreamException
-     *         If any {@code IOStream} fails. Should not occur.
+     *     If any {@code IOStream} fails. Should not occur.
      */
     @Test
     public void testFlattenArrays() throws IOStreamException
@@ -253,13 +253,13 @@ public class IOStreamablesTests
             IOStreamables.toArray(
                 IOStreamables.flattenArrays(
                     IOStreamables.fromArray(
-                                        new String[]{
-                                                "a1",
-                                                "a2"
-                                        }, new String[]{"b1", "b2", "b3"}, new String[]{"c1"}
-                                )
+                        new String[]{
+                            "a1",
+                            "a2"
+                        }, new String[]{"b1", "b2", "b3"}, new String[]{"c1"}
+                    )
                 ), String[]::new
-                )
+            )
         );
         Assert.assertArrayEquals(
             new String[]{"d1", "d2"},
@@ -267,12 +267,12 @@ public class IOStreamablesTests
                 IOStreamables.flattenArrays(
                     IOStreamables.fromArray(
                         new String[]{
-                                                "d1",
-                                                "d2"
-                                        }, IOStreamablesTests.EMPTY
-                                )
+                            "d1",
+                            "d2"
+                        }, IOStreamablesTests.EMPTY
+                    )
                 ), String[]::new
-                )
+            )
         );
         Assert.assertArrayEquals(
             new String[]{"e1", "e2"},
@@ -281,9 +281,9 @@ public class IOStreamablesTests
                     IOStreamables.fromArray(
                         IOStreamablesTests.EMPTY,
                         new String[]{"e1", "e2"}
-                                )
+                    )
                 ), String[]::new
-                )
+            )
         );
         Assert.assertArrayEquals(
             IOStreamablesTests.EMPTY,
@@ -292,9 +292,9 @@ public class IOStreamablesTests
                     IOStreamables.fromArray(
                         IOStreamablesTests.EMPTY,
                         IOStreamablesTests.EMPTY
-                                )
+                    )
                 ), String[]::new
-                )
+            )
         );
 
         try
@@ -323,7 +323,7 @@ public class IOStreamablesTests
      * Tests {@link IOStreamables#flattenIterables(IOStreamable)}.
      *
      * @throws IOStreamException
-     *         If a {@code IOStream} fails. Should not occur.
+     *     If a {@code IOStream} fails. Should not occur.
      */
     @Test
     public void testFlattenIterables() throws IOStreamException
@@ -333,48 +333,48 @@ public class IOStreamablesTests
             IOStreamables.toArray(
                 IOStreamables.flattenIterables(
                     IOStreamables.fromArray(
-                                        Arrays.asList(
-                                                "a1",
-                                                "a2"
-                                        ), Arrays.asList("b1", "b2", "b3"), Collections.singletonList("c1")
-                                )
+                        Arrays.asList(
+                            "a1",
+                            "a2"
+                        ), Arrays.asList("b1", "b2", "b3"), Collections.singletonList("c1")
+                    )
                 ), String[]::new
-                )
+            )
         );
         Assert.assertArrayEquals(
             new String[]{"d1", "d2"},
             IOStreamables.toArray(
                 IOStreamables.flattenIterables(
                     IOStreamables.fromArray(
-                                        Arrays.asList(
-                                                "d1",
-                                                "d2"
-                                        ), Collections.emptyList()
-                                )
+                        Arrays.asList(
+                            "d1",
+                            "d2"
+                        ), Collections.emptyList()
+                    )
                 ), String[]::new
-                )
+            )
         );
         Assert.assertArrayEquals(
             new String[]{"e1", "e2"},
             IOStreamables.toArray(
                 IOStreamables.flattenIterables(
                     IOStreamables.fromArray(
-                                        Collections.emptyList(),
-                                        Arrays.asList("e1", "e2")
-                                )
+                        Collections.emptyList(),
+                        Arrays.asList("e1", "e2")
+                    )
                 ), String[]::new
-                )
+            )
         );
         Assert.assertArrayEquals(
             IOStreamablesTests.EMPTY,
             IOStreamables.toArray(
                 IOStreamables.flattenIterables(
                     IOStreamables.fromArray(
-                                        Collections.emptyList(),
-                                        Collections.emptyList()
-                                )
+                        Collections.emptyList(),
+                        Collections.emptyList()
+                    )
                 ), String[]::new
-                )
+            )
         );
 
         try
@@ -404,7 +404,7 @@ public class IOStreamablesTests
      * Tests {@link IOStreamables#flattenStreamables(IOStreamable)}.
      *
      * @throws IOStreamException
-     *         If a {@link IOStream} fails. Should not occur.
+     *     If a {@link IOStream} fails. Should not occur.
      */
     @Test
     public void testFlattenStreamables() throws IOStreamException
@@ -415,14 +415,14 @@ public class IOStreamablesTests
                 IOStreamables.flattenStreamables(
                     IOStreamables.fromArray(
                         IOStreamables.fromArray(
-                                                "a1",
-                                                "a2"
-                                        ),
+                            "a1",
+                            "a2"
+                        ),
                         IOStreamables.fromArray("b1", "b2", "b3"),
                         IOStreamables.fromArray("c1")
-                                )
+                    )
                 ), String[]::new
-                )
+            )
         );
         Assert.assertArrayEquals(
             new String[]{"d1", "d2"},
@@ -430,12 +430,12 @@ public class IOStreamablesTests
                 IOStreamables.flattenStreamables(
                     IOStreamables.fromArray(
                         IOStreamables.fromArray(
-                                                "d1",
-                                                "d2"
-                                        ), IOStreamables.<String>fromArray()
-                                )
+                            "d1",
+                            "d2"
+                        ), IOStreamables.<String>fromArray()
+                    )
                 ), String[]::new
-                )
+            )
         );
         Assert.assertArrayEquals(
             new String[]{"e1", "e2"},
@@ -444,9 +444,9 @@ public class IOStreamablesTests
                     IOStreamables.fromArray(
                         IOStreamables.<String>fromArray(),
                         IOStreamables.fromArray("e1", "e2")
-                                )
+                    )
                 ), String[]::new
-                )
+            )
         );
         Assert.assertArrayEquals(
             IOStreamablesTests.EMPTY,
@@ -455,9 +455,9 @@ public class IOStreamablesTests
                     IOStreamables.fromArray(
                         IOStreamables.fromArray(),
                         IOStreamables.fromArray()
-                                )
+                    )
                 ), String[]::new
-                )
+            )
         );
 
         try
@@ -472,9 +472,9 @@ public class IOStreamablesTests
 
         final IOStreamable<String> f = IOStreamables.flattenStreamables(
             IOStreamables.<IOStreamable<String>>fromArray(
-                        null,
-                        null
-                )
+                null,
+                null
+            )
         );
         try
         {
@@ -491,13 +491,14 @@ public class IOStreamablesTests
      * Tests {@link IOStreamables#fromIterable(Iterable)}.
      *
      * @throws IOStreamException
-     *         If a {@link IOStream} fails. Should not occur.
+     *     If a {@link IOStream} fails. Should not occur.
      */
     @Test
     public void testIterableStreamable() throws IOStreamException
     {
         final List<String> values = Arrays.asList("a", "b", "c");
-        try (final IOStream<String> stream = IOStreamables.fromIterable(values).stream())
+        try (final IOStream<String> stream = IOStreamables.fromIterable(values)
+            .stream())
         {
             Assert.assertTrue(stream.hasNext());
             Assert.assertEquals("a", stream.next());
@@ -522,7 +523,7 @@ public class IOStreamablesTests
      * Tests {@link IOStreamables#singleton(Object)}.
      *
      * @throws IOStreamException
-     *         If a {@link IOStream} fails. Should not occur.
+     *     If a {@link IOStream} fails. Should not occur.
      */
     @Test
     public void testSingletonStreamable() throws IOStreamException
@@ -549,7 +550,7 @@ public class IOStreamablesTests
      * Tests {@link IOStreamables#toArray(IOStreamable, java.util.function.IntFunction)}.
      *
      * @throws IOStreamException
-     *         If a {@link IOStream} fails. Should not occur.
+     *     If a {@link IOStream} fails. Should not occur.
      */
     @Test
     public void testToArray() throws IOStreamException
@@ -565,7 +566,7 @@ public class IOStreamablesTests
      * Tests {@link IOStreamables#toList(IOStreamable)}.
      *
      * @throws IOStreamException
-     *         If a {@link IOStream} fails. Should not occur.
+     *     If a {@link IOStream} fails. Should not occur.
      */
     @Test
     public void testToList() throws IOStreamException
@@ -581,7 +582,7 @@ public class IOStreamablesTests
      * Tests {@link IOStreamables#toSet(IOStreamable)}.
      *
      * @throws IOStreamException
-     *         If a {@link IOStream} fails. Should not occur.
+     *     If a {@link IOStream} fails. Should not occur.
      */
     @Test
     public void testToSet() throws IOStreamException

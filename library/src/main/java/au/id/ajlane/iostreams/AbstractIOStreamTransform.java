@@ -1,5 +1,5 @@
 /*
- * Copyright 2013 Aaron Lane
+ * Copyright 2016 Aaron Lane
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,9 +20,9 @@ package au.id.ajlane.iostreams;
  * A convenient base class for implementing {@link IOStreamTransform}.
  *
  * @param <T>
- *         The type of the items in the original {@code IOStream}.
+ *     The type of the items in the original {@code IOStream}.
  * @param <R>
- *         The type of the items in the new {@code IOStream}.
+ *     The type of the items in the new {@code IOStream}.
  */
 public abstract class AbstractIOStreamTransform<T, R> implements IOStreamTransform<T, R>
 {
@@ -51,7 +51,7 @@ public abstract class AbstractIOStreamTransform<T, R> implements IOStreamTransfo
      * This method is called once by the base class before the first item is transformed.
      *
      * @throws Exception
-     *         If there was any problem in preparing the transform.
+     *     If there was any problem in preparing the transform.
      */
     protected void open() throws Exception
     {
@@ -64,10 +64,12 @@ public abstract class AbstractIOStreamTransform<T, R> implements IOStreamTransfo
      * This method is called by the base class when {@link #apply} is called.
      *
      * @param item
-     *         The item to transform.
+     *     The item to transform.
+     *
      * @return The transformed item.
+     *
      * @throws Exception
-     *         If the item cannot be transformed.
+     *     If the item cannot be transformed.
      */
     protected abstract R transform(T item) throws Exception;
 }

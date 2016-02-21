@@ -1,5 +1,5 @@
 /*
- * Copyright 2013 Aaron Lane
+ * Copyright 2016 Aaron Lane
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,13 +20,13 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Set;
 import java.util.function.IntFunction;
+import java.util.function.Supplier;
 
 /**
- * Utilities for working with instances of {@link IOStreamable}.
+ * Utilities for working with instances of streamable resource.
  * <p>
- *     Where a function duplicates a capability that is on the {@code IOStreamable} interface, prefer to use that
- *     version instead - specific implementations may be more efficient.
- * </p>
+ * Where a function duplicates a capability that is on the streamable resource interface, prefer to use that version
+ * instead - specific implementations may be more efficient.
  */
 public final class IOStreamables
 {
@@ -41,7 +41,8 @@ public final class IOStreamables
         @Override
         public boolean equals(final Object obj)
         {
-            return obj.getClass().equals(this.getClass()) && obj == this;
+            return obj.getClass()
+                .equals(this.getClass()) && obj == this;
         }
 
         @Override
@@ -58,15 +59,17 @@ public final class IOStreamables
     };
 
     /**
-     * Changes the type of the items in the {@link IOStreamable} by lazily casting each item.
+     * Changes the type of the items in the streamable resource by lazily casting each item.
      *
      * @param streamable
-     *         The {@link IOStreamable} to transform. Must not be {@code null}.
+     *     The streamable resource to transform. Must not be {@code null}.
      * @param <T>
-     *         The original type of the items.
+     *     The original type of the items.
      * @param <R>
-     *         The new type of of the items.
-     * @return An {@link IOStreamable} which is a transformed view of the given {@code IOStreamable}.
+     *     The new type of of the items.
+     *
+     * @return An streamable resource which is a transformed view of the given streamable resource.
+     *
      * @see IOStreams#cast(IOStream)
      */
     public static <T, R> IOStreamable<R> cast(final IOStreamable<T> streamable)
@@ -88,15 +91,16 @@ public final class IOStreamables
     }
 
     /**
-     * Concatenates the items in a series of {@link IOStreamable} instances.
+     * Concatenates the items in a series of streamable resources.
      * <p>
-     * The series itself is provided by another {@link IOStreamable}.
+     * The series itself is provided by another streamable resource.
      *
      * @param streamables
-     *         The series of {@link IOStreamable} instances to concatenate. Must not be {@code null}.
+     *     The series of streamable resources to concatenate. Must not be {@code null}.
      * @param <T>
-     *         The type of the items in the {@link IOStreamable} instances.
-     * @return An {@link IOStreamable} which is a concatenated view of the given {@code IOStreamable} instances.
+     *     The type of the items in the streamable resources.
+     *
+     * @return An streamable resource which is a concatenated view of the given streamable resource instances.
      */
     public static <T> IOStreamable<T> concat(final IOStreamable<? extends IOStreamable<? extends T>> streamables)
     {
@@ -108,12 +112,15 @@ public final class IOStreamables
             {
                 return new AbstractIOStream<T>()
                 {
-                    private final IOStream<? extends IOStreamable<? extends T>> streamablesStream = streamables.stream();
+                    private final IOStream<? extends IOStreamable<? extends T>> streamablesStream =
+                        streamables.stream();
                     private IOStream<? extends T> current = null;
 
                     @Override
-                    protected void end() throws IOStreamCloseException {
-                        if (current != null) {
+                    protected void end() throws IOStreamCloseException
+                    {
+                        if (current != null)
+                        {
                             current.close();
                         }
                     }
@@ -123,7 +130,8 @@ public final class IOStreamables
                     {
                         if (streamablesStream.hasNext())
                         {
-                            current = streamablesStream.next().stream();
+                            current = streamablesStream.next()
+                                .stream();
                         }
                     }
 
@@ -145,36 +153,41 @@ public final class IOStreamables
                                 catch (final IOStreamCloseException ex)
                                 {
                                     throw new IOStreamReadException(
-                                            "Could not close one of the concatenated streams.",
-                                            ex
+                                        "Could not close one of the concatenated streams.",
+                                        ex
                                     );
                                 }
-                                current = streamablesStream.hasNext() ? streamablesStream.next().stream() : null;
+                                current = streamablesStream.hasNext() ?
+                                    streamablesStream.next()
+                                        .stream() :
+                                    null;
                             }
                         }
                         return super.find();
                     }
-
-
                 };
             }
         };
     }
 
     /**
-     * Concatenates the items in a series of {@link IOStreamable} instances.
+     * Concatenates the items provided by a series of streamable resources.
      *
      * @param streamables
-     *         The series of {@link IOStreamable} instances to concatenate. Must not be {@code null}.
+     *     The series of streamable resources to concatenate. Must not be {@code null}.
      * @param <T>
-     *         The type of the items in the {@link IOStreamable} instances.
-     * @return An {@link IOStreamable} which is a concatenated view of the given {@code IOStreamable} instances.
+     *     The type of the items in the streamable resources.
+     *
+     * @return An streamable resource which is a concatenated view of the given streamable resource instances.
      */
     @SafeVarargs
     public static <T> IOStreamable<T> concat(final IOStreamable<T>... streamables)
     {
         Objects.requireNonNull(streamables, "The array cannot be null.");
-        if (streamables.length == 0) return IOStreamables.empty();
+        if (streamables.length == 0)
+        {
+            return IOStreamables.empty();
+        }
         return new IOStreamable<T>()
         {
             @Override
@@ -212,8 +225,8 @@ public final class IOStreamables
                                 catch (final IOStreamCloseException ex)
                                 {
                                     throw new IOStreamReadException(
-                                            "Could not close one of the concatenated streams.",
-                                            ex
+                                        "Could not close one of the concatenated streams.",
+                                        ex
                                     );
                                 }
                                 index += 1;
@@ -226,28 +239,66 @@ public final class IOStreamables
                     @Override
                     protected void end() throws IOStreamCloseException
                     {
-                        if (current != null) current.close();
+                        if (current != null)
+                        {
+                            current.close();
+                        }
                     }
                 };
             }
         };
     }
 
-    public static <T> void consume(IOStreamable<T> streamable, IOStreamConsumer<? super T> consumer)
-        throws IOStreamReadException, IOStreamCloseException {
-        IOStreams.consume(streamable.stream(), consumer);
+    /**
+     * Consumes the stream of a resource.
+     *
+     * @param streamable
+     *     The streamable resource to consume.
+     * @param consumer
+     *     A consumer to receive the items in the stream.
+     * @param <T>
+     *     The type of the items in the streamable resource.
+     *
+     * @throws IOStreamReadException
+     *     If there were any problems in reading the stream.
+     * @throws IOStreamCloseException
+     *     If there were any problems in closing the stream.
+     */
+    public static <T> void consume(
+        final IOStreamable<T> streamable,
+        final Supplier<? extends IOStreamConsumer<? super T>> consumer
+    )
+        throws IOStreamReadException, IOStreamCloseException
+    {
+        IOStreams.consume(streamable.stream(), consumer.get());
     }
 
-    public static <T> void consume(IOStreamable<T> streamable) throws IOStreamReadException, IOStreamCloseException {
+    /**
+     * Consumes the stream of a resource, triggering any side-effects while discarding the items.
+     *
+     * @param streamable
+     *     The streamable resource to consume.
+     * @param <T>
+     *     The type of the items in the streamable resource.
+     *
+     * @throws IOStreamReadException
+     *     If there were any problems in reading the stream.
+     * @throws IOStreamCloseException
+     *     If there were any problems in closing the stream.
+     */
+    public static <T> void consume(final IOStreamable<T> streamable)
+        throws IOStreamReadException, IOStreamCloseException
+    {
         IOStreams.consume(streamable.stream());
     }
 
     /**
-     * Provides an empty {@link IOStreamable}.
+     * Provides an empty streamable resource.
      *
      * @param <T>
-     *         The type of the items in the {@link IOStreamable}.
-     * @return An {@link IOStreamable}.
+     *     The type of the items in the streamable resource.
+     *
+     * @return An streamable resource.
      */
     @SuppressWarnings("unchecked")
     public static <T> IOStreamable<T> empty()
@@ -256,52 +307,65 @@ public final class IOStreamables
     }
 
     /**
-     * Filters certain items out of a {@link IOStreamable}.
+     * Filters certain items out of a streamable resource.
      *
-     * @param streamable
-     *         The {@link IOStreamable} to filter. Must not be {@code null}.
-     * @param filter
-     *         The filter to apply. Must not be {@code null}.
      * @param <T>
-     *         The type of the items in the {@link IOStreamable}.
-     * @return An {@link IOStreamable} which is a filtered view of the given {@code IOStreamable}.
+     *     The type of the items in the streamable resource.
+     * @param streamable
+     *     The streamable resource to filter. Must not be {@code null}.
+     * @param filter
+     *     The filter to apply. Must not be {@code null}.
+     *
+     * @return An streamable resource which is a filtered view of the given streamable resource.
      */
-    public static <T> IOStreamable<T> filter(final IOStreamable<T> streamable, final IOStreamFilter<? super T> filter)
+    public static <T> IOStreamable<T> filter(
+        final IOStreamable<T> streamable,
+        final Supplier<? extends IOStreamFilter<? super T>> filter
+    )
     {
         Objects.requireNonNull(streamable, "The streamable cannot be null.");
         Objects.requireNonNull(filter, "The filter cannot be null.");
-        return () -> IOStreams.filter(streamable.stream(), filter);
+        return () -> IOStreams.filter(streamable.stream(), filter.get());
     }
 
     /**
-     * Converts a single {@link IOStreamable} into a series of {@code IOStreamable} instances and concatenates all
-     * of their values.
+     * Converts a single streamable resource into a series of streamable resource instances and concatenates all of
+     * their values.
      *
-     * @param streamable The {@link IOStreamable} which will be transformed.
-     * @param transform The {@link IOStreamTransform} which will expand the original stream.
-     * @param <T> The type of the items in the original {@link IOStreamable}.
-     * @param <R> The type of the items in the transformed {@link IOStreamable}.
-     * @return An expanded {@link IOStreamable} with the new type.
+     * @param <T>
+     *     The type of the items in the original streamable resource.
+     * @param <R>
+     *     The type of the items in the transformed streamable resource.
+     * @param streamable
+     *     The streamable resource which will be transformed.
+     * @param transform
+     *     The {@link IOStreamTransform} which will expand the original stream.
+     *
+     * @return An expanded streamable resource with the new type.
      */
-    public static <T, R> IOStreamable<R> flatMap(final IOStreamable<T> streamable,
-                                                 final IOStreamTransform<? super T, ? extends IOStreamable<? extends R>> transform) {
+    public static <T, R> IOStreamable<R> flatMap(
+        final IOStreamable<T> streamable,
+        final Supplier<? extends IOStreamTransform<? super T, ? extends IOStreamable<? extends R>>> transform
+    )
+    {
         Objects.requireNonNull(streamable, "The streamable cannot be null.");
         Objects.requireNonNull(transform, "The transform cannot be null.");
         return concat(streamable.map(transform));
     }
 
     /**
-     * Converts a series of arrays into a single {@link IOStreamable}.
+     * Converts a series of arrays into a single streamable resource.
      * <p>
-     * The arrays are lazily concatenated in the order provided by the given {@code IOStreamable}. Must not be {@code
+     * The arrays are lazily concatenated in the order provided by the given streamable resource. Must not be {@code
      * null}.
      *
      * @param streamable
-     *         The {@link IOStreamable} which will provide the arrays. Must not be {@code null}.
+     *     The streamable resource which will provide the arrays. Must not be {@code null}.
      * @param <T>
-     *         The type of the items in the arrays.
-     * @return An {@link IOStreamable} which is a concatenated view of the arrays provided by the given {@code
-     *         Streamable}.
+     *     The type of the items in the arrays.
+     *
+     * @return An streamable resource which is a concatenated view of the arrays provided by the given {@code
+     * Streamable}.
      */
     public static <T> IOStreamable<T> flattenArrays(final IOStreamable<T[]> streamable)
     {
@@ -310,69 +374,76 @@ public final class IOStreamables
     }
 
     /**
-     * Converts a series of {@link Iterable} instances into a single the {@link IOStreamable}.
+     * Converts a series of {@link Iterable} instances into a single the streamable resource.
      * <p>
-     * The {@code Iterable} instances are lazily concatenated in the order provided by the given {@code IOStreamable}.
+     * The {@code Iterable} instances are lazily concatenated in the order provided by the given streamable resource.
      *
      * @param streamable
-     *         The {@link IOStreamable} which will provide the {@code Iterable} instances. Must not be {@code null}.
+     *     The streamable resource which will provide the {@code Iterable} instances. Must not be {@code null}.
      * @param <T>
-     *         The type of the items in the {@link Iterable} instances.
-     * @return An {@link IOStreamable} which is a concatenated view of the {@link Iterable} instances provided by the given
-     *         {@code IOStreamable}.
+     *     The type of the items in the {@link Iterable} instances.
+     *
+     * @return An streamable resource which is a concatenated view of the {@link Iterable} instances provided by the
+     * given streamable resource.
      */
-    public static <T> IOStreamable<T> flattenIterables(final IOStreamable<? extends Iterable<? extends T>> streamable) {
+    public static <T> IOStreamable<T> flattenIterables(final IOStreamable<? extends Iterable<? extends T>> streamable)
+    {
         Objects.requireNonNull(streamable, "The streamable cannot be null.");
         return () -> IOStreams.flattenIterables(streamable.stream());
     }
 
     /**
-     * Converts a series of {@link IOStreamable} instances into a single {@link IOStreamable}.
+     * Converts a series of streamable resources into a single streamable resource.
      * <p>
-     * The {@link IOStreamable} instances are lazily concatenated in the order provided by the given {@code IOStreamable}.
-     * Must not be {@code null}.
+     * The streamable resources are lazily concatenated in the order provided by the given {@code IOStreamable}. Must
+     * not be {@code null}.
      *
      * @param streamable
-     *         The {@link IOStreamable} which will provide the series of {@code IOStreamable} instances. Must not be {@code
-     *         null}.
+     *     The streamable resource which will provide the series of streamable resource instances. Must not be {@code
+     *     null}.
      * @param <T>
-     *         The type of the items in the {@link IOStreamable} instances.
-     * @return An {@link IOStreamable} which is a concatenated view of the {@code IOStreamable} instances provided by the
-     *         given {@code IOStreamable}.
+     *     The type of the items in the streamable resources.
+     *
+     * @return An streamable resource which is a concatenated view of the streamable resource instances provided by the
+     * given streamable resource.
      */
     public static <T> IOStreamable<T> flattenStreamables(final IOStreamable<? extends IOStreamable<T>> streamable)
     {
         Objects.requireNonNull(streamable, "The streamable cannot be null.");
-        return () -> streamable.stream().flatMap(IOStreamable::stream);
+        return () -> streamable.stream()
+            .flatMap(IOStreamable::stream);
     }
 
     /**
-     * Creates a new {@link IOStreamable} containing the values of an array.
+     * Creates a new streamable resource containing the values of an array.
      *
      * @param values
-     *         The array which will underlie the {@link IOStreamable}. Must not be {@code null}.
+     *     The array which will underlie the streamable resource. Must not be {@code null}.
      * @param <T>
-     *         The type of the items in the array.
-     * @return An {@link IOStreamable} which is a view of the given array.
+     *     The type of the items in the array.
+     *
+     * @return An streamable resource which is a view of the given array.
      */
     @SafeVarargs
     public static <T> IOStreamable<T> fromArray(final T... values)
     {
         Objects.requireNonNull(values, "The array cannot be null.");
-        if (values.length == 0) {
+        if (values.length == 0)
+        {
             return IOStreamables.empty();
         }
         return () -> IOStreams.fromArray(values);
     }
 
     /**
-     * Creates a new {@link IOStreamable} containing the values of an {@link Iterable}.
+     * Creates a new streamable resource containing the values of an {@link Iterable}.
      *
      * @param iterable
-     *         The {@link Iterable} which will underlie the {@link IOStreamable}. Must not be {@code null}.
+     *     The {@link Iterable} which will underlie the streamable resource. Must not be {@code null}.
      * @param <T>
-     *         The type of the items in the {@link Iterable}.
-     * @return A {@link IOStreamable} which is a view of the given {@link Iterable}.
+     *     The type of the items in the {@link Iterable}.
+     *
+     * @return A streamable resource which is a view of the given {@link Iterable}.
      */
     public static <T> IOStreamable<T> fromIterable(final Iterable<T> iterable)
     {
@@ -380,99 +451,159 @@ public final class IOStreamables
         return () -> IOStreams.fromIterator(iterable.iterator());
     }
 
-    public static <T> IOStreamable<T> keep(IOStreamable<T> streamable, IOStreamPredicate<? super T> predicate) {
-        return () -> streamable.stream().keep(predicate);
-    }
-
     /**
-     * Transforms the items in a {@link IOStreamable}.
-     * <p>
-     * Transforming the items in a {@link IOStreamable} does not change the number of items it provides. To remove items,
-     * use {@link #filter(IOStreamable, IOStreamFilter)}.
+     * Filters the items in a streamable resource to include only items which match the predicate.
      *
      * @param streamable
-     *         The {@link IOStreamable} to map.
-     * @param transform
-     *         The map to apply to each item in the {@link IOStreamable}.
+     *     The streamable resource to filter.
+     * @param predicate
+     *     A supplier to provide the predicate.
      * @param <T>
-     *         The type of the items in the original {@link IOStreamable}.
-     * @param <R>
-     *         The type of the items in the new {@link IOStreamable}.
-     * @return A {@link IOStreamable} which is a transformed view of the given {@code IOStreamable}.
+     *     The type of the items in the streamable resource.
+     *
+     * @return A filtered view of the streamable resource.
      */
-    public static <T, R> IOStreamable<R> map(final IOStreamable<T> streamable,
-                                             final IOStreamTransform<? super T, ? extends R> transform)
+    public static <T> IOStreamable<T> keep(
+        final IOStreamable<T> streamable,
+        final Supplier<? extends IOStreamPredicate<? super T>> predicate
+    )
     {
-        return () -> IOStreams.map(streamable.stream(), transform);
+        return () -> streamable.stream()
+            .keep(predicate.get());
     }
 
     /**
-     * Creates a new {@link IOStreamable} containing only a single item.
+     * Transforms the items in a streamable resource.
+     * <p>
+     * Transforming the items in a streamable resource does not change the number of items it provides. To remove items,
+     * use {@link #filter(IOStreamable, Supplier)}.
+     *
+     * @param <T>
+     *     The type of the items in the original streamable resource.
+     * @param <R>
+     *     The type of the items in the new streamable resource.
+     * @param streamable
+     *     The streamable resource to map.
+     * @param transform
+     *     The map to apply to each item in the streamable resource.
+     *
+     * @return A streamable resource which is a transformed view of the given streamable resource.
+     */
+    public static <T, R> IOStreamable<R> map(
+        final IOStreamable<T> streamable,
+        final Supplier<? extends IOStreamTransform<? super T, ? extends R>> transform
+    )
+    {
+        return () -> IOStreams.map(streamable.stream(), transform.get());
+    }
+
+    /**
+     * Creates a new streamable resource containing only a single item.
      *
      * @param item
-     *         The item which will be provided by the {@link IOStreamable}.
+     *     The item which will be provided by the streamable resource.
      * @param <T>
-     *         The type of the item.
-     * @return A {@link IOStreamable} which only provides the given value.
+     *     The type of the item.
+     *
+     * @return A streamable resource which only provides the given value.
      */
     public static <T> IOStreamable<T> singleton(final T item)
     {
         return () -> IOStreams.singleton(item);
     }
 
-    public static <T> IOStreamable<T> skip(IOStreamable<T> streamable, IOStreamPredicate<? super T> predicate) {
-        return () -> streamable.stream().skip(predicate);
-    }
-
     /**
-     * Reads a {@link IOStreamable} and copies its values to an array.
-     *
-     * @param streamable The {@link IOStreamable} to copy.
-     * @param supplier   A function which will supply the array to fill. You may pass the array constructor e.g. {@code
-     *                   String[]::new} to create a new array.
-     * @param <T>        The type of the items in the array.
-     * @return An array.
-     * @throws IOStreamException If there was any problem in reading or closing the {@link IOStreamable}'s {@link
-     *                           IOStream}.
-     */
-    public static <T> T[] toArray(final IOStreamable<T> streamable, final IntFunction<T[]> supplier)
-        throws IOStreamException {
-        return streamable.stream().toArray(supplier);
-    }
-
-    /**
-     * Reads a {@link IOStreamable} and copies its values to a {@link List}.
+     * Filters the items in a streamable resource to exclude any items which match the predicate.
      *
      * @param streamable
-     *         The {@link IOStreamable} to copy.
+     *     The streamable resource to filter.
+     * @param predicate
+     *     A supplier to provide the predicate.
      * @param <T>
-     *         The type of the items in the {@link List}
-     * @return An immutable {@link List}.
-     * @throws IOStreamException
-     *         If there was any problem in reading or closing the {@link IOStreamable}'s {@link IOStream}.
+     *     The type of the items in the streamable resource.
+     *
+     * @return A filtered view of the streamable resource.
      */
-    public static <T> List<? extends T> toList(final IOStreamable<T> streamable) throws IOStreamException {
+    public static <T> IOStreamable<T> skip(
+        final IOStreamable<T> streamable,
+        final Supplier<? extends IOStreamPredicate<? super T>> predicate
+    )
+    {
+        return () -> streamable.stream()
+            .skip(predicate.get());
+    }
+
+    /**
+     * Reads a streamable resource and copies its values to an array.
+     *
+     * @param streamable
+     *     The streamable resource to copy.
+     * @param supplier
+     *     A function which will supply the array to fill. You may pass the array constructor e.g. {@code String[]::new}
+     *     to create a new array.
+     * @param <T>
+     *     The type of the items in the array.
+     *
+     * @return An array.
+     *
+     * @throws IOStreamReadException
+     *     If there was any problem in reading the stream.
+     * @throws IOStreamCloseException
+     *     If there was any problem in closing the stream.
+     */
+    public static <T> T[] toArray(final IOStreamable<T> streamable, final IntFunction<T[]> supplier)
+        throws IOStreamReadException, IOStreamCloseException
+    {
+        return streamable.stream()
+            .toArray(supplier);
+    }
+
+    /**
+     * Reads a streamable resource and copies its values to a {@link List}.
+     *
+     * @param streamable
+     *     The streamable resource to copy.
+     * @param <T>
+     *     The type of the items in the {@link List}
+     *
+     * @return An immutable {@link List}.
+     *
+     * @throws IOStreamReadException
+     *     If there was any problem in reading the stream.
+     * @throws IOStreamCloseException
+     *     If there was any problem in closing the stream.
+     */
+    public static <T> List<? extends T> toList(final IOStreamable<T> streamable)
+        throws IOStreamReadException, IOStreamCloseException
+    {
         return IOStreams.toList(streamable.stream());
     }
 
     /**
-     * Reads a {@link IOStreamable} and copies its values to a {2link Set}.
+     * Reads a streamable resource and copies its values to a {2link Set}.
      * <p>
-     * Duplicate values in the {@code IOStreamable} will be discarded.
+     * Duplicate values in the streamable resource will be discarded.
      *
      * @param streamable
-     *         The {@link IOStreamable} to copy.
+     *     The streamable resource to copy.
      * @param <T>
-     *         The type of the items in the {@link Set}.
+     *     The type of the items in the {@link Set}.
+     *
      * @return An immutable {@link Set}.
-     * @throws IOStreamException
-     *         If there was any problem in reading or closing the {@link IOStreamable}'s {@link IOStream}.
+     *
+     * @throws IOStreamReadException
+     *     If there was any problem in reading the resource's stream.
+     * @throws IOStreamCloseException
+     *     If there was any problem in closing the resource's stream.
      */
-    public static <T> Set<T> toSet(final IOStreamable<T> streamable) throws IOStreamException {
+    public static <T> Set<T> toSet(final IOStreamable<T> streamable)
+        throws IOStreamReadException, IOStreamCloseException
+    {
         return IOStreams.toSet(streamable.stream());
     }
 
-    private IOStreamables() throws InstantiationException {
+    private IOStreamables() throws InstantiationException
+    {
         throw new InstantiationException("This class cannot be instantiated.");
     }
 }

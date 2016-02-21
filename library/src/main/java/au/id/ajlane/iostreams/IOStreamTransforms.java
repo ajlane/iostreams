@@ -1,5 +1,5 @@
 /*
- * Copyright 2013 Aaron Lane
+ * Copyright 2016 Aaron Lane
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -41,9 +41,10 @@ public final class IOStreamTransforms
      * Provides the identity transform, which does not alter the items in the {@link IOStream}.
      *
      * @param <T>
-     *         The type of the items in the original {@link IOStream}.
+     *     The type of the items in the original {@link IOStream}.
      * @param <R>
-     *         The type of the items in the transformed {@link IOStream}.
+     *     The type of the items in the transformed {@link IOStream}.
+     *
      * @return A {@link IOStreamTransform}.
      */
     @SuppressWarnings("unchecked")
@@ -58,34 +59,42 @@ public final class IOStreamTransforms
      * Each transform is applied in sequence.
      *
      * @param a
-     *         The first transform.
+     *     The first transform.
      * @param b
-     *         The second transform.
+     *     The second transform.
      * @param <T>
-     *         The type of the items in the original {@link IOStream}.
+     *     The type of the items in the original {@link IOStream}.
      * @param <I>
-     *         The intermediate type of the transformed items.
+     *     The intermediate type of the transformed items.
      * @param <R>
-     *         The type of the items in the transformed {@link IOStream}.
+     *     The type of the items in the transformed {@link IOStream}.
+     *
      * @return A {@link IOStreamTransform}.
      */
-    public static <T, I, R> IOStreamTransform<T, R> pipe(final IOStreamTransform<T, I> a, final IOStreamTransform<I, R> b)
+    public static <T, I, R> IOStreamTransform<T, R> pipe(
+        final IOStreamTransform<T, I> a,
+        final IOStreamTransform<I, R> b
+    )
     {
         return new AbstractIOStreamTransform<T, R>()
         {
             @Override
-            public R transform(final T item) throws Exception
+            public void close() throws Exception
             {
-                return b.apply(a.apply(item));
+                try
+                {
+                    b.close();
+                }
+                finally
+                {
+                    a.close();
+                }
             }
 
             @Override
-            public void close() throws Exception {
-                try{
-                    b.close();
-                } finally {
-                    a.close();
-                }
+            public R transform(final T item) throws Exception
+            {
+                return b.apply(a.apply(item));
             }
         };
     }
@@ -96,22 +105,27 @@ public final class IOStreamTransforms
      * Each transform is applied in sequence.
      *
      * @param a
-     *         The first transform.
+     *     The first transform.
      * @param b
-     *         The second transform.
+     *     The second transform.
      * @param c
-     *         The third transform.
+     *     The third transform.
      * @param <T>
-     *         The type of the items in the original {@link IOStream}.
+     *     The type of the items in the original {@link IOStream}.
      * @param <I1>
-     *         The first intermediate type of the transformed items.
+     *     The first intermediate type of the transformed items.
      * @param <I2>
-     *         The second intermediate type of the transformed items.
+     *     The second intermediate type of the transformed items.
      * @param <R>
-     *         The type of the items in the transformed {@link IOStream}.
+     *     The type of the items in the transformed {@link IOStream}.
+     *
      * @return A {@link IOStreamTransform}.
      */
-    public static <T, I1, I2, R> IOStreamTransform<T, R> pipe(final IOStreamTransform<T, I1> a, final IOStreamTransform<I1, I2> b, final IOStreamTransform<I2, R> c)
+    public static <T, I1, I2, R> IOStreamTransform<T, R> pipe(
+        final IOStreamTransform<T, I1> a,
+        final IOStreamTransform<I1, I2> b,
+        final IOStreamTransform<I2, R> c
+    )
     {
         return new AbstractIOStreamTransform<T, R>()
         {
@@ -122,13 +136,20 @@ public final class IOStreamTransforms
             }
 
             @Override
-            public void close() throws Exception {
-                try{
+            public void close() throws Exception
+            {
+                try
+                {
                     c.close();
-                } finally {
-                    try {
+                }
+                finally
+                {
+                    try
+                    {
                         b.close();
-                    } finally {
+                    }
+                    finally
+                    {
                         c.close();
                     }
                 }
@@ -142,26 +163,32 @@ public final class IOStreamTransforms
      * Each transform is applied in sequence.
      *
      * @param a
-     *         The first transform.
+     *     The first transform.
      * @param b
-     *         The second transform.
+     *     The second transform.
      * @param c
-     *         The third transform.
+     *     The third transform.
      * @param d
-     *         The fourth transform.
+     *     The fourth transform.
      * @param <T>
-     *         The type of the items in the original {@link IOStream}.
+     *     The type of the items in the original {@link IOStream}.
      * @param <I1>
-     *         The first intermediate type of the transformed items.
+     *     The first intermediate type of the transformed items.
      * @param <I2>
-     *         The second intermediate type of the transformed items.
+     *     The second intermediate type of the transformed items.
      * @param <I3>
-     *         The third intermediate type of the transformed items.
+     *     The third intermediate type of the transformed items.
      * @param <R>
-     *         The type of the items in the transformed {@link IOStream}.
+     *     The type of the items in the transformed {@link IOStream}.
+     *
      * @return A {@link IOStreamTransform}.
      */
-    public static <T, I1, I2, I3, R> IOStreamTransform<T, R> pipe(final IOStreamTransform<T, I1> a, final IOStreamTransform<I1, I2> b, final IOStreamTransform<I2, I3> c, final IOStreamTransform<I3, R> d)
+    public static <T, I1, I2, I3, R> IOStreamTransform<T, R> pipe(
+        final IOStreamTransform<T, I1> a,
+        final IOStreamTransform<I1, I2> b,
+        final IOStreamTransform<I2, I3> c,
+        final IOStreamTransform<I3, R> d
+    )
     {
         return new AbstractIOStreamTransform<T, R>()
         {
@@ -172,16 +199,26 @@ public final class IOStreamTransforms
             }
 
             @Override
-            public void close() throws Exception {
-                try{
+            public void close() throws Exception
+            {
+                try
+                {
                     d.close();
-                } finally {
-                    try {
+                }
+                finally
+                {
+                    try
+                    {
                         c.close();
-                    } finally {
-                        try{
+                    }
+                    finally
+                    {
+                        try
+                        {
                             b.close();
-                        } finally {
+                        }
+                        finally
+                        {
                             a.close();
                         }
                     }
@@ -198,30 +235,37 @@ public final class IOStreamTransforms
      * To join more than five transforms together, group the transforms in batches, then join the groups.
      *
      * @param a
-     *         The first transform.
+     *     The first transform.
      * @param b
-     *         The second transform.
+     *     The second transform.
      * @param c
-     *         The third transform.
+     *     The third transform.
      * @param d
-     *         The fourth transform.
+     *     The fourth transform.
      * @param e
-     *         The fifth transform.
+     *     The fifth transform.
      * @param <T>
-     *         The type of the items in the original {@link IOStream}.
+     *     The type of the items in the original {@link IOStream}.
      * @param <I1>
-     *         The first intermediate type of the transformed items.
+     *     The first intermediate type of the transformed items.
      * @param <I2>
-     *         The second intermediate type of the transformed items.
+     *     The second intermediate type of the transformed items.
      * @param <I3>
-     *         The third intermediate type of the transformed items.
+     *     The third intermediate type of the transformed items.
      * @param <I4>
-     *         The fourth intermediate type of the transformed items.
+     *     The fourth intermediate type of the transformed items.
      * @param <R>
-     *         The type of the items in the transformed {@link IOStream}.
+     *     The type of the items in the transformed {@link IOStream}.
+     *
      * @return A {@link IOStreamTransform}.
      */
-    public static <T, I1, I2, I3, I4, R> IOStreamTransform<T, R> pipe(final IOStreamTransform<T, I1> a, final IOStreamTransform<I1, I2> b, final IOStreamTransform<I2, I3> c, final IOStreamTransform<I3, I4> d, final IOStreamTransform<I4, R> e)
+    public static <T, I1, I2, I3, I4, R> IOStreamTransform<T, R> pipe(
+        final IOStreamTransform<T, I1> a,
+        final IOStreamTransform<I1, I2> b,
+        final IOStreamTransform<I2, I3> c,
+        final IOStreamTransform<I3, I4> d,
+        final IOStreamTransform<I4, R> e
+    )
     {
         return new AbstractIOStreamTransform<T, R>()
         {
@@ -232,19 +276,32 @@ public final class IOStreamTransforms
             }
 
             @Override
-            public void close() throws Exception {
-                try {
+            public void close() throws Exception
+            {
+                try
+                {
                     e.close();
-                } finally {
-                    try{
+                }
+                finally
+                {
+                    try
+                    {
                         d.close();
-                    } finally {
-                        try {
+                    }
+                    finally
+                    {
+                        try
+                        {
                             c.close();
-                        } finally {
-                            try{
+                        }
+                        finally
+                        {
+                            try
+                            {
                                 b.close();
-                            } finally {
+                            }
+                            finally
+                            {
                                 a.close();
                             }
                         }

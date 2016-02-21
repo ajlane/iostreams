@@ -1,5 +1,5 @@
 /*
- * Copyright 2013 Aaron Lane
+ * Copyright 2016 Aaron Lane
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,13 +27,14 @@ public class IOStreamCloseException extends IOStreamException
      * Constructs a new {@code IOStreamCloseException} with the given message and cause.
      *
      * @param message
-     *         A message describing the issue in terms of the {@link IOStream}. Must not be empty of {@code null}.
+     *     A message describing the issue in terms of the {@link IOStream}. Must not be empty of {@code null}.
      * @param cause
-     *         The underlying cause of the issue. Must not be {@code null}.
+     *     The underlying cause of the issue. Must not be {@code null}.
+     *
      * @throws IllegalArgumentException
-     *         If the message is empty.
+     *     If the message is empty.
      * @throws NullPointerException
-     *         If the either the message or the cause is {@code null}.
+     *     If the either the message or the cause is {@code null}.
      */
     public IOStreamCloseException(final String message, final Exception cause)
     {

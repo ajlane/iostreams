@@ -1,5 +1,5 @@
 /*
- * Copyright 2013 Aaron Lane
+ * Copyright 2016 Aaron Lane
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,13 +27,14 @@ public class IOStreamReadException extends IOStreamException
      * Constructs a new {@code IOStreamReadException} with the given message and cause.
      *
      * @param message
-     *         A message describing the exception in terms of the {@link IOStream}. Must not be empty or {@code null}.
+     *     A message describing the exception in terms of the {@link IOStream}. Must not be empty or {@code null}.
      * @param cause
-     *         The underlying cause of the issue. Must not be {@code null}.
+     *     The underlying cause of the issue. Must not be {@code null}.
+     *
      * @throws IllegalArgumentException
-     *         If the message is empty.
+     *     If the message is empty.
      * @throws NullPointerException
-     *         If the message or cause is {@code null}.
+     *     If the message or cause is {@code null}.
      */
     public IOStreamReadException(final String message, final Exception cause)
     {
