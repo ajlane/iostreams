@@ -17,9 +17,11 @@
 package au.id.ajlane.iostreams;
 
 import java.io.Closeable;
+import java.util.Comparator;
 import java.util.Iterator;
 import java.util.List;
 import java.util.NoSuchElementException;
+import java.util.Optional;
 import java.util.Set;
 import java.util.function.IntFunction;
 import java.util.stream.Stream;
@@ -92,6 +94,22 @@ public interface IOStream<T> extends Closeable
         throws IOStreamReadException, IOStreamCloseException
     {
         IOStreams.consume(this, consumer);
+    }
+
+    /**
+     * Counts the number of items in the stream.
+     * <p>
+     * Consumes the stream in order to count all of the items.
+     *
+     * @return The number of items in the stream, or {@link Long#MAX_VALUE} if there are too many items to count.
+     * @throws IOStreamReadException
+     *     If there was a problem in reading the stream.
+     * @throws IOStreamCloseException
+     *     If there was a problem in closing the stream.
+     */
+    default long count() throws IOStreamReadException, IOStreamCloseException
+    {
+        return IOStreams.count(this);
     }
 
     /**
@@ -256,6 +274,43 @@ public interface IOStream<T> extends Closeable
     )
     {
         return IOStreams.map(this, transform, exceptionHandler);
+    }
+
+
+    /**
+     * Finds the maximum value in the stream.
+     * <p>
+     * Consumes the stream.
+     *
+     * @param comparator
+     *     A comparator to use to compare items in the stream. Must not be null.
+     * @return The maximum value in the stream, or an empty value if the stream is empty or if the maximum is null.
+     * @throws IOStreamReadException
+     *     If there was a problem in reading the stream.
+     * @throws IOStreamCloseException
+     *     If there was a problem in closing the stream.
+     */
+    default Optional<T> max(final Comparator<T> comparator) throws IOStreamReadException, IOStreamCloseException
+    {
+        return IOStreams.max(this, comparator);
+    }
+
+    /**
+     * Finds the minimum value in the stream.
+     * <p>
+     * Consumes the stream.
+     *
+     * @param comparator
+     *     A comparator to use to compare items in the stream. Must not be null.
+     * @return The minimum value in the stream, or an empty value if the stream is empty or if the minimum is null.
+     * @throws IOStreamReadException
+     *     If there was a problem in reading the stream.
+     * @throws IOStreamCloseException
+     *     If there was a problem in closing the stream.
+     */
+    default Optional<T> min(final Comparator<T> comparator) throws IOStreamReadException, IOStreamCloseException
+    {
+        return IOStreams.min(this, comparator);
     }
 
     /**

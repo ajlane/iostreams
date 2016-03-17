@@ -17,12 +17,14 @@
 package au.id.ajlane.iostreams;
 
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
 import java.util.function.IntFunction;
 import java.util.stream.Stream;
@@ -365,6 +367,45 @@ public final class IOStreams
             {
                 stream.close();
             }
+        }
+    }
+
+    /**
+     * Counts the number of items in the stream.
+     * <p>
+     * Consumes the stream in order to count every item. To keep a running total of items as they are being consumed,
+     * consider using a stateful consumer with {@link #observe(IOStream, IOStreamConsumer)}.
+     *
+     * @param stream
+     *     The stream to consume to count the values. Must not be null.
+     * @param <T>
+     *     The type of the items in the stream.
+     * @return The total number of items in the stream, or {@link Long#MAX_VALUE} if there are too many items to
+     * represent with a long.
+     * @throws IOStreamReadException
+     *     If there was a problem with reading the stream.
+     * @throws IOStreamCloseException
+     *     If there was a problem with closing the stream.
+     */
+    public static <T> long count(final IOStream<T> stream)
+        throws IOStreamReadException, IOStreamCloseException
+    {
+        try
+        {
+            long count = 0;
+            while (stream.hasNext())
+            {
+                stream.next();
+                if (count < Long.MAX_VALUE)
+                {
+                    count++;
+                }
+            }
+            return count;
+        }
+        finally
+        {
+            stream.close();
         }
     }
 
@@ -1222,6 +1263,64 @@ public final class IOStreams
     }
 
     /**
+     * Finds the maximum value in the stream.
+     *
+     * @param stream
+     *     The stream to consume to find the maximum value. Must not be null.
+     * @param comparator
+     *     The comparator to use to compare items in the stream. Must not be null.
+     * @param <T>
+     *     The type of the items in the stream.
+     * @return The maximum value, or an empty value if the stream is empty or if the maximum is null.
+     * @throws IOStreamReadException
+     *     If there was problem with reading the stream.
+     * @throws IOStreamCloseException
+     *     If there was a problem with closing the stream.
+     */
+    public static <T> Optional<T> max(final IOStream<T> stream, Comparator<T> comparator)
+        throws IOStreamReadException, IOStreamCloseException
+    {
+        Optional<T> max = Optional.empty();
+        try
+        {
+            while (stream.hasNext())
+            {
+                final T item = stream.next();
+                if (!max.isPresent() || comparator.compare(item, max.get()) > 0)
+                {
+                    max = Optional.ofNullable(item);
+                }
+            }
+        }
+        finally
+        {
+            stream.close();
+        }
+        return max;
+    }
+
+    /**
+     * Finds the minimum value in the stream.
+     *
+     * @param stream
+     *     The stream to consume to find the minimum value. Must not be null.
+     * @param comparator
+     *     The comparator to use to compare items in the stream. Must not be null.
+     * @param <T>
+     *     The type of the items in the stream.
+     * @return The minimum value, or an empty value if the stream is empty or if the minimum is null.
+     * @throws IOStreamReadException
+     *     If there was a problem with reading the stream.
+     * @throws IOStreamCloseException
+     *     If there was a problem with closing the stream.
+     */
+    public static <T> Optional<T> min(final IOStream<T> stream, Comparator<T> comparator)
+        throws IOStreamReadException, IOStreamCloseException
+    {
+        return max(stream, comparator.reversed());
+    }
+
+    /**
      * Registers a function to observe values as they are consumed.
      * <p>
      * The observer will be closed when the returned stream is closed.
@@ -1305,6 +1404,9 @@ public final class IOStreams
     public static <T> PeekableIOStream<T> peekable(final IOStream<T> stream)
     {
         Objects.requireNonNull(stream, "The stream cannot be null.");
+        if(stream instanceof PeekableIOStream<?>) {
+            return (PeekableIOStream<T>) stream;
+        }
         return new PeekableIOStream<T>()
         {
             private final LinkedList<T> buffer = new LinkedList<>();

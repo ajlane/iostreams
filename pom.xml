@@ -53,8 +53,8 @@
         <url>https://github.com/ajlane/iostreams</url>
         <connection>scm:git:git://github.com/ajlane/iostreams.git</connection>
         <developerConnection>scm:git:git@github.com:ajlane/iostreams.git</developerConnection>
-      <tag>HEAD</tag>
-  </scm>
+        <tag>HEAD</tag>
+    </scm>
 
     <modules>
         <module>examples</module>
