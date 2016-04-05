@@ -16,12 +16,12 @@
 
 package au.id.ajlane.iostreams.examples;
 
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Paths;
+
 import au.id.ajlane.iostreams.FileLineIOStream;
 import au.id.ajlane.iostreams.FilterDecision;
 import au.id.ajlane.iostreams.IOStreams;
-
-import java.nio.charset.StandardCharsets;
-import java.nio.file.Paths;
 
 /**
  * An example application which lazily reads lines from a set of files, filters them, and prints the lines to standard
@@ -45,7 +45,8 @@ public final class LineReadingExample
             // Read each line from each file
             .flatMap(file -> FileLineIOStream.fromFile(Paths.get(file), StandardCharsets.UTF_8))
             // Filter out empty lines or lines that start with a comment
-            .filter(line -> {
+            .filter(line ->
+            {
                 if (!line.text.matches("\\s*(#.*)?"))
                 {
                     return FilterDecision.KEEP_AND_CONTINUE;

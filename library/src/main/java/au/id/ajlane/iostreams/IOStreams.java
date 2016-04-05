@@ -384,8 +384,10 @@ public final class IOStreams
      *     The stream to consume to count the values. Must not be null.
      * @param <T>
      *     The type of the items in the stream.
+     *
      * @return The total number of items in the stream, or {@link Long#MAX_VALUE} if there are too many items to
      * represent with a long.
+     *
      * @throws IOStreamReadException
      *     If there was a problem with reading the stream.
      * @throws IOStreamCloseException
@@ -1279,7 +1281,9 @@ public final class IOStreams
      *     The comparator to use to compare items in the stream. Must not be null.
      * @param <T>
      *     The type of the items in the stream.
+     *
      * @return The maximum value, or an empty value if the stream is empty or if the maximum is null.
+     *
      * @throws IOStreamReadException
      *     If there was problem with reading the stream.
      * @throws IOStreamCloseException
@@ -1316,7 +1320,9 @@ public final class IOStreams
      *     The comparator to use to compare items in the stream. Must not be null.
      * @param <T>
      *     The type of the items in the stream.
+     *
      * @return The minimum value, or an empty value if the stream is empty or if the minimum is null.
+     *
      * @throws IOStreamReadException
      *     If there was a problem with reading the stream.
      * @throws IOStreamCloseException
@@ -1412,7 +1418,8 @@ public final class IOStreams
     public static <T> PeekableIOStream<T> peekable(final IOStream<T> stream)
     {
         Objects.requireNonNull(stream, "The stream cannot be null.");
-        if(stream instanceof PeekableIOStream<?>) {
+        if (stream instanceof PeekableIOStream<?>)
+        {
             return (PeekableIOStream<T>) stream;
         }
         return new PeekableIOStream<T>()
