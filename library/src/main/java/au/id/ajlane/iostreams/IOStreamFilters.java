@@ -495,6 +495,44 @@ public final class IOStreamFilters
         };
     }
 
+    /**
+     * Creates a filter which will terminate the stream when it encounters a matching item.
+     *
+     * @param predicate
+     *     A predicate to test each item. Must not be null.
+     * @param <T>
+     *     The type of the items in the stream.
+     *
+     * @return A filter which may cause the stream to terminate early.
+     */
+    public static <T> IOStreamFilter<T> keepUntil(final IOStreamPredicate<? super T> predicate)
+    {
+        if (predicate == null)
+        {
+            throw new NullPointerException("The predicate must be non-null.");
+        }
+        return t -> predicate.test(t) ? FilterDecision.SKIP_AND_TERMINATE : FilterDecision.KEEP_AND_CONTINUE;
+    }
+
+    /**
+     * Creates a filter which will terminate the stream when it encounters a non-matching item.
+     *
+     * @param predicate
+     *     A predicate to test each item. Must not be null.
+     * @param <T>
+     *     The type of the items in the stream.
+     *
+     * @return A filter which may cause the stream to terminate early.
+     */
+    public static <T> IOStreamFilter<T> keepWhile(final IOStreamPredicate<? super T> predicate)
+    {
+        if (predicate == null)
+        {
+            throw new NullPointerException("The predicate must be non-null.");
+        }
+        return t -> predicate.test(t) ? FilterDecision.KEEP_AND_CONTINUE : FilterDecision.SKIP_AND_TERMINATE;
+    }
+
     private IOStreamFilters() throws InstantiationException
     {
         throw new InstantiationException("This class cannot be instantiated.");

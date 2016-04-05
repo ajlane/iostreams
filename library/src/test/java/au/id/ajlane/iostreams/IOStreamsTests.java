@@ -16,9 +16,7 @@
 
 package au.id.ajlane.iostreams;
 
-import org.junit.Assert;
-import org.junit.Test;
-
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -26,7 +24,11 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.NoSuchElementException;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.StreamSupport;
+
+import org.junit.Assert;
+import org.junit.Test;
 
 /**
  * Tests {@link IOStreams}.
@@ -34,8 +36,6 @@ import java.util.stream.StreamSupport;
 @SuppressWarnings({"ProhibitedExceptionCaught", "StandardVariableNames"})
 public class IOStreamsTests
 {
-    private static final String[] EMPTY = {};
-
     @Test
     public void testConcatArrayOfStreams() throws IOStreamException
     {
@@ -48,7 +48,7 @@ public class IOStreamsTests
         );
 
         Assert.assertArrayEquals(
-            EMPTY,
+            new String[0],
             IOStreams.concat(a, b)
                 .toArray(String[]::new)
         );
@@ -101,7 +101,7 @@ public class IOStreamsTests
                 .toArray(String[]::new)
         );
         Assert.assertArrayEquals(
-            EMPTY,
+            new String[0],
             IOStreams.concat(IOStreams.fromArray(a, b))
                 .toArray(String[]::new)
         );
@@ -177,7 +177,7 @@ public class IOStreamsTests
         final TestStream<String> b = TestStream.of("b1", "b2", "b3");
         final TestStreamFilter<String> noneB = TestStreamFilter.wrap(IOStreamFilters.none());
         Assert.assertArrayEquals(
-            EMPTY,
+            new String[0],
             IOStreams.filter(b, noneB)
                 .toArray(String[]::new)
         );
@@ -197,7 +197,7 @@ public class IOStreamsTests
         final TestStream<String> d = TestStream.wrap(IOStreams.empty());
         final TestStreamFilter<String> whitelistD = TestStreamFilter.wrap(IOStreamFilters.whitelist("d3", "d2"));
         Assert.assertArrayEquals(
-            EMPTY,
+            new String[0],
             IOStreams.filter(d, whitelistD)
                 .toArray
                     (String[]::new)
@@ -253,7 +253,7 @@ public class IOStreamsTests
             IOStreams.flattenArrays(
                 IOStreams.fromArray(
                     new String[]{"d1", "d2"},
-                    EMPTY
+                    new String[0]
                 )
             )
                 .toArray(String[]::new)
@@ -262,18 +262,18 @@ public class IOStreamsTests
             new String[]{"e1", "e2"},
             IOStreams.flattenArrays(
                 IOStreams.fromArray(
-                    EMPTY,
+                    new String[0],
                     new String[]{"e1", "e2"}
                 )
             )
                 .toArray(String[]::new)
         );
         Assert.assertArrayEquals(
-            EMPTY,
+            new String[0],
             IOStreams.flattenArrays(
                 IOStreams.fromArray(
-                    EMPTY,
-                    EMPTY
+                    new String[0],
+                    new String[0]
                 )
             )
                 .toArray(String[]::new)
@@ -335,7 +335,7 @@ public class IOStreamsTests
                 .toArray(String[]::new)
         );
         Assert.assertArrayEquals(
-            EMPTY,
+            new String[0],
             IOStreams.flattenIterables(
                 IOStreams.fromArray(
                     Collections.emptyList(),
@@ -408,7 +408,7 @@ public class IOStreamsTests
                 .toArray(String[]::new)
         );
         Assert.assertArrayEquals(
-            EMPTY,
+            new String[0],
             IOStreams.flattenIterators(
                 IOStreams.fromArray(
                     Collections.emptyList()
@@ -525,7 +525,7 @@ public class IOStreamsTests
         final TestStream<String> a = TestStream.of(
             "a-a1", "a-a2", "a-a3", "a-b1", "a-b2", "a-a4", "a-c1", "a-d1", "a-d2"
         );
-        try(final IOStream<? extends IOStream<String>> aGroups = a.group((l, r) -> l.charAt(2) == r.charAt(2)))
+        try (final IOStream<? extends IOStream<String>> aGroups = a.group((l, r) -> l.charAt(2) == r.charAt(2)))
         {
             Assert.assertArrayEquals(
                 new String[]{"a-a1", "a-a2", "a-a3"},
@@ -562,7 +562,7 @@ public class IOStreamsTests
         Assert.assertTrue(a.isClosed());
 
         final TestStream<String> b = TestStream.of("b-a1", "b-a2", "b-a3", "b-b1", "b-b2");
-        try(final IOStream<? extends IOStream<String>> bGroups = b.group((l, r) -> l.charAt(2) == r.charAt(2)))
+        try (final IOStream<? extends IOStream<String>> bGroups = b.group((l, r) -> l.charAt(2) == r.charAt(2)))
         {
             try (final IOStream<String> bOrphan = bGroups.next())
             {
@@ -583,7 +583,7 @@ public class IOStreamsTests
         Assert.assertTrue(b.isClosed());
 
         final TestStream<String> c = TestStream.of("c-a1");
-        try(final IOStream<? extends IOStream<String>> cGroups = c.group((l, r) -> false))
+        try (final IOStream<? extends IOStream<String>> cGroups = c.group((l, r) -> false))
         {
             Assert.assertArrayEquals(
                 new String[]{"c-a1"},
@@ -771,6 +771,85 @@ public class IOStreamsTests
     }
 
     @Test
+    public void testRepeat() throws IOStreamException
+    {
+        final AtomicInteger counterA = new AtomicInteger(1);
+        final TestStream<Integer> a = TestStream.wrap(IOStreams.repeat(counterA::getAndIncrement));
+        Assert.assertArrayEquals(
+            new Integer[]{1, 2, 3, 4, 5},
+            a.until(i -> i > 5)
+                .toArray(Integer[]::new)
+        );
+        Assert.assertTrue(a.isClosed());
+        Assert.assertFalse(a.hasNext());
+        try
+        {
+            a.next();
+            Assert.fail();
+        }
+        catch (final NoSuchElementException ex)
+        {
+            // Expected
+        }
+        try
+        {
+            IOStreams.repeat(null);
+            Assert.fail();
+        }
+        catch (NullPointerException ex)
+        {
+            // Expected
+        }
+
+        final AtomicInteger counterB = new AtomicInteger(1);
+        final TestStream<String> b = TestStream.wrap(IOStreams.repeat(() -> {
+            throw new IOException("b" + counterB.getAndIncrement());
+        }));
+        try
+        {
+            b.hasNext();
+            Assert.fail();
+        }
+        catch (IOStreamException ex)
+        {
+            Assert.assertEquals(
+                "b1",
+                ex.getCause()
+                    .getMessage()
+            );
+        }
+        try
+        {
+            b.next();
+            Assert.fail();
+        }
+        catch (IOStreamException ex)
+        {
+            Assert.assertEquals(
+                "b2",
+                ex.getCause()
+                    .getMessage()
+            );
+        }
+        Assert.assertFalse(b.isClosed());
+        try
+        {
+            b.consume();
+            Assert.fail();
+        }
+        catch (IOStreamException ex)
+        {
+            Assert.assertEquals(
+                "b3",
+                ex.getCause()
+                    .getMessage()
+            );
+        }
+        Assert.assertTrue(b.isClosed());
+        b.consume();
+    }
+
+    @Test
     public void testSingletonStream() throws IOStreamException
     {
         final String singleton = "a";
@@ -795,7 +874,7 @@ public class IOStreamsTests
     public void testToArray() throws IOStreamException
     {
         final IOStream<String> a = IOStreams.fromArray();
-        Assert.assertArrayEquals(EMPTY, IOStreams.toArray(a, String[]::new));
+        Assert.assertArrayEquals(new String[0], IOStreams.toArray(a, String[]::new));
 
         final IOStream<String> b = IOStreams.fromArray("b1", "b2", "b3");
         Assert.assertArrayEquals(new String[]{"b1", "b2", "b3"}, IOStreams.toArray(b, String[]::new));
@@ -819,6 +898,44 @@ public class IOStreamsTests
 
         final IOStream<String> b = IOStreams.fromArray("b1", "b2", "b3");
         Assert.assertEquals(new HashSet<>(Arrays.asList("b1", "b2", "b3")), IOStreams.toSet(b));
+    }
+
+    @Test
+    public void testUntil() throws IOStreamException
+    {
+        final TestStream<String> a = TestStream.of("a1", "a2", "a3", "a4");
+        Assert.assertArrayEquals(
+            new String[]{"a1", "a2"},
+            IOStreams.until(a, "a3"::equals)
+                .toArray(String[]::new)
+        );
+        Assert.assertTrue(a.isClosed());
+        Assert.assertArrayEquals(
+            new String[0],
+            IOStreams.until(a, "a3"::equals)
+                .toArray(String[]::new)
+        );
+        Assert.assertTrue(a.isClosed());
+
+        try
+        {
+            IOStreams.until(a, null);
+            Assert.fail();
+        }
+        catch (NullPointerException ex)
+        {
+            // Expected
+        }
+
+        try
+        {
+            IOStreams.until(null, "a3"::equals);
+            Assert.fail();
+        }
+        catch (NullPointerException ex)
+        {
+            // Expected
+        }
     }
 
 }

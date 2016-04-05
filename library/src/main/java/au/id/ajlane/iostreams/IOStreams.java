@@ -37,12 +37,16 @@ import java.util.stream.Stream;
  */
 public final class IOStreams
 {
+
     private static final EmptyIOStream EMPTY = new EmptyIOStream();
 
     /**
-     * Casts all of the items in the stream. <p>Beware that if any of the items cannot be cast, the stream will throw a
-     * {@link ClassCastException} when it attempts to read those items.</p> <p>To safely change the type, use {@link
-     * #map(IOStream, IOStreamTransform)} to transform the items.</p>
+     * Casts all of the items in the stream.
+     * <p>
+     * Beware that if any of the items cannot be cast, the stream will throw a {@link ClassCastException} when it
+     * attempts to read those items.
+     * <p>
+     * To safely change the type, use {@link #map(IOStream, IOStreamTransform)} to transform the items.
      *
      * @param stream
      *     The stream to transform. Must not be null.
@@ -686,6 +690,7 @@ public final class IOStreams
             @Override
             public void close()
             {
+                index = values.length;
             }
 
             @Override
@@ -1035,7 +1040,10 @@ public final class IOStreams
      *
      * @return A filtered view of the stream.
      */
-    public static <T> IOStream<T> keep(final IOStream<? extends T> stream, final IOStreamPredicate<? super T> predicate)
+    public static <T> IOStream<T> keep(
+        final IOStream<? extends T> stream,
+        final IOStreamPredicate<? super T> predicate
+    )
     {
         return filter(stream, IOStreamFilters.fromPredicate(predicate));
     }
@@ -1504,16 +1512,80 @@ public final class IOStreams
             {
                 reducer.close();
             }
-            catch (RuntimeException ex)
+            catch (final RuntimeException ex)
             {
                 throw ex;
             }
-            catch (Exception ex)
+            catch (final Exception ex)
             {
                 throw new IOStreamCloseException("Could not close the reducer.", ex);
             }
             stream.close();
         }
+    }
+
+    /**
+     * Creates a stream which repeatedly takes values from a supplier.
+     *
+     * @param supplier
+     *     The supplier to take values from. Must not be null.
+     * @param <T>
+     *     The type of the items in the stream.
+     *
+     * @return An infinite stream.
+     */
+    public static <T> IOStream<T> repeat(final IOStreamSupplier<? extends T> supplier)
+    {
+        if (supplier == null)
+        {
+            throw new NullPointerException("The supplier must be non-null.");
+        }
+        return new AbstractIOStream<T>()
+        {
+            private volatile boolean closed = false;
+
+            @Override
+            public void end() throws IOStreamCloseException
+            {
+                try
+                {
+                    supplier.close();
+                }
+                catch (RuntimeException ex)
+                {
+                    throw ex;
+                }
+                catch (Exception ex)
+                {
+                    throw new IOStreamCloseException("Could not close the supplier.", ex);
+                }
+                finally
+                {
+                    closed = true;
+                }
+            }
+
+            @Override
+            public T find() throws IOStreamReadException
+            {
+                if (closed)
+                {
+                    return terminate();
+                }
+                try
+                {
+                    return supplier.get();
+                }
+                catch (RuntimeException ex)
+                {
+                    throw ex;
+                }
+                catch (Exception ex)
+                {
+                    throw new IOStreamReadException("Could not get the next item from the supplier.", ex);
+                }
+            }
+        };
     }
 
     /**
@@ -1568,7 +1640,10 @@ public final class IOStreams
      *
      * @return A view of the stream, containing only items that are not matched by the predicate.
      */
-    public static <T> IOStream<T> skip(final IOStream<? extends T> stream, final IOStreamPredicate<? super T> predicate)
+    public static <T> IOStream<T> skip(
+        final IOStream<? extends T> stream,
+        final IOStreamPredicate<? super T> predicate
+    )
     {
         return filter(
             stream,
@@ -1650,7 +1725,7 @@ public final class IOStreams
     }
 
     /**
-     * Consumes the strem by collecting all of the items into a set.
+     * Consumes the stream by collecting all of the items into a set.
      *
      * @param stream
      *     The stream to consume. Must not be null.
@@ -1671,6 +1746,25 @@ public final class IOStreams
         final Set<T> set = new HashSet<>();
         stream.consume(set::add);
         return set;
+    }
+
+    /**
+     * Terminates the stream when one of the items matches.
+     * <p>
+     * The matching item will not be kept.
+     *
+     * @param stream
+     *     The stream to filter. Must not be null.
+     * @param predicate
+     *     The predicate to test each item. Must not be null.
+     * @param <T>
+     *     The type of the items in the stream.
+     *
+     * @return A view of the stream which may terminate early.
+     */
+    public static <T> IOStream<T> until(final IOStream<T> stream, final IOStreamPredicate<? super T> predicate)
+    {
+        return stream.filter(IOStreamFilters.keepUntil(predicate));
     }
 
     private IOStreams() throws InstantiationException

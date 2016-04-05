@@ -437,7 +437,7 @@ public interface IOStream<T> extends Closeable
     }
 
     /**
-     * Consumes the strem by collecting all of the items into a set.
+     * Consumes the stream by collecting all of the items into a set.
      *
      * @return A set containing the unique items from the stream.
      *
@@ -449,5 +449,18 @@ public interface IOStream<T> extends Closeable
     default Set<T> toSet() throws IOStreamReadException, IOStreamCloseException
     {
         return IOStreams.toSet(this);
+    }
+
+    /**
+     * Terminates the stream when one of the items matches. <p> The matching item will not be kept.
+     *
+     * @param predicate
+     *     The predicate to test each item. Must not be null.
+     *
+     * @return A view of the stream which may terminate early.
+     */
+    default IOStream<T> until(final IOStreamPredicate<? super T> predicate)
+    {
+        return IOStreams.until(this, predicate);
     }
 }
