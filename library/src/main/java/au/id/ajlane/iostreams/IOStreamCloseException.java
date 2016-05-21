@@ -19,25 +19,24 @@ package au.id.ajlane.iostreams;
 /**
  * Indicates that the resources held by a {@link IOStream} could not be released.
  */
-public class IOStreamCloseException extends IOStreamException
+public final class IOStreamCloseException extends IOStreamException
 {
     private static final long serialVersionUID = -4458433200743954325L;
 
     /**
-     * Constructs a new {@code IOStreamCloseException} with the given message and cause.
+     * Constructs a new {@code IOStreamCloseException} with the given cause.
      *
-     * @param message
-     *     A message describing the issue in terms of the {@link IOStream}. Must not be empty of {@code null}.
      * @param cause
-     *     The underlying cause of the issue. Must not be {@code null}.
+     *     The underlying cause of the issue. Must be a non-{@code null}, checked exception. An
+     *     {@link IOStreamException} will be replaced by its own cause.
      *
-     * @throws IllegalArgumentException
-     *     If the message is empty.
+     * @throws RuntimeException
+     *     If the cause is a runtime exception.
      * @throws NullPointerException
-     *     If the either the message or the cause is {@code null}.
+     *     If the cause is {@code null}.
      */
-    public IOStreamCloseException(final String message, final Exception cause)
+    public IOStreamCloseException(final Exception cause)
     {
-        super(message, cause);
+        super("Could not close the stream.", cause);
     }
 }

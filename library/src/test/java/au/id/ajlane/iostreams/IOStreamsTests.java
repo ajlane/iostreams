@@ -87,6 +87,66 @@ public class IOStreamsTests
         {
             // Expected
         }
+
+        final ErrorStream<String> f = new ErrorStream<>(new RuntimeException("f"), null);
+        final ErrorStream<String> g = new ErrorStream<>(new RuntimeException("g"), null);
+        final ErrorStream<String> h = new ErrorStream<>(new RuntimeException("h"), null);
+        final IOStream<String> fgh = IOStreams.concat(f, g, h);
+
+        try
+        {
+            fgh.hasNext();
+            Assert.fail();
+        }
+        catch (RuntimeException ex)
+        {
+            if (!"f".equals(ex.getMessage()))
+            {
+                throw ex;
+            }
+        }
+
+        try
+        {
+            fgh.next();
+            Assert.fail();
+        }
+        catch (RuntimeException ex)
+        {
+            if (!"f".equals(ex.getMessage()))
+            {
+                throw ex;
+            }
+        }
+
+        final ErrorStream<String> i = new ErrorStream<>(null, new IOException("i"));
+        final ErrorStream<String> j = new ErrorStream<>(null, new IOException("j"));
+        final ErrorStream<String> k = new ErrorStream<>(null, new IOException("k"));
+        final IOStream<String> ijk = IOStreams.concat(i, j, k);
+
+        try (final IOStream<String> autoCloseIjk = ijk)
+        {
+            Assert.assertTrue(ijk.hasNext());
+            Assert.assertEquals(null, ijk.next());
+        }
+        catch (IOStreamCloseException ex)
+        {
+            Assert.assertEquals(
+                "k",
+                ex.getCause()
+                    .getMessage()
+            );
+            Assert.assertEquals(
+                "j",
+                ex.getCause()
+                    .getSuppressed()[0].getMessage()
+            );
+            Assert.assertEquals(
+                "i",
+                ex.getCause()
+                    .getSuppressed()[0].getSuppressed()[0].getMessage()
+            );
+        }
     }
 
     @Test

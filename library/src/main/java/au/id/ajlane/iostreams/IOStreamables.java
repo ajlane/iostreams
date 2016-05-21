@@ -152,10 +152,7 @@ public final class IOStreamables
                                 }
                                 catch (final IOStreamCloseException ex)
                                 {
-                                    throw new IOStreamReadException(
-                                        "Could not close one of the concatenated streams.",
-                                        ex
-                                    );
+                                    throw new IOStreamReadException(ex);
                                 }
                                 current = streamablesStream.hasNext() ?
                                     streamablesStream.next()
@@ -224,10 +221,7 @@ public final class IOStreamables
                                 }
                                 catch (final IOStreamCloseException ex)
                                 {
-                                    throw new IOStreamReadException(
-                                        "Could not close one of the concatenated streams.",
-                                        ex
-                                    );
+                                    throw new IOStreamReadException(ex);
                                 }
                                 index += 1;
                                 current = index < streamables.length ? streamables[index].stream() : null;

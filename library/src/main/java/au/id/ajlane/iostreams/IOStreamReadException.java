@@ -19,25 +19,24 @@ package au.id.ajlane.iostreams;
 /**
  * Indicates a problem when reading from a {@link IOStream}.
  */
-public class IOStreamReadException extends IOStreamException
+public final class IOStreamReadException extends IOStreamException
 {
     private static final long serialVersionUID = -1762416184437292517L;
 
     /**
-     * Constructs a new {@code IOStreamReadException} with the given message and cause.
+     * Constructs a new {@code IOStreamReadException} with the given cause.
      *
-     * @param message
-     *     A message describing the exception in terms of the {@link IOStream}. Must not be empty or {@code null}.
      * @param cause
-     *     The underlying cause of the issue. Must not be {@code null}.
+     *     The underlying cause of the issue. Must be a non-{@code null}, checked exception. An
+     *     {@link IOStreamException} will be replaced by its own cause.
      *
-     * @throws IllegalArgumentException
-     *     If the message is empty.
+     * @throws RuntimeException
+     *     If the cause is a runtime exception.
      * @throws NullPointerException
-     *     If the message or cause is {@code null}.
+     *     If the cause is {@code null}.
      */
-    public IOStreamReadException(final String message, final Exception cause)
+    public IOStreamReadException(final Exception cause)
     {
-        super(message, cause);
+        super("Could not read from the stream.", cause);
     }
 }

@@ -28,7 +28,7 @@ package au.id.ajlane.iostreams;
  * @see IOStreamables#map(IOStreamable, java.util.function.Supplier)
  */
 @FunctionalInterface
-public interface IOStreamTransform<T, R>
+public interface IOStreamTransform<T, R> extends AutoCloseable
 {
     /**
      * Transforms a single item in the {@link IOStream}.

@@ -28,55 +28,56 @@ public abstract class IOStreamException extends IOException
 {
     private static final long serialVersionUID = 2772263250587555205L;
 
-    private static Exception checkCause(final Exception cause)
+    private static Exception fixCause(final Exception cause)
     {
         if (cause == null)
         {
-            throw new NullPointerException(
-                "The cause of a " + IOStreamException.class.getSimpleName() + " cannot be null."
-            );
+            throw new NullPointerException("The cause cannot be null.");
         }
-        return cause;
-    }
-
-    private static String checkMessage(final String message, final Exception cause)
-    {
-        if (message == null)
+        else if (cause instanceof RuntimeException)
         {
-            final NullPointerException error = new NullPointerException(
-                "The message cannot be null."
-                    + " Try to describe the cause of the exception in terms of what the stream is doing."
-            );
-            error.addSuppressed(cause);
-            throw error;
+            throw (RuntimeException) cause;
         }
-        if (message.isEmpty())
+        else if (cause instanceof IOStreamException)
         {
-            final IllegalArgumentException error = new IllegalArgumentException(
-                "The message cannot be empty."
-                    + " Try to describe the cause of the exception in terms of what the stream is doing."
-            );
-            error.addSuppressed(cause);
-            throw error;
+            return ((IOStreamException) cause).getCause();
         }
-        return message;
+        else
+        {
+            return cause;
+        }
     }
 
     /**
      * Constructs a new {@code IOStreamException} with the given message and cause.
      *
      * @param message
-     *     A message describing the exception in terms of the {@link IOStream}. Must not be empty or {@code null}.
+     *     A message describing the exception. Must not be empty or {@code null}.
      * @param cause
-     *     The underlying cause of the issue. Must not be {@code null}.
+     *     The underlying cause of the issue. Must not be {@code null}. An {@code IOStreamException} will be replaced
+     *     with it's own cause.
      *
-     * @throws IllegalArgumentException
-     *     If the message is empty.
+     * @throws RuntimeException
+     *     if the given cause is a runtime exception.
      * @throws NullPointerException
-     *     If either the message or the cause is {@code null}.
+     *     if the given cause is {@code null}.
      */
-    protected IOStreamException(final String message, final Exception cause)
+    IOStreamException(final String message, final Exception cause)
     {
-        super(IOStreamException.checkMessage(message, cause), IOStreamException.checkCause(cause));
+        super(message, fixCause(cause));
+    }
+
+    /**
+     * The cause of the issue.
+     * <p>
+     * The cause of an {@code IOStreamException} is always a checked exception, and is never another {@link
+     * IOStreamException}.
+     *
+     * @return A non-null checked exception.
+     */
+    @Override
+    public Exception getCause()
+    {
+        return (Exception) super.getCause();
     }
 }

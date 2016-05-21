@@ -226,7 +226,7 @@ public class FileLineIOStream extends AbstractIOStream<FileLine>
             }
             catch (final IOException ex)
             {
-                throw new IOStreamCloseException("Could not close the underlying buffered reader.", ex);
+                throw new IOStreamCloseException(ex);
             }
         }
     }
@@ -241,7 +241,7 @@ public class FileLineIOStream extends AbstractIOStream<FileLine>
         }
         catch (final IOException ex)
         {
-            throw new IOStreamReadException("Could not read from the file.", ex);
+            throw new IOStreamReadException(ex);
         }
         if (value != null)
         {
@@ -265,7 +265,7 @@ public class FileLineIOStream extends AbstractIOStream<FileLine>
         }
         catch (final Exception ex)
         {
-            throw new IOStreamReadException("Could not open " + path + '.', ex);
+            throw new IOStreamReadException(new IOException("Could not open " + path + '.', ex));
         }
     }
 

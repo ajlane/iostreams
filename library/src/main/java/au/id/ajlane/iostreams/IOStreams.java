@@ -37,7 +37,6 @@ import java.util.stream.Stream;
  */
 public final class IOStreams
 {
-
     private static final EmptyIOStream EMPTY = new EmptyIOStream();
 
     /**
@@ -115,25 +114,12 @@ public final class IOStreams
             @Override
             protected void end() throws IOStreamCloseException
             {
-                try
+                try (
+                    final IOStream<? extends IOStream<? extends T>> autoCloseStreams = streams;
+                    final IOStream<? extends T> autoCloseCurrent = current
+                )
                 {
-                    if (current != null)
-                    {
-                        current.close();
-                    }
-                }
-                finally
-                {
-                    streams.close();
-                }
-            }
-
-            @Override
-            protected void open() throws IOStreamReadException
-            {
-                if (streams.hasNext())
-                {
-                    current = Objects.requireNonNull(streams.next(), "The first concatenated stream was null");
+                    // Auto close resources
                 }
             }
 
@@ -145,7 +131,6 @@ public final class IOStreams
                     if (Thread.interrupted())
                     {
                         throw new IOStreamReadException(
-                            "The thread was interrupted between two concatenated streams.",
                             new InterruptedException("The thread was interrupted.")
                         );
                     }
@@ -161,7 +146,7 @@ public final class IOStreams
                         }
                         catch (final IOStreamCloseException ex)
                         {
-                            throw new IOStreamReadException("Could not close one of the concatenated streams.", ex);
+                            throw new IOStreamReadException(ex.getCause());
                         }
                         current = streams.hasNext() ? Objects.requireNonNull(
                             streams.next(),
@@ -170,6 +155,15 @@ public final class IOStreams
                     }
                 }
                 return terminate();
+            }
+
+            @Override
+            protected void open() throws IOStreamReadException
+            {
+                if (streams.hasNext())
+                {
+                    current = Objects.requireNonNull(streams.next(), "The first concatenated stream was null");
+                }
             }
         };
     }
@@ -197,6 +191,70 @@ public final class IOStreams
             private int index = 0;
 
             @Override
+            protected void end() throws IOStreamCloseException
+            {
+                Exception lastException = null;
+                boolean caughtRuntimeException = false;
+                for (; index < streams.length; index++)
+                {
+                    if (streams[index] == null)
+                    {
+                        continue;
+                    }
+                    try
+                    {
+                        streams[index].close();
+                    }
+                    catch (final RuntimeException ex)
+                    {
+                        caughtRuntimeException = true;
+                        if (lastException != null)
+                        {
+                            ex.addSuppressed(lastException);
+                        }
+                        lastException = ex;
+                    }
+                    catch (final IOStreamException ex)
+                    {
+                        if (lastException != null)
+                        {
+                            ex.getCause()
+                                .addSuppressed(lastException);
+                        }
+                        lastException = ex.getCause();
+                    }
+                }
+                if (lastException != null)
+                {
+                    if (caughtRuntimeException)
+                    {
+                        if (lastException instanceof RuntimeException)
+                        {
+                            throw (RuntimeException) lastException;
+                        }
+                        else
+                        {
+                            throw new RuntimeException(
+                                "Suppressed a runtime exception with a checked exception.",
+                                lastException
+                            );
+                        }
+                    }
+                    else
+                    {
+                        if (lastException instanceof RuntimeException)
+                        {
+                            throw (RuntimeException) lastException;
+                        }
+                        else
+                        {
+                            throw new IOStreamCloseException(lastException);
+                        }
+                    }
+                }
+            }
+
+            @Override
             protected T find() throws IOStreamReadException
             {
                 while (index < streams.length)
@@ -217,71 +275,12 @@ public final class IOStreams
                         }
                         catch (final IOStreamCloseException ex)
                         {
-                            throw new IOStreamReadException("Could not close one of the concatenated streams.", ex);
+                            throw new IOStreamReadException(ex.getCause());
                         }
                         index += 1;
                     }
                 }
                 return terminate();
-            }
-
-            @Override
-            protected void end() throws IOStreamCloseException
-            {
-                Exception lastException = null;
-                boolean runtimeException = false;
-                for (; index < streams.length; index++)
-                {
-                    if (streams[index] == null)
-                    {
-                        continue;
-                    }
-                    try
-                    {
-                        streams[index].close();
-                    }
-                    catch (final RuntimeException ex)
-                    {
-                        runtimeException = true;
-                        if (lastException != null)
-                        {
-                            ex.addSuppressed(lastException);
-                        }
-                        lastException = ex;
-                    }
-                    catch (final Exception ex)
-                    {
-                        if (lastException != null)
-                        {
-                            ex.addSuppressed(lastException);
-                        }
-                        lastException = ex;
-                    }
-                }
-                if (lastException != null)
-                {
-                    if (runtimeException)
-                    {
-                        if (lastException instanceof RuntimeException)
-                        {
-                            throw (RuntimeException) lastException;
-                        }
-                        else
-                        {
-                            throw new RuntimeException(
-                                "Suppressed a runtime exception with a checked exception.",
-                                lastException
-                            );
-                        }
-                    }
-                    else
-                    {
-                        throw new IOStreamCloseException(
-                            "Could not close one or more of the concatenated streams.",
-                            lastException
-                        );
-                    }
-                }
             }
         };
     }
@@ -304,16 +303,12 @@ public final class IOStreams
     public static <T> void consume(final IOStream<T> stream)
         throws IOStreamReadException, IOStreamCloseException
     {
-        try
+        try (final IOStream<T> outer = stream)
         {
             while (stream.hasNext())
             {
                 stream.next();
             }
-        }
-        finally
-        {
-            stream.close();
         }
     }
 
@@ -335,7 +330,10 @@ public final class IOStreams
     public static <T> void consume(final IOStream<T> stream, final IOStreamConsumer<? super T> consumer)
         throws IOStreamReadException, IOStreamCloseException
     {
-        try
+        try (
+            final IOStream<T> autoCloseStream = stream;
+            final IOStreamConsumer<? super T> autoCloseConsumer = consumer
+        )
         {
             while (stream.hasNext())
             {
@@ -343,34 +341,23 @@ public final class IOStreams
                 {
                     consumer.accept(stream.next());
                 }
-                catch (final RuntimeException ex)
+                catch (final RuntimeException | IOStreamReadException | IOStreamCloseException ex)
                 {
                     throw ex;
                 }
                 catch (final Exception ex)
                 {
-                    throw new IOStreamReadException("Could not consume the next item in the stream.", ex);
+                    throw new IOStreamReadException(ex);
                 }
             }
         }
-        finally
+        catch (final RuntimeException | IOStreamReadException | IOStreamCloseException ex)
         {
-            try
-            {
-                consumer.close();
-            }
-            catch (final RuntimeException ex)
-            {
-                throw ex;
-            }
-            catch (final Exception ex)
-            {
-                throw new IOStreamCloseException("Could not close the consumer.", ex);
-            }
-            finally
-            {
-                stream.close();
-            }
+            throw ex;
+        }
+        catch (final Exception ex)
+        {
+            throw new IOStreamCloseException(ex);
         }
     }
 
@@ -396,7 +383,7 @@ public final class IOStreams
     public static <T> long count(final IOStream<T> stream)
         throws IOStreamReadException, IOStreamCloseException
     {
-        try
+        try (final IOStream<T> autoCloseStream = stream)
         {
             long count = 0;
             while (stream.hasNext())
@@ -408,10 +395,6 @@ public final class IOStreams
                 }
             }
             return count;
-        }
-        finally
-        {
-            stream.close();
         }
     }
 
@@ -454,21 +437,20 @@ public final class IOStreams
             @Override
             protected void end() throws IOStreamCloseException
             {
-                try
+                try (
+                    final IOStream<? extends T> autoCloseStream = stream;
+                    final IOStreamFilter<? super T> autoCloseFilter = filter
+                )
                 {
-                    filter.close();
+                    // Auto close resources
                 }
-                catch (final RuntimeException ex)
+                catch (final RuntimeException | IOStreamCloseException ex)
                 {
                     throw ex;
                 }
                 catch (final Exception ex)
                 {
-                    throw new IOStreamCloseException("Could not close the filter.", ex);
-                }
-                finally
-                {
-                    stream.close();
+                    throw new IOStreamCloseException(ex);
                 }
             }
 
@@ -480,7 +462,6 @@ public final class IOStreams
                     if (Thread.interrupted())
                     {
                         throw new IOStreamReadException(
-                            "The thread was interrupted while filtering the stream.",
                             new InterruptedException("The thread was interrupted.")
                         );
                     }
@@ -490,16 +471,13 @@ public final class IOStreams
                     {
                         decision = filter.apply(next);
                     }
-                    catch (final RuntimeException ex)
+                    catch (final RuntimeException | IOStreamReadException ex)
                     {
                         throw ex;
                     }
                     catch (final Exception ex)
                     {
-                        throw new IOStreamReadException(
-                            "Could not decide whether to keep or skip the next item in the stream.",
-                            ex
-                        );
+                        throw new IOStreamReadException(ex);
                     }
                     switch (decision)
                     {
@@ -633,7 +611,10 @@ public final class IOStreams
     {
         Objects.requireNonNull(stream, "The stream must not be null.");
         Objects.requireNonNull(accumulator, "The accumulator must not be null.");
-        try
+        try (
+            final IOStream<T> autoCloseStream = stream;
+            final IOStreamAccumulator<R, ? super T> autoCloseAccumulator = accumulator
+        )
         {
             R result = initial;
             while (stream.hasNext())
@@ -642,32 +623,13 @@ public final class IOStreams
             }
             return result;
         }
-        catch (final RuntimeException ex)
+        catch (final RuntimeException | IOStreamReadException ex)
         {
             throw ex;
         }
         catch (final Exception ex)
         {
-            throw new IOStreamReadException("Could not reduce the stream to a single value.", ex);
-        }
-        finally
-        {
-            try
-            {
-                accumulator.close();
-            }
-            catch (final RuntimeException ex)
-            {
-                throw ex;
-            }
-            catch (final Exception ex)
-            {
-                throw new IOStreamCloseException("Could not close the combiner.", ex);
-            }
-            finally
-            {
-                stream.close();
-            }
+            throw new IOStreamReadException(ex);
         }
     }
 
@@ -749,6 +711,26 @@ public final class IOStreams
         return new IOStream<T>()
         {
             @Override
+            public void close() throws IOStreamCloseException
+            {
+                if (iterator instanceof AutoCloseable)
+                {
+                    try
+                    {
+                        ((AutoCloseable) iterator).close();
+                    }
+                    catch (final RuntimeException | IOStreamCloseException ex)
+                    {
+                        throw ex;
+                    }
+                    catch (final Exception ex)
+                    {
+                        throw new IOStreamCloseException(ex);
+                    }
+                }
+            }
+
+            @Override
             public boolean hasNext()
             {
                 return iterator.hasNext();
@@ -758,26 +740,6 @@ public final class IOStreams
             public T next()
             {
                 return iterator.next();
-            }
-
-            @Override
-            public void close() throws IOStreamCloseException
-            {
-                if (iterator instanceof AutoCloseable)
-                {
-                    try
-                    {
-                        ((AutoCloseable) iterator).close();
-                    }
-                    catch (final RuntimeException ex)
-                    {
-                        throw ex;
-                    }
-                    catch (final Exception ex)
-                    {
-                        throw new IOStreamCloseException("Could not close underlying iterator.", ex);
-                    }
-                }
             }
         };
     }
@@ -913,43 +875,23 @@ public final class IOStreams
             private T next;
             private T previous;
 
-            private boolean samePartition(final T a, final T b) throws IOStreamReadException
-            {
-                try
-                {
-                    return predicate.test(a, b);
-                }
-                catch (final RuntimeException ex)
-                {
-                    throw ex;
-                }
-                catch (final Exception ex)
-                {
-                    throw new IOStreamReadException(
-                        "Could not determine whether two items were in the same group.",
-                        ex
-                    );
-                }
-            }
-
             @Override
             public void end() throws IOStreamCloseException
             {
-                try
+                try (
+                    final IOStream<T> autoCloseStream = stream;
+                    final IOStreamBiPredicate<? super T, ? super T> autoClosePredicate = predicate
+                )
                 {
-                    predicate.close();
+                    // Auto close resources
                 }
-                catch (RuntimeException ex)
+                catch (RuntimeException | IOStreamCloseException ex)
                 {
                     throw ex;
                 }
                 catch (Exception ex)
                 {
-                    throw new IOStreamCloseException("Could not close the predicate.", ex);
-                }
-                finally
-                {
-                    stream.close();
+                    throw new IOStreamCloseException(ex);
                 }
             }
 
@@ -1027,6 +969,22 @@ public final class IOStreams
                     }
                 };
             }
+
+            private boolean samePartition(final T a, final T b) throws IOStreamReadException
+            {
+                try
+                {
+                    return predicate.test(a, b);
+                }
+                catch (final RuntimeException | IOStreamReadException ex)
+                {
+                    throw ex;
+                }
+                catch (final Exception ex)
+                {
+                    throw new IOStreamReadException(ex);
+                }
+            }
         };
     }
 
@@ -1093,21 +1051,20 @@ public final class IOStreams
             @Override
             public void close() throws IOStreamCloseException
             {
-                try
+                try (
+                    final IOStream<? extends T> autoCloseStream = stream;
+                    final IOStreamTransform<? super T, ? extends R> autoCloseTransform = transform;
+                )
                 {
-                    transform.close();
+                    // Auto close resources
                 }
-                catch (final RuntimeException ex)
+                catch (final RuntimeException | IOStreamCloseException ex)
                 {
                     throw ex;
                 }
                 catch (final Exception ex)
                 {
-                    throw new IOStreamCloseException("Could not close the transform.", ex);
-                }
-                finally
-                {
-                    stream.close();
+                    throw new IOStreamCloseException(ex);
                 }
             }
 
@@ -1124,13 +1081,13 @@ public final class IOStreams
                 {
                     return transform.apply(stream.next());
                 }
-                catch (final RuntimeException ex)
+                catch (final RuntimeException | IOStreamReadException ex)
                 {
                     throw ex;
                 }
                 catch (final Exception ex)
                 {
-                    throw new IOStreamReadException("Could not transform the next item the in the stream.", ex);
+                    throw new IOStreamReadException(ex);
                 }
             }
         };
@@ -1173,36 +1130,21 @@ public final class IOStreams
             @Override
             public void end() throws IOStreamCloseException
             {
-                try
+                try (
+                    final IOStream<? extends T> autoCloseStream = stream;
+                    final IOStreamTransform<? super T, ? extends R> autoCloseTransform = transform;
+                    final IOStreamTransformExceptionHandler<? super T> autoCloseExceptionHandler = exceptionHandler;
+                )
                 {
-                    exceptionHandler.close();
+                    // Auto close resources
                 }
-                catch (final RuntimeException ex)
+                catch (final RuntimeException | IOStreamCloseException ex)
                 {
                     throw ex;
                 }
                 catch (final Exception ex)
                 {
-                    throw new IOStreamCloseException("Could not close the exception handler.", ex);
-                }
-                finally
-                {
-                    try
-                    {
-                        transform.close();
-                    }
-                    catch (final RuntimeException ex)
-                    {
-                        throw ex;
-                    }
-                    catch (final Exception ex)
-                    {
-                        throw new IOStreamCloseException("Could not close the transform.", ex);
-                    }
-                    finally
-                    {
-                        stream.close();
-                    }
+                    throw new IOStreamCloseException(ex);
                 }
             }
 
@@ -1214,7 +1156,6 @@ public final class IOStreams
                     if (Thread.interrupted())
                     {
                         throw new IOStreamReadException(
-                            "The thread was interrupted while transforming the stream.",
                             new InterruptedException("The thread was interrupted.")
                         );
                     }
@@ -1227,43 +1168,54 @@ public final class IOStreams
                     {
                         throw ex;
                     }
-                    catch (final Exception ex)
+                    catch (final Exception transformThrown)
                     {
+                        final Exception transformFailure = transformThrown instanceof IOStreamException ?
+                            ((IOStreamException) transformThrown).getCause() :
+                            transformThrown;
                         final FilterDecision decision;
                         try
                         {
-                            decision = exceptionHandler.handle(item, ex);
+                            decision = exceptionHandler.handle(item, transformFailure);
                         }
-                        catch (final RuntimeException ex2)
+                        catch (final RuntimeException handlerThrown)
                         {
-                            ex2.addSuppressed(ex);
-                            throw ex2;
+                            handlerThrown.addSuppressed(transformFailure);
+                            throw handlerThrown;
                         }
-                        catch (final Exception ex2)
+                        catch (final IOStreamException handlerThrown)
                         {
-                            ex2.addSuppressed(ex);
-                            throw new IOStreamReadException("The exception handler was unable to handle an exception "
-                                + "from the transform.", ex2);
+                            final Exception handlerFailure = handlerThrown.getCause();
+                            handlerFailure.addSuppressed(transformFailure);
+                            throw new IOStreamReadException(handlerFailure);
+                        }
+                        catch (final Exception handlerThrown)
+                        {
+                            handlerThrown.addSuppressed(transformFailure);
+                            throw new IOStreamReadException(handlerThrown);
+                        }
+                        if (decision == null)
+                        {
+                            final NullPointerException handlerFailure =
+                                new NullPointerException("The filter decision was null.");
+                            handlerFailure.addSuppressed(transformFailure);
+                            throw handlerFailure;
                         }
                         switch (decision)
                         {
                             case KEEP_AND_CONTINUE:
                             case KEEP_AND_TERMINATE:
-                                throw new IOStreamReadException(
-                                    "Could not transform the next item in the stream, but the exception handler chose "
-                                        + "not to skip the item.",
-                                    ex
-                                );
+                                throw new IOStreamReadException(transformFailure);
                             case SKIP_AND_CONTINUE:
                                 continue;
                             case SKIP_AND_TERMINATE:
                                 this.terminate = true;
                                 continue;
                             default:
-                                final IllegalStateException unrecognised =
-                                    new IllegalStateException("Unrecognised decision: " + decision);
-                                unrecognised.addSuppressed(ex);
-                                throw unrecognised;
+                                final UnsupportedOperationException handlerFailure =
+                                    new UnsupportedOperationException("Unrecognised decision: " + decision);
+                                handlerFailure.addSuppressed(transformFailure);
+                                throw handlerFailure;
                         }
                     }
                 }
@@ -1293,7 +1245,7 @@ public final class IOStreams
         throws IOStreamReadException, IOStreamCloseException
     {
         Optional<T> max = Optional.empty();
-        try
+        try (final IOStream<T> autoCloseStream = stream)
         {
             while (stream.hasNext())
             {
@@ -1304,10 +1256,7 @@ public final class IOStreams
                 }
             }
         }
-        finally
-        {
-            stream.close();
-        }
+
         return max;
     }
 
@@ -1357,21 +1306,20 @@ public final class IOStreams
             @Override
             public void close() throws IOStreamCloseException
             {
-                try
+                try (
+                    final IOStream<T> autoCloseStream = stream;
+                    final IOStreamConsumer<? super T> autoCloseObserver = observer
+                )
                 {
-                    observer.close();
+                    // Auto close resources
                 }
-                catch (RuntimeException ex)
+                catch (RuntimeException | IOStreamCloseException ex)
                 {
                     throw ex;
                 }
                 catch (Exception ex)
                 {
-                    throw new IOStreamCloseException("Could not close the observer.", ex);
-                }
-                finally
-                {
-                    stream.close();
+                    throw new IOStreamCloseException(ex);
                 }
             }
 
@@ -1389,13 +1337,13 @@ public final class IOStreams
                 {
                     observer.accept(next);
                 }
-                catch (RuntimeException ex)
+                catch (RuntimeException | IOStreamReadException ex)
                 {
                     throw ex;
                 }
                 catch (Exception ex)
                 {
-                    throw new IOStreamReadException("Could not observe the next value in the stream.", ex);
+                    throw new IOStreamReadException(ex);
                 }
                 return next;
             }
@@ -1427,33 +1375,11 @@ public final class IOStreams
             private final LinkedList<T> buffer = new LinkedList<>();
 
             @Override
-            public Iterable<T> peek(int n) throws IOStreamReadException
-            {
-                int extra = n - buffer.size();
-                for (int i = 0; i < extra && stream.hasNext(); i++)
-                {
-                    buffer.add(stream.next());
-                }
-                return buffer.subList(0, Integer.min(n, buffer.size()));
-            }
-
-            @Override
-            public PeekableIOStream<T> peekable()
-            {
-                return this;
-            }
-
-
-            @Override
             public void close() throws IOStreamCloseException
             {
-                try
+                try (final IOStream<T> autoCloseStream = stream)
                 {
                     buffer.clear();
-                }
-                finally
-                {
-                    stream.close();
                 }
             }
 
@@ -1475,6 +1401,23 @@ public final class IOStreams
                     buffer.clear();
                     return stream.next();
                 }
+            }
+
+            @Override
+            public Iterable<T> peek(int n) throws IOStreamReadException
+            {
+                int extra = n - buffer.size();
+                for (int i = 0; i < extra && stream.hasNext(); i++)
+                {
+                    buffer.add(stream.next());
+                }
+                return buffer.subList(0, Integer.min(n, buffer.size()));
+            }
+
+            @Override
+            public PeekableIOStream<T> peekable()
+            {
+                return this;
             }
         };
     }
@@ -1501,33 +1444,20 @@ public final class IOStreams
     public static <R, T> R reduce(final IOStream<T> stream, final IOStreamTransform<? super IOStream<T>, R> reducer)
         throws IOStreamReadException, IOStreamCloseException
     {
-        try
+        try (
+            final IOStream<T> autoCloseStream = stream;
+            final IOStreamTransform<? super IOStream<T>, R> autoCloseReducer = reducer
+        )
         {
             return reducer.apply(stream);
         }
-        catch (final RuntimeException ex)
+        catch (final RuntimeException | IOStreamReadException | IOStreamCloseException ex)
         {
             throw ex;
         }
         catch (final Exception ex)
         {
-            throw new IOStreamReadException("Could not reduce the stream to a single value.", ex);
-        }
-        finally
-        {
-            try
-            {
-                reducer.close();
-            }
-            catch (final RuntimeException ex)
-            {
-                throw ex;
-            }
-            catch (final Exception ex)
-            {
-                throw new IOStreamCloseException("Could not close the reducer.", ex);
-            }
-            stream.close();
+            throw new IOStreamReadException(ex);
         }
     }
 
@@ -1554,17 +1484,17 @@ public final class IOStreams
             @Override
             public void end() throws IOStreamCloseException
             {
-                try
+                try (final IOStreamSupplier<? extends T> autoCloseSupplier = supplier)
                 {
-                    supplier.close();
+                    // Auto close resources
                 }
-                catch (RuntimeException ex)
+                catch (RuntimeException | IOStreamCloseException ex)
                 {
                     throw ex;
                 }
                 catch (Exception ex)
                 {
-                    throw new IOStreamCloseException("Could not close the supplier.", ex);
+                    throw new IOStreamCloseException(ex);
                 }
                 finally
                 {
@@ -1583,13 +1513,13 @@ public final class IOStreams
                 {
                     return supplier.get();
                 }
-                catch (RuntimeException ex)
+                catch (RuntimeException | IOStreamReadException ex)
                 {
                     throw ex;
                 }
                 catch (Exception ex)
                 {
-                    throw new IOStreamReadException("Could not get the next item from the supplier.", ex);
+                    throw new IOStreamReadException(ex);
                 }
             }
         };

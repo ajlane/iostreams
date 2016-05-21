@@ -32,6 +32,33 @@ import java.util.function.IntFunction;
  */
 class EmptyIOStream implements PeekableIOStream
 {
+    private static class EmptyIOStreamWithResource extends EmptyIOStream
+    {
+        private final AutoCloseable resource;
+
+        public EmptyIOStreamWithResource(final AutoCloseable resource)
+        {
+            this.resource = resource;
+        }
+
+        @Override
+        public void close() throws IOStreamCloseException
+        {
+            try
+            {
+                resource.close();
+            }
+            catch (final RuntimeException | IOStreamCloseException ex)
+            {
+                throw ex;
+            }
+            catch (final Exception ex)
+            {
+                throw new IOStreamCloseException(ex);
+            }
+        }
+    }
+
     @Override
     public void close() throws IOStreamCloseException
     {
@@ -50,63 +77,27 @@ class EmptyIOStream implements PeekableIOStream
         {
             consumer.close();
         }
-        catch (final RuntimeException ex)
+        catch (final RuntimeException | IOStreamCloseException ex)
         {
             throw ex;
         }
         catch (final Exception ex)
         {
-            throw new IOStreamCloseException("Could not close the consumer.", ex);
+            throw new IOStreamCloseException(ex);
         }
     }
 
     @Override
     public IOStream filter(final IOStreamFilter filter)
     {
-        return new EmptyIOStream()
-        {
-            @Override
-            public void close() throws IOStreamCloseException
-            {
-                try
-                {
-                    filter.close();
-                }
-                catch (final RuntimeException ex)
-                {
-                    throw ex;
-                }
-                catch (final Exception ex)
-                {
-                    throw new IOStreamCloseException("Could not close the filter.", ex);
-                }
-            }
-        };
+        return new EmptyIOStreamWithResource(filter);
     }
 
     @SuppressWarnings("unchecked")
     @Override
     public IOStream flatMap(final IOStreamTransform transform)
     {
-        return new EmptyIOStream()
-        {
-            @Override
-            public void close() throws IOStreamCloseException
-            {
-                try
-                {
-                    transform.close();
-                }
-                catch (final RuntimeException ex)
-                {
-                    throw ex;
-                }
-                catch (final Exception ex)
-                {
-                    throw new IOStreamCloseException("Could not close the transform.", ex);
-                }
-            }
-        };
+        return new EmptyIOStreamWithResource(transform);
     }
 
     @Override
@@ -117,13 +108,13 @@ class EmptyIOStream implements PeekableIOStream
         {
             accumulator.close();
         }
-        catch (final RuntimeException ex)
+        catch (final RuntimeException | IOStreamReadException | IOStreamCloseException ex)
         {
             throw ex;
         }
         catch (final Exception ex)
         {
-            throw new IOStreamCloseException("Could not close the accumulator.", ex);
+            throw new IOStreamCloseException(ex);
         }
         return initial;
     }
@@ -141,25 +132,7 @@ class EmptyIOStream implements PeekableIOStream
     @Override
     public IOStream group(final IOStreamBiPredicate predicate)
     {
-        return new EmptyIOStream()
-        {
-            @Override
-            public void close() throws IOStreamCloseException
-            {
-                try
-                {
-                    predicate.close();
-                }
-                catch (final RuntimeException ex)
-                {
-                    throw ex;
-                }
-                catch (final Exception ex)
-                {
-                    throw new IOStreamCloseException("Could not close the grouping predicate.", ex);
-                }
-            }
-        };
+        return new EmptyIOStreamWithResource(predicate);
     }
 
     @Override
@@ -171,25 +144,7 @@ class EmptyIOStream implements PeekableIOStream
     @Override
     public IOStream keep(final IOStreamPredicate predicate)
     {
-        return new EmptyIOStream()
-        {
-            @Override
-            public void close() throws IOStreamCloseException
-            {
-                try
-                {
-                    predicate.close();
-                }
-                catch (final RuntimeException ex)
-                {
-                    throw ex;
-                }
-                catch (final Exception ex)
-                {
-                    throw new IOStreamCloseException("Could not close the predicate.", ex);
-                }
-            }
-        };
+        return new EmptyIOStreamWithResource(predicate);
     }
 
     @Override
@@ -205,25 +160,7 @@ class EmptyIOStream implements PeekableIOStream
     @Override
     public IOStream map(IOStreamTransform transform)
     {
-        return new EmptyIOStream()
-        {
-            @Override
-            public void close() throws IOStreamCloseException
-            {
-                try
-                {
-                    transform.close();
-                }
-                catch (RuntimeException ex)
-                {
-                    throw ex;
-                }
-                catch (Exception ex)
-                {
-                    throw new IOStreamCloseException("Could not close the transform.", ex);
-                }
-            }
-        };
+        return new EmptyIOStreamWithResource(transform);
     }
 
     @Override
@@ -232,40 +169,24 @@ class EmptyIOStream implements PeekableIOStream
         final IOStreamTransformExceptionHandler exceptionHandler
     )
     {
-        return new EmptyIOStream()
+        return new EmptyIOStreamWithResource(() ->
         {
-            @Override
-            public void close() throws IOStreamCloseException
+            try (
+                final IOStreamTransform autoCloseTransform = transform;
+                final IOStreamTransformExceptionHandler autoCloseExceptionHandler = exceptionHandler
+            )
             {
-                try
-                {
-                    exceptionHandler.close();
-                }
-                catch (RuntimeException ex)
-                {
-                    throw ex;
-                }
-                catch (Exception ex)
-                {
-                    throw new IOStreamCloseException("Could not close the exception handler.", ex);
-                }
-                finally
-                {
-                    try
-                    {
-                        transform.close();
-                    }
-                    catch (RuntimeException ex)
-                    {
-                        throw ex;
-                    }
-                    catch (Exception ex)
-                    {
-                        throw new IOStreamCloseException("Could not close the transform.", ex);
-                    }
-                }
+                // Auto close resources
             }
-        };
+            catch (RuntimeException | IOStreamCloseException ex)
+            {
+                throw ex;
+            }
+            catch (Exception ex)
+            {
+                throw new IOStreamCloseException(ex);
+            }
+        });
     }
 
     @Override
@@ -277,25 +198,7 @@ class EmptyIOStream implements PeekableIOStream
     @Override
     public IOStream observe(IOStreamConsumer observer)
     {
-        return new EmptyIOStream()
-        {
-            @Override
-            public void close() throws IOStreamCloseException
-            {
-                try
-                {
-                    observer.close();
-                }
-                catch (RuntimeException ex)
-                {
-                    throw ex;
-                }
-                catch (Exception ex)
-                {
-                    throw new IOStreamCloseException("Could not close the observer.", ex);
-                }
-            }
-        };
+        return new EmptyIOStreamWithResource(observer);
     }
 
     @Override
@@ -308,73 +211,19 @@ class EmptyIOStream implements PeekableIOStream
     public Object reduce(final IOStreamTransform reducer)
         throws IOStreamReadException, IOStreamCloseException
     {
-        return new EmptyIOStream()
-        {
-            @Override
-            public void close() throws IOStreamCloseException
-            {
-                try
-                {
-                    reducer.close();
-                }
-                catch (final RuntimeException ex)
-                {
-                    throw ex;
-                }
-                catch (final Exception ex)
-                {
-                    throw new IOStreamCloseException("Could not close the reducer.", ex);
-                }
-            }
-        };
+        return new EmptyIOStreamWithResource(reducer);
     }
 
     @Override
     public IOStream skip(IOStreamPredicate predicate)
     {
-        return new EmptyIOStream()
-        {
-            @Override
-            public void close() throws IOStreamCloseException
-            {
-                try
-                {
-                    predicate.close();
-                }
-                catch (final RuntimeException ex)
-                {
-                    throw ex;
-                }
-                catch (final Exception ex)
-                {
-                    throw new IOStreamCloseException("Could not close the predicate.", ex);
-                }
-            }
-        };
+        return new EmptyIOStreamWithResource(predicate);
     }
 
     @Override
     public IOStream split(IOStreamBiPredicate predicate)
     {
-        return new EmptyIOStream()
-        {
-            @Override
-            public void close() throws IOStreamCloseException
-            {
-                try
-                {
-                    predicate.close();
-                }
-                catch (final RuntimeException ex)
-                {
-                    throw ex;
-                }
-                catch (final Exception ex)
-                {
-                    throw new IOStreamCloseException("Could not close the predicate.", ex);
-                }
-            }
-        };
+        return new EmptyIOStreamWithResource(predicate);
     }
 
     @Override

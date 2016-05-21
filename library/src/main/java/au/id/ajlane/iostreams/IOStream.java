@@ -284,7 +284,9 @@ public interface IOStream<T> extends Closeable
      *
      * @param comparator
      *     A comparator to use to compare items in the stream. Must not be null.
+     *
      * @return The maximum value in the stream, or an empty value if the stream is empty or if the maximum is null.
+     *
      * @throws IOStreamReadException
      *     If there was a problem in reading the stream.
      * @throws IOStreamCloseException
@@ -302,7 +304,9 @@ public interface IOStream<T> extends Closeable
      *
      * @param comparator
      *     A comparator to use to compare items in the stream. Must not be null.
+     *
      * @return The minimum value in the stream, or an empty value if the stream is empty or if the minimum is null.
+     *
      * @throws IOStreamReadException
      *     If there was a problem in reading the stream.
      * @throws IOStreamCloseException

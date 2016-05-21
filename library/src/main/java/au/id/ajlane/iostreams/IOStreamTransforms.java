@@ -71,7 +71,7 @@ public final class IOStreamTransforms
      *
      * @return A {@link IOStreamTransform}.
      */
-    public static <T, I, R> IOStreamTransform<T, R> pipe(
+    public static <T, I, R> IOStreamTransform<T, R> map(
         final IOStreamTransform<T, I> a,
         final IOStreamTransform<I, R> b
     )

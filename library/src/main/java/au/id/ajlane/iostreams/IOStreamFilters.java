@@ -312,7 +312,7 @@ public final class IOStreamFilters
                     }
                     else
                     {
-                        throw new IOStreamCloseException("Could not close one or more of the filters.", lastException);
+                        throw new IOStreamCloseException(lastException);
                     }
                 }
             }
