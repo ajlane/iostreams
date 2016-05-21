@@ -341,7 +341,7 @@ public final class IOStreams
                 {
                     consumer.accept(stream.next());
                 }
-                catch (final RuntimeException | IOStreamReadException | IOStreamCloseException ex)
+                catch (final RuntimeException | IOStreamException ex)
                 {
                     throw ex;
                 }
@@ -1053,7 +1053,7 @@ public final class IOStreams
             {
                 try (
                     final IOStream<? extends T> autoCloseStream = stream;
-                    final IOStreamTransform<? super T, ? extends R> autoCloseTransform = transform;
+                    final IOStreamTransform<? super T, ? extends R> autoCloseTransform = transform
                 )
                 {
                     // Auto close resources
@@ -1133,7 +1133,7 @@ public final class IOStreams
                 try (
                     final IOStream<? extends T> autoCloseStream = stream;
                     final IOStreamTransform<? super T, ? extends R> autoCloseTransform = transform;
-                    final IOStreamTransformExceptionHandler<? super T> autoCloseExceptionHandler = exceptionHandler;
+                    final IOStreamTransformExceptionHandler<? super T> autoCloseExceptionHandler = exceptionHandler
                 )
                 {
                     // Auto close resources
@@ -1449,7 +1449,18 @@ public final class IOStreams
             final IOStreamTransform<? super IOStream<T>, R> autoCloseReducer = reducer
         )
         {
-            return reducer.apply(stream);
+            try
+            {
+                return reducer.apply(stream);
+            }
+            catch (RuntimeException | IOStreamException ex)
+            {
+                throw ex;
+            }
+            catch (Exception ex)
+            {
+                throw new IOStreamReadException(ex);
+            }
         }
         catch (final RuntimeException | IOStreamReadException | IOStreamCloseException ex)
         {
@@ -1457,7 +1468,7 @@ public final class IOStreams
         }
         catch (final Exception ex)
         {
-            throw new IOStreamReadException(ex);
+            throw new IOStreamCloseException(ex);
         }
     }
 

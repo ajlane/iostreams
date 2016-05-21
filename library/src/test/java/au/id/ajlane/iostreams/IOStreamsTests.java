@@ -124,6 +124,7 @@ public class IOStreamsTests
         final ErrorStream<String> k = new ErrorStream<>(null, new IOException("k"));
         final IOStream<String> ijk = IOStreams.concat(i, j, k);
 
+        boolean closeFailed = false;
         try (final IOStream<String> autoCloseIjk = ijk)
         {
             Assert.assertTrue(ijk.hasNext());
@@ -131,6 +132,7 @@ public class IOStreamsTests
         }
         catch (IOStreamCloseException ex)
         {
+            closeFailed = true;
             Assert.assertEquals(
                 "k",
                 ex.getCause()
@@ -147,6 +149,7 @@ public class IOStreamsTests
                     .getSuppressed()[0].getSuppressed()[0].getMessage()
             );
         }
+        Assert.assertTrue(closeFailed);
     }
 
     @Test
@@ -349,7 +352,7 @@ public class IOStreamsTests
             // Expected
         }
 
-        try (final IOStream<String> f = IOStreams.flattenArrays(IOStreams.<String[]>fromArray(null, null)))
+        try (final IOStream<String> f = IOStreams.flattenArrays(IOStreams.fromArray(null, null)))
         {
             f.toArray(String[]::new);
             Assert.fail();
@@ -821,13 +824,41 @@ public class IOStreamsTests
     @Test
     public void testReduce() throws IOStreamException
     {
-        final IOStream<String> a = IOStreams.fromArray("a1", "a2", "a3", "a4", "a5");
-        final String aReduced = a.reduce(values -> {
-            final StringBuilder builder = new StringBuilder();
-            values.consume(builder::append);
-            return builder.toString();
-        });
-        Assert.assertEquals("a1a2a3a4a5", aReduced);
+        try (final IOStream<String> a = IOStreams.fromArray("a1", "a2", "a3", "a4", "a5"))
+        {
+            final String aReduced = a.reduce(values -> {
+                final StringBuilder builder = new StringBuilder();
+                values.consume(builder::append);
+                return builder.toString();
+            });
+            Assert.assertEquals("a1a2a3a4a5", aReduced);
+        }
+
+        try (final IOStream<Integer> b = IOStreams.fromArray(1, 2, 3, 4, 5))
+        {
+            b.reduce(new IOStreamTransform<IOStream<Integer>, Integer>()
+            {
+                @Override
+                public Integer apply(final IOStream<Integer> values) throws Exception
+                {
+                    return 0;
+                }
+
+                @Override
+                public void close() throws Exception
+                {
+                    throw new IOException("b");
+                }
+            });
+            Assert.fail();
+        }
+        catch (IOStreamCloseException ex)
+        {
+            Assert.assertEquals("b",
+                ex.getCause()
+                    .getMessage()
+            );
+        }
     }
 
     @Test
@@ -913,7 +944,7 @@ public class IOStreamsTests
     public void testSingletonStream() throws IOStreamException
     {
         final String singleton = "a";
-        try (final IOStream<Object> stream = IOStreams.<Object>singleton(singleton))
+        try (final IOStream<Object> stream = IOStreams.singleton(singleton))
         {
             Assert.assertTrue(stream.hasNext());
             Assert.assertEquals(singleton, stream.next());
