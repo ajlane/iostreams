@@ -102,6 +102,7 @@ public interface IOStream<T> extends Closeable
      * Consumes the stream in order to count all of the items.
      *
      * @return The number of items in the stream, or {@link Long#MAX_VALUE} if there are too many items to count.
+     *
      * @throws IOStreamReadException
      *     If there was a problem in reading the stream.
      * @throws IOStreamCloseException

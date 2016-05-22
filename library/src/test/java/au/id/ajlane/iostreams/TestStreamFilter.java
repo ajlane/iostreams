@@ -24,8 +24,6 @@ package au.id.ajlane.iostreams;
  */
 public class TestStreamFilter<T> implements IOStreamFilter<T>
 {
-    private final IOStreamFilter<T> filter;
-
     /**
      * Wraps another filter to provide test metrics.
      *
@@ -40,25 +38,25 @@ public class TestStreamFilter<T> implements IOStreamFilter<T>
     {
         return new TestStreamFilter<>(filter);
     }
+    private final IOStreamFilter<T> filter;
+    private boolean closed = false;
 
     private TestStreamFilter(final IOStreamFilter<T> filter)
     {
         this.filter = filter;
     }
 
-    private boolean closed = false;
+    @Override
+    public FilterDecision apply(final T item) throws Exception
+    {
+        return filter.apply(item);
+    }
 
     @Override
     public void close() throws Exception
     {
         filter.close();
         closed = true;
-    }
-
-    @Override
-    public FilterDecision apply(final T item) throws Exception
-    {
-        return filter.apply(item);
     }
 
     /**

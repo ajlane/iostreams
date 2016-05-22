@@ -19,17 +19,19 @@ package au.id.ajlane.iostreams;
 /**
  * A wrapper for streams that provides additional metrics for testing.
  *
- * @param <T> The type of the items in the stream.
+ * @param <T>
+ *     The type of the items in the stream.
  */
 public class TestStream<T> implements IOStream<T>
 {
-    private final IOStream<T> stream;
-
     /**
      * Wraps another stream to provide test metrics.
      *
-     * @param stream The stream to wrap.
-     * @param <T> The type of the items in the stream.
+     * @param stream
+     *     The stream to wrap.
+     * @param <T>
+     *     The type of the items in the stream.
+     *
      * @return A test stream that delegates to the given stream.
      */
     public static <T> TestStream<T> wrap(final IOStream<T> stream)
@@ -39,21 +41,26 @@ public class TestStream<T> implements IOStream<T>
 
     /**
      * Creates a test stream containing the given items.
-     * @param items The items that the stream should provide.
-     * @param <T> The type of the items.
+     *
+     * @param items
+     *     The items that the stream should provide.
+     * @param <T>
+     *     The type of the items.
+     *
      * @return A test stream.
      */
+    @SafeVarargs
     public static <T> TestStream<T> of(final T... items)
     {
         return wrap(IOStreams.fromArray(items));
     }
+    private final IOStream<T> stream;
+    private boolean closed = false;
 
     private TestStream(final IOStream<T> stream)
     {
         this.stream = stream;
     }
-
-    private boolean closed = false;
 
     @Override
     public void close() throws IOStreamCloseException

@@ -16,14 +16,14 @@
 
 package au.id.ajlane.iostreams;
 
-import org.junit.Assert;
-import org.junit.Test;
-
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.NoSuchElementException;
 import java.util.Set;
+
+import org.junit.Assert;
+import org.junit.Test;
 
 /**
  * Tests {@link IOStreamFilters}.

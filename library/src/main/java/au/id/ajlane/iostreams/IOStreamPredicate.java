@@ -19,7 +19,8 @@ package au.id.ajlane.iostreams;
 /**
  * A predicate for testing whether items match some criteria.
  *
- * @param <T> The type of the items.
+ * @param <T>
+ *     The type of the items.
  */
 @FunctionalInterface
 public interface IOStreamPredicate<T> extends AutoCloseable
@@ -31,6 +32,7 @@ public interface IOStreamPredicate<T> extends AutoCloseable
 
     /**
      * Inverts the predicate to match the opposite set of values.
+     *
      * @return An inverted predicate.
      */
     default IOStreamPredicate<T> invert()
@@ -41,9 +43,13 @@ public interface IOStreamPredicate<T> extends AutoCloseable
     /**
      * Tests whether an item matches the predicate.
      *
-     * @param item The item to test.
+     * @param item
+     *     The item to test.
+     *
      * @return {@code true} if the item matches, {@code false} otherwise.
-     * @throws Exception If there was a problem with testing the item.
+     *
+     * @throws Exception
+     *     If there was a problem with testing the item.
      */
     boolean test(final T item) throws Exception;
 }

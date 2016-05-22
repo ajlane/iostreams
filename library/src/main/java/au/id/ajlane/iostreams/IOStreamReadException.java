@@ -21,14 +21,14 @@ package au.id.ajlane.iostreams;
  */
 public final class IOStreamReadException extends IOStreamException
 {
-    private static final long serialVersionUID = -1762416184437292517L;
+    private static final long serialVersionUID = 7791390013204923834L;
 
     /**
      * Constructs a new {@code IOStreamReadException} with the given cause.
      *
      * @param cause
-     *     The underlying cause of the issue. Must be a non-{@code null}, checked exception. An
-     *     {@link IOStreamException} will be replaced by its own cause.
+     *     The underlying cause of the issue. Must be a non-{@code null}, checked exception. An {@link
+     *     IOStreamException} will be replaced by its own cause.
      *
      * @throws RuntimeException
      *     If the cause is a runtime exception.

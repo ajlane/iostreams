@@ -33,12 +33,6 @@ public final class IOStreamables
     private static final IOStreamable<?> EMPTY = new IOStreamable<Object>()
     {
         @Override
-        public int hashCode()
-        {
-            return 1;
-        }
-
-        @Override
         public boolean equals(final Object obj)
         {
             return obj.getClass()
@@ -46,15 +40,21 @@ public final class IOStreamables
         }
 
         @Override
-        public String toString()
+        public int hashCode()
         {
-            return "{}";
+            return 1;
         }
 
         @Override
         public IOStream<Object> stream()
         {
             return IOStreams.empty();
+        }
+
+        @Override
+        public String toString()
+        {
+            return "{}";
         }
     };
 
@@ -126,16 +126,6 @@ public final class IOStreamables
                     }
 
                     @Override
-                    protected void open() throws IOStreamReadException
-                    {
-                        if (streamablesStream.hasNext())
-                        {
-                            current = streamablesStream.next()
-                                .stream();
-                        }
-                    }
-
-                    @Override
                     protected T find() throws IOStreamReadException
                     {
                         while (current != null)
@@ -161,6 +151,16 @@ public final class IOStreamables
                             }
                         }
                         return super.find();
+                    }
+
+                    @Override
+                    protected void open() throws IOStreamReadException
+                    {
+                        if (streamablesStream.hasNext())
+                        {
+                            current = streamablesStream.next()
+                                .stream();
+                        }
                     }
                 };
             }
@@ -196,11 +196,11 @@ public final class IOStreamables
                     private int index = 0;
 
                     @Override
-                    protected void open()
+                    protected void end() throws IOStreamCloseException
                     {
-                        if (index < streamables.length)
+                        if (current != null)
                         {
-                            current = streamables[index].stream();
+                            current.close();
                         }
                     }
 
@@ -231,11 +231,11 @@ public final class IOStreamables
                     }
 
                     @Override
-                    protected void end() throws IOStreamCloseException
+                    protected void open()
                     {
-                        if (current != null)
+                        if (index < streamables.length)
                         {
-                            current.close();
+                            current = streamables[index].stream();
                         }
                     }
                 };

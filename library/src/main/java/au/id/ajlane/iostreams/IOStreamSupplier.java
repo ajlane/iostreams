@@ -26,6 +26,11 @@ package au.id.ajlane.iostreams;
 public interface IOStreamSupplier<T> extends AutoCloseable
 {
 
+    @Override
+    default void close() throws Exception
+    {
+    }
+
     /**
      * Provides the next item to supply.
      *
@@ -35,9 +40,4 @@ public interface IOStreamSupplier<T> extends AutoCloseable
      *     If there was a problem with consuming the item.
      */
     T get() throws Exception;
-
-    @Override
-    default void close() throws Exception
-    {
-    }
 }

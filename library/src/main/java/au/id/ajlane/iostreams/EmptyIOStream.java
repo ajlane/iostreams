@@ -202,6 +202,18 @@ class EmptyIOStream implements PeekableIOStream
     }
 
     @Override
+    public Object peek() throws IOStreamReadException
+    {
+        throw new NoSuchElementException("The stream does not contain any items.");
+    }
+
+    @Override
+    public Iterable peek(int n) throws IOStreamReadException
+    {
+        return Collections.emptyList();
+    }
+
+    @Override
     public PeekableIOStream peekable()
     {
         return this;
@@ -242,17 +254,5 @@ class EmptyIOStream implements PeekableIOStream
     public Set<Object> toSet() throws IOStreamReadException, IOStreamCloseException
     {
         return Collections.emptySet();
-    }
-
-    @Override
-    public Object peek() throws IOStreamReadException
-    {
-        throw new NoSuchElementException("The stream does not contain any items.");
-    }
-
-    @Override
-    public Iterable peek(int n) throws IOStreamReadException
-    {
-        return Collections.emptyList();
     }
 }

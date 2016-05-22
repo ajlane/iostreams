@@ -736,6 +736,97 @@ public class IOStreamsTests
     }
 
     @Test
+    public void testMap() throws IOStreamException
+    {
+        try (final IOStream<String> a = IOStreams.map(TestStream.of("a1", "a2", "a3"), s -> s.replace('a', 'z')))
+        {
+            Assert.assertArrayEquals(new String[]{"z1", "z2", "z3"}, a.toArray(String[]::new));
+        }
+
+        try (final IOStream<String> b = IOStreams.map(
+            TestStream.of("b1", "b2", "b3"),
+            new IOStreamTransform<String, String>()
+            {
+                @Override
+                public String apply(final String item)
+                {
+                    return item.replace('b', 'z');
+                }
+
+                @Override
+                public void close() throws IOException
+                {
+                    throw new IOException("b");
+                }
+            }
+        ))
+        {
+            Assert.assertArrayEquals(new String[]{"z1", "z2", "z3"}, b.toArray(String[]::new));
+        }
+        catch (IOStreamCloseException ex)
+        {
+            Assert.assertEquals(
+                "b",
+                ex.getCause()
+                    .getMessage()
+            );
+        }
+
+        boolean caughtCloseException = false;
+        try (final IOStream<String> c = IOStreams.map(
+            new ErrorStream<>(new IOException("c-read"), new RuntimeException("c-close")),
+            new IOStreamTransform<String, String>()
+            {
+                @Override
+                public String apply(final String item)
+                {
+                    throw new RuntimeException("c-map");
+                }
+
+                @Override
+                public void close() throws IOException
+                {
+                    throw new IOException("c-map-close");
+                }
+            }
+        ))
+        {
+            boolean caughtReadException = false;
+            try
+            {
+                c.hasNext();
+                Assert.fail();
+            }
+            catch (IOStreamReadException ex)
+            {
+                caughtReadException = true;
+                Assert.assertEquals(
+                    "c-read",
+                    ex.getCause()
+                        .getMessage()
+                );
+            }
+            Assert.assertTrue(caughtReadException);
+        }
+        catch (IOStreamCloseException ex)
+        {
+            caughtCloseException = true;
+            Assert.assertEquals(
+                "c-map-close",
+                ex.getCause()
+                    .getMessage()
+            );
+            Assert.assertEquals(
+                "c-close",
+                ex.getCause()
+                    .getSuppressed()[0]
+                    .getMessage()
+            );
+        }
+        Assert.assertTrue(caughtCloseException);
+    }
+
+    @Test
     public void testObserve() throws IOStreamException
     {
         final IOStream<String> a = IOStreams.fromArray("a1", "a2", "a3", "a4", "a5");
@@ -854,7 +945,8 @@ public class IOStreamsTests
         }
         catch (IOStreamCloseException ex)
         {
-            Assert.assertEquals("b",
+            Assert.assertEquals(
+                "b",
                 ex.getCause()
                     .getMessage()
             );

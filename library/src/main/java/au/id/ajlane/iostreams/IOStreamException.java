@@ -26,7 +26,7 @@ import java.io.IOException;
  */
 public abstract class IOStreamException extends IOException
 {
-    private static final long serialVersionUID = 2772263250587555205L;
+    private static final long serialVersionUID = -7730103429830744318L;
 
     private static Exception fixCause(final Exception cause)
     {

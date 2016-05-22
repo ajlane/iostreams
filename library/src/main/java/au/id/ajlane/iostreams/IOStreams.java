@@ -351,7 +351,7 @@ public final class IOStreams
                 }
             }
         }
-        catch (final RuntimeException | IOStreamReadException | IOStreamCloseException ex)
+        catch (final RuntimeException ex)
         {
             throw ex;
         }
@@ -444,7 +444,7 @@ public final class IOStreams
                 {
                     // Auto close resources
                 }
-                catch (final RuntimeException | IOStreamCloseException ex)
+                catch (final RuntimeException ex)
                 {
                     throw ex;
                 }
@@ -471,7 +471,7 @@ public final class IOStreams
                     {
                         decision = filter.apply(next);
                     }
-                    catch (final RuntimeException | IOStreamReadException ex)
+                    catch (final RuntimeException ex)
                     {
                         throw ex;
                     }
@@ -623,7 +623,7 @@ public final class IOStreams
             }
             return result;
         }
-        catch (final RuntimeException | IOStreamReadException ex)
+        catch (final RuntimeException ex)
         {
             throw ex;
         }
@@ -719,7 +719,7 @@ public final class IOStreams
                     {
                         ((AutoCloseable) iterator).close();
                     }
-                    catch (final RuntimeException | IOStreamCloseException ex)
+                    catch (final RuntimeException ex)
                     {
                         throw ex;
                     }
@@ -885,7 +885,7 @@ public final class IOStreams
                 {
                     // Auto close resources
                 }
-                catch (RuntimeException | IOStreamCloseException ex)
+                catch (RuntimeException ex)
                 {
                     throw ex;
                 }
@@ -976,7 +976,7 @@ public final class IOStreams
                 {
                     return predicate.test(a, b);
                 }
-                catch (final RuntimeException | IOStreamReadException ex)
+                catch (final RuntimeException ex)
                 {
                     throw ex;
                 }
@@ -1058,7 +1058,7 @@ public final class IOStreams
                 {
                     // Auto close resources
                 }
-                catch (final RuntimeException | IOStreamCloseException ex)
+                catch (final RuntimeException ex)
                 {
                     throw ex;
                 }
@@ -1081,7 +1081,7 @@ public final class IOStreams
                 {
                     return transform.apply(stream.next());
                 }
-                catch (final RuntimeException | IOStreamReadException ex)
+                catch (final RuntimeException ex)
                 {
                     throw ex;
                 }
@@ -1138,7 +1138,7 @@ public final class IOStreams
                 {
                     // Auto close resources
                 }
-                catch (final RuntimeException | IOStreamCloseException ex)
+                catch (final RuntimeException ex)
                 {
                     throw ex;
                 }
@@ -1313,7 +1313,7 @@ public final class IOStreams
                 {
                     // Auto close resources
                 }
-                catch (RuntimeException | IOStreamCloseException ex)
+                catch (RuntimeException ex)
                 {
                     throw ex;
                 }
@@ -1337,7 +1337,7 @@ public final class IOStreams
                 {
                     observer.accept(next);
                 }
-                catch (RuntimeException | IOStreamReadException ex)
+                catch (RuntimeException ex)
                 {
                     throw ex;
                 }
@@ -1462,7 +1462,7 @@ public final class IOStreams
                 throw new IOStreamReadException(ex);
             }
         }
-        catch (final RuntimeException | IOStreamReadException | IOStreamCloseException ex)
+        catch (final RuntimeException ex)
         {
             throw ex;
         }
@@ -1499,7 +1499,7 @@ public final class IOStreams
                 {
                     // Auto close resources
                 }
-                catch (RuntimeException | IOStreamCloseException ex)
+                catch (RuntimeException ex)
                 {
                     throw ex;
                 }
@@ -1524,7 +1524,7 @@ public final class IOStreams
                 {
                     return supplier.get();
                 }
-                catch (RuntimeException | IOStreamReadException ex)
+                catch (RuntimeException ex)
                 {
                     throw ex;
                 }

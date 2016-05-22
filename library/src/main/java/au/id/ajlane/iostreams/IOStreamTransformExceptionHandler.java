@@ -48,7 +48,8 @@ public interface IOStreamTransformExceptionHandler<T> extends AutoCloseable
      *
      * @return A filter decision.
      *
-     * @throws Exception If the item or exception could not be handled.
+     * @throws Exception
+     *     If the item or exception could not be handled.
      */
     FilterDecision handle(T item, Exception ex) throws Exception;
 }

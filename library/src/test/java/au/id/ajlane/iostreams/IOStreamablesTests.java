@@ -16,15 +16,15 @@
 
 package au.id.ajlane.iostreams;
 
-import org.junit.Assert;
-import org.junit.Test;
-
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.NoSuchElementException;
+
+import org.junit.Assert;
+import org.junit.Test;
 
 /**
  * Tests {@link IOStreamables}.
@@ -204,7 +204,7 @@ public class IOStreamablesTests
             IOStreamablesTests.EMPTY,
             IOStreamables.toArray(
                 IOStreamables.filter(
-                    IOStreamables.<String>empty(),
+                    IOStreamables.empty(),
                     () -> IOStreamFilters.whitelist("c2", "c3")
                 ), String[]::new
             )
@@ -307,7 +307,7 @@ public class IOStreamablesTests
             // Expected
         }
 
-        final IOStreamable<String> f = IOStreamables.flattenArrays(IOStreamables.<String[]>fromArray(null, null));
+        final IOStreamable<String> f = IOStreamables.flattenArrays(IOStreamables.fromArray(null, null));
         try
         {
             IOStreamables.toArray(f, String[]::new);
@@ -432,7 +432,7 @@ public class IOStreamablesTests
                         IOStreamables.fromArray(
                             "d1",
                             "d2"
-                        ), IOStreamables.<String>fromArray()
+                        ), IOStreamables.fromArray()
                     )
                 ), String[]::new
             )
@@ -442,7 +442,7 @@ public class IOStreamablesTests
             IOStreamables.toArray(
                 IOStreamables.flattenStreamables(
                     IOStreamables.fromArray(
-                        IOStreamables.<String>fromArray(),
+                        IOStreamables.fromArray(),
                         IOStreamables.fromArray("e1", "e2")
                     )
                 ), String[]::new
@@ -471,7 +471,7 @@ public class IOStreamablesTests
         }
 
         final IOStreamable<String> f = IOStreamables.flattenStreamables(
-            IOStreamables.<IOStreamable<String>>fromArray(
+            IOStreamables.fromArray(
                 null,
                 null
             )
@@ -528,7 +528,7 @@ public class IOStreamablesTests
     @Test
     public void testSingletonStreamable() throws IOStreamException
     {
-        final IOStreamable<Object> a = IOStreamables.<Object>singleton("a");
+        final IOStreamable<Object> a = IOStreamables.singleton("a");
         try (final IOStream<Object> stream = a.stream())
         {
             Assert.assertTrue(stream.hasNext());

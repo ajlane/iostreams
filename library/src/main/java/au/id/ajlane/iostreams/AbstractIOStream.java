@@ -45,53 +45,6 @@ public abstract class AbstractIOStream<T> implements IOStream<T>
         this.state = AbstractIOStream.State.CLOSED;
     }
 
-    @Override
-    public final boolean hasNext() throws IOStreamReadException
-    {
-        while (true)
-        {
-            switch (this.state)
-            {
-                case NEW:
-                    this.doOpen();
-                    continue;
-                case NEEDS_NEXT:
-                    this.doFind();
-                    continue;
-                case HAS_NEXT:
-                    return true;
-                case TERMINATED:
-                case CLOSED:
-                default:
-                    return false;
-            }
-        }
-    }
-
-    @Override
-    public final T next() throws IOStreamReadException
-    {
-        while (true)
-        {
-            switch (this.state)
-            {
-                case NEW:
-                    this.doOpen();
-                    continue;
-                case NEEDS_NEXT:
-                    this.doFind();
-                    continue;
-                case HAS_NEXT:
-                    this.state = AbstractIOStream.State.NEEDS_NEXT;
-                    return this.next;
-                case TERMINATED:
-                case CLOSED:
-                default:
-                    throw new NoSuchElementException("There is no next item.");
-            }
-        }
-    }
-
     private void doFind() throws IOStreamReadException
     {
         this.next = this.find();
@@ -145,6 +98,53 @@ public abstract class AbstractIOStream<T> implements IOStream<T>
     protected T find() throws IOStreamReadException
     {
         return this.terminate();
+    }
+
+    @Override
+    public final boolean hasNext() throws IOStreamReadException
+    {
+        while (true)
+        {
+            switch (this.state)
+            {
+                case NEW:
+                    this.doOpen();
+                    continue;
+                case NEEDS_NEXT:
+                    this.doFind();
+                    continue;
+                case HAS_NEXT:
+                    return true;
+                case TERMINATED:
+                case CLOSED:
+                default:
+                    return false;
+            }
+        }
+    }
+
+    @Override
+    public final T next() throws IOStreamReadException
+    {
+        while (true)
+        {
+            switch (this.state)
+            {
+                case NEW:
+                    this.doOpen();
+                    continue;
+                case NEEDS_NEXT:
+                    this.doFind();
+                    continue;
+                case HAS_NEXT:
+                    this.state = AbstractIOStream.State.NEEDS_NEXT;
+                    return this.next;
+                case TERMINATED:
+                case CLOSED:
+                default:
+                    throw new NoSuchElementException("There is no next item.");
+            }
+        }
     }
 
     /**

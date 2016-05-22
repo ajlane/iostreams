@@ -252,23 +252,6 @@ public class FileLineIOStream extends AbstractIOStream<FileLine>
         return terminate();
     }
 
-    @Override
-    protected void open() throws IOStreamReadException
-    {
-        try
-        {
-            this.reader = supplier.call();
-        }
-        catch (final RuntimeException ex)
-        {
-            throw ex;
-        }
-        catch (final Exception ex)
-        {
-            throw new IOStreamReadException(new IOException("Could not open " + path + '.', ex));
-        }
-    }
-
     /**
      * Provides the number of lines which have been read from this {@code FileLineIOStream} so far.
      *
@@ -287,6 +270,23 @@ public class FileLineIOStream extends AbstractIOStream<FileLine>
     public String getPath()
     {
         return path;
+    }
+
+    @Override
+    protected void open() throws IOStreamReadException
+    {
+        try
+        {
+            this.reader = supplier.call();
+        }
+        catch (final RuntimeException ex)
+        {
+            throw ex;
+        }
+        catch (final Exception ex)
+        {
+            throw new IOStreamReadException(new IOException("Could not open " + path + '.', ex));
+        }
     }
 
     @Override

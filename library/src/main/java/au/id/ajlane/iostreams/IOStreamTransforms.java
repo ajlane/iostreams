@@ -130,12 +130,6 @@ public final class IOStreamTransforms
         return new AbstractIOStreamTransform<T, R>()
         {
             @Override
-            public R transform(final T item) throws Exception
-            {
-                return c.apply(b.apply(a.apply(item)));
-            }
-
-            @Override
             public void close() throws Exception
             {
                 try
@@ -153,6 +147,12 @@ public final class IOStreamTransforms
                         c.close();
                     }
                 }
+            }
+
+            @Override
+            public R transform(final T item) throws Exception
+            {
+                return c.apply(b.apply(a.apply(item)));
             }
         };
     }
@@ -193,12 +193,6 @@ public final class IOStreamTransforms
         return new AbstractIOStreamTransform<T, R>()
         {
             @Override
-            public R transform(final T item) throws Exception
-            {
-                return d.apply(c.apply(b.apply(a.apply(item))));
-            }
-
-            @Override
             public void close() throws Exception
             {
                 try
@@ -223,6 +217,12 @@ public final class IOStreamTransforms
                         }
                     }
                 }
+            }
+
+            @Override
+            public R transform(final T item) throws Exception
+            {
+                return d.apply(c.apply(b.apply(a.apply(item))));
             }
         };
     }
@@ -270,12 +270,6 @@ public final class IOStreamTransforms
         return new AbstractIOStreamTransform<T, R>()
         {
             @Override
-            public R transform(final T item) throws Exception
-            {
-                return e.apply(d.apply(c.apply(b.apply(a.apply(item)))));
-            }
-
-            @Override
             public void close() throws Exception
             {
                 try
@@ -307,6 +301,12 @@ public final class IOStreamTransforms
                         }
                     }
                 }
+            }
+
+            @Override
+            public R transform(final T item) throws Exception
+            {
+                return e.apply(d.apply(c.apply(b.apply(a.apply(item)))));
             }
         };
     }
