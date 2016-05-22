@@ -791,7 +791,6 @@ public class IOStreamsTests
             }
         ))
         {
-            boolean caughtReadException = false;
             try
             {
                 c.hasNext();
@@ -799,14 +798,12 @@ public class IOStreamsTests
             }
             catch (IOStreamReadException ex)
             {
-                caughtReadException = true;
                 Assert.assertEquals(
                     "c-read",
                     ex.getCause()
                         .getMessage()
                 );
             }
-            Assert.assertTrue(caughtReadException);
         }
         catch (IOStreamCloseException ex)
         {
