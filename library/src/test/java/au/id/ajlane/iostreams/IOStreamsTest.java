@@ -37,6 +37,34 @@ import org.junit.Test;
 public class IOStreamsTest
 {
     @Test
+    public void testCast() throws IOStreamException
+    {
+        final IOStream<Object> a = TestStream.of("a1", "a2", "a3");
+        try (final IOStream<String> aAsStrings = IOStreams.cast(a))
+        {
+            Assert.assertArrayEquals(new String[]{"a1", "a2", "a3"}, aAsStrings.toArray(String[]::new));
+        }
+
+        final IOStream<Object> b = TestStream.of("b1", 2);
+        try (final IOStream<String> bAsStrings = IOStreams.cast(b))
+        {
+            Assert.assertTrue(bAsStrings.hasNext());
+            Assert.assertEquals("b1", bAsStrings.next());
+            Assert.assertTrue(bAsStrings.hasNext());
+            try
+            {
+                // Interestingly, if we don't try to read/assign the value, it doesn't throw.
+                final String b2 = bAsStrings.next();
+                Assert.fail();
+            }
+            catch (final ClassCastException ex)
+            {
+                // Expected
+            }
+        }
+    }
+
+    @Test
     public void testConcatArrayOfStreams() throws IOStreamException
     {
         final TestStream<String> a = TestStream.of("a1");
@@ -736,6 +764,24 @@ public class IOStreamsTest
     }
 
     @Test
+    public void testKeep() throws IOStreamException
+    {
+        try (final IOStream<String> a = IOStreams.keep(TestStream.of("a1", "a2", "a3"), "a2"::equals))
+        {
+            Assert.assertArrayEquals(new String[]{"a2"}, a.toArray(String[]::new));
+        }
+    }
+
+    @Test
+    public void testLimit() throws IOStreamException
+    {
+        try (final IOStream<String> a = IOStreams.limit(TestStream.of("a1", "a2", "a3"), 2))
+        {
+            Assert.assertArrayEquals(new String[]{"a1", "a2"}, a.toArray(String[]::new));
+        }
+    }
+
+    @Test
     public void testMap() throws IOStreamException
     {
         try (final IOStream<String> a = IOStreams.map(TestStream.of("a1", "a2", "a3"), s -> s.replace('a', 'z')))
@@ -821,6 +867,54 @@ public class IOStreamsTest
             );
         }
         Assert.assertTrue(caughtCloseException);
+    }
+
+    @Test
+    public void testMapWithExceptionHandler() throws IOStreamException
+    {
+        final IOStreamTransformExceptionHandler<String> skipHandler = (item, ex) -> FilterDecision.SKIP_AND_CONTINUE;
+
+        try (final IOStream<String> a = IOStreams.map(
+            TestStream.of("a1", "a2", "a3"),
+            s -> s.replace('a', 'z'),
+            skipHandler
+        ))
+        {
+            Assert.assertArrayEquals(new String[]{"z1", "z2", "z3"}, a.toArray(String[]::new));
+        }
+
+        try (final IOStream<String> b = IOStreams.map(
+            TestStream.of("b1", "b2", "b3"),
+            new IOStreamTransform<String, String>()
+            {
+                @Override
+                public String apply(final String item) throws Exception
+                {
+                    if ("b2".equals(item))
+                    {
+                        throw new IOException("b2");
+                    }
+                    return item;
+                }
+
+                @Override
+                public void close() throws IOException
+                {
+                    throw new IOException("b");
+                }
+            }, skipHandler
+        ))
+        {
+            Assert.assertArrayEquals(new String[]{"z1", "z3"}, b.toArray(String[]::new));
+        }
+        catch (IOStreamCloseException ex)
+        {
+            Assert.assertEquals(
+                "b",
+                ex.getCause()
+                    .getMessage()
+            );
+        }
     }
 
     @Test
@@ -1047,6 +1141,15 @@ public class IOStreamsTest
             {
                 // Expected
             }
+        }
+    }
+
+    @Test
+    public void testSkip() throws IOStreamException
+    {
+        try (final IOStream<String> a = IOStreams.skip(TestStream.of("a1", "a2", "a3"), "a2"::equals))
+        {
+            Assert.assertArrayEquals(new String[]{"a1", "a3"}, a.toArray(String[]::new));
         }
     }
 
