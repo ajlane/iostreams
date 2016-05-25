@@ -1,5 +1,6 @@
 IOStreams
 =========
+[![build-status](https://travis-ci.org/ajlane/iostreams.svg?branch=master)](https://travis-ci.org/ajlane/iostreams) [![codecov](https://codecov.io/gh/ajlane/iostreams/branch/master/graph/badge.svg)](https://codecov.io/gh/ajlane/iostreams)
 
 Composable heavy-weight iterators for Java. Like Java 8 Streams that can throw checked exceptions.
 
