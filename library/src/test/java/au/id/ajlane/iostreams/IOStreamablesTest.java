@@ -30,7 +30,7 @@ import org.junit.Test;
  * Tests {@link IOStreamables}.
  */
 @SuppressWarnings({"ProhibitedExceptionCaught", "StandardVariableNames"})
-public class IOStreamablesTests
+public class IOStreamablesTest
 {
     private static final String[] EMPTY = {};
 
@@ -182,7 +182,7 @@ public class IOStreamablesTests
             )
         );
         Assert.assertArrayEquals(
-            IOStreamablesTests.EMPTY,
+            IOStreamablesTest.EMPTY,
             IOStreamables.toArray(
                 IOStreamables.filter(
                     IOStreamables.fromArray("b1", "b2", "b3"),
@@ -201,7 +201,7 @@ public class IOStreamablesTests
         );
 
         Assert.assertArrayEquals(
-            IOStreamablesTests.EMPTY,
+            IOStreamablesTest.EMPTY,
             IOStreamables.toArray(
                 IOStreamables.filter(
                     IOStreamables.empty(),
@@ -269,7 +269,7 @@ public class IOStreamablesTests
                         new String[]{
                             "d1",
                             "d2"
-                        }, IOStreamablesTests.EMPTY
+                        }, IOStreamablesTest.EMPTY
                     )
                 ), String[]::new
             )
@@ -279,19 +279,19 @@ public class IOStreamablesTests
             IOStreamables.toArray(
                 IOStreamables.flattenArrays(
                     IOStreamables.fromArray(
-                        IOStreamablesTests.EMPTY,
+                        IOStreamablesTest.EMPTY,
                         new String[]{"e1", "e2"}
                     )
                 ), String[]::new
             )
         );
         Assert.assertArrayEquals(
-            IOStreamablesTests.EMPTY,
+            IOStreamablesTest.EMPTY,
             IOStreamables.toArray(
                 IOStreamables.flattenArrays(
                     IOStreamables.fromArray(
-                        IOStreamablesTests.EMPTY,
-                        IOStreamablesTests.EMPTY
+                        IOStreamablesTest.EMPTY,
+                        IOStreamablesTest.EMPTY
                     )
                 ), String[]::new
             )
@@ -366,7 +366,7 @@ public class IOStreamablesTests
             )
         );
         Assert.assertArrayEquals(
-            IOStreamablesTests.EMPTY,
+            IOStreamablesTest.EMPTY,
             IOStreamables.toArray(
                 IOStreamables.flattenIterables(
                     IOStreamables.fromArray(
@@ -449,7 +449,7 @@ public class IOStreamablesTests
             )
         );
         Assert.assertArrayEquals(
-            IOStreamablesTests.EMPTY,
+            IOStreamablesTest.EMPTY,
             IOStreamables.toArray(
                 IOStreamables.flattenStreamables(
                     IOStreamables.fromArray(
@@ -556,7 +556,7 @@ public class IOStreamablesTests
     public void testToArray() throws IOStreamException
     {
         final IOStreamable<String> a = IOStreamables.fromArray();
-        Assert.assertArrayEquals(IOStreamablesTests.EMPTY, IOStreamables.toArray(a, String[]::new));
+        Assert.assertArrayEquals(IOStreamablesTest.EMPTY, IOStreamables.toArray(a, String[]::new));
 
         final IOStreamable<String> b = IOStreamables.fromArray("b1", "b2", "b3");
         Assert.assertArrayEquals(new String[]{"b1", "b2", "b3"}, IOStreamables.toArray(b, String[]::new));

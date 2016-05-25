@@ -34,7 +34,7 @@ import org.junit.Test;
  * Tests {@link IOStreams}.
  */
 @SuppressWarnings({"ProhibitedExceptionCaught", "StandardVariableNames"})
-public class IOStreamsTests
+public class IOStreamsTest
 {
     @Test
     public void testConcatArrayOfStreams() throws IOStreamException
