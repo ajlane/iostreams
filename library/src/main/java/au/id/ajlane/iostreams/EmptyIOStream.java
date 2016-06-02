@@ -48,7 +48,7 @@ class EmptyIOStream implements PeekableIOStream
             {
                 resource.close();
             }
-            catch (final RuntimeException | IOStreamCloseException ex)
+            catch (final RuntimeException ex)
             {
                 throw ex;
             }
@@ -77,7 +77,7 @@ class EmptyIOStream implements PeekableIOStream
         {
             consumer.close();
         }
-        catch (final RuntimeException | IOStreamCloseException ex)
+        catch (final RuntimeException ex)
         {
             throw ex;
         }
@@ -108,7 +108,7 @@ class EmptyIOStream implements PeekableIOStream
         {
             accumulator.close();
         }
-        catch (final RuntimeException | IOStreamReadException | IOStreamCloseException ex)
+        catch (final RuntimeException ex)
         {
             throw ex;
         }
@@ -178,7 +178,7 @@ class EmptyIOStream implements PeekableIOStream
             {
                 // Auto close resources
             }
-            catch (RuntimeException | IOStreamCloseException ex)
+            catch (RuntimeException ex)
             {
                 throw ex;
             }
