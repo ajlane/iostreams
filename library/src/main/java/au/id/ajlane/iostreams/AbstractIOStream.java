@@ -41,63 +41,14 @@ public abstract class AbstractIOStream<T> implements IOStream<T>
     @Override
     public final void close() throws IOStreamCloseException
     {
-        this.end();
+        try {
+            this.end();
+        } catch (RuntimeException ex) {
+            throw ex;
+        } catch (Exception ex) {
+            throw new IOStreamCloseException(ex);
+        }
         this.state = AbstractIOStream.State.CLOSED;
-    }
-
-    private void doFind() throws IOStreamReadException
-    {
-        this.next = this.find();
-        if (this.state == AbstractIOStream.State.NEEDS_NEXT)
-        {
-            this.state = AbstractIOStream.State.HAS_NEXT;
-        }
-    }
-
-    private void doOpen() throws IOStreamReadException
-    {
-        this.open();
-        if (this.state == AbstractIOStream.State.NEW)
-        {
-            this.state = AbstractIOStream.State.NEEDS_NEXT;
-        }
-    }
-
-    /**
-     * Releases any resources held by this {@code IOStream}.
-     * <p>
-     * This method will be called by the base class when {@link #close()} is called.
-     * <p>
-     * Like {@code close}, successive calls to {@code end()} should have no further effect.
-     *
-     * @throws IOStreamCloseException
-     *     If the {@code IOStream} could not be closed for some reason. The {@code IOStream} may not release all
-     *     resources if this is the case.
-     */
-    protected void end() throws IOStreamCloseException
-    {
-        // Do nothing by default
-    }
-
-    /**
-     * Finds the next item in the {@code IOStream}.
-     * <p>
-     * This method will be called by the base class as necessary when {@link #hasNext()} or {@link #next()} is called.
-     * <p>
-     * If there is no next item, this method should call {@link #terminate()} and return the dummy value provided by
-     * that method.
-     * <p>
-     * If the thread is interrupted during this method, implementors may choose to throw {@link IOStreamReadException}
-     * with an {@link InterruptedException} as the cause.
-     *
-     * @return The next item in the {@code IOStream}, or the dummy value provided by {@link #terminate()}.
-     *
-     * @throws IOStreamReadException
-     *     If there was any problem accessing the underlying resources of this {@code IOStream}.
-     */
-    protected T find() throws IOStreamReadException
-    {
-        return this.terminate();
     }
 
     @Override
@@ -148,6 +99,43 @@ public abstract class AbstractIOStream<T> implements IOStream<T>
     }
 
     /**
+     * Releases any resources held by this {@code IOStream}.
+     * <p>
+     * This method will be called by the base class when {@link #close()} is called.
+     * <p>
+     * Like {@code close}, successive calls to {@code end()} should have no further effect.
+     *
+     * @throws Exception
+     *     If the {@code IOStream} could not be closed for some reason. The {@code IOStream} may not release all
+     *     resources if this is the case.
+     */
+    protected void end() throws Exception
+    {
+        // Do nothing by default
+    }
+
+    /**
+     * Finds the next item in the {@code IOStream}.
+     * <p>
+     * This method will be called by the base class as necessary when {@link #hasNext()} or {@link #next()} is called.
+     * <p>
+     * If there is no next item, this method should call {@link #terminate()} and return the dummy value provided by
+     * that method.
+     * <p>
+     * If the thread is interrupted during this method, implementors may choose to throw {@link IOStreamReadException}
+     * with an {@link InterruptedException} as the cause.
+     *
+     * @return The next item in the {@code IOStream}, or the dummy value provided by {@link #terminate()}.
+     *
+     * @throws Exception
+     *     If there was any problem accessing the underlying resources of this {@code IOStream}.
+     */
+    protected T find() throws Exception
+    {
+        return this.terminate();
+    }
+
+    /**
      * Prepares any resources required to read this {@code IOStream}.
      * <p>
      * This method will be called by the base class the first time either {@link #hasNext()} or {@link #next()} is
@@ -156,10 +144,10 @@ public abstract class AbstractIOStream<T> implements IOStream<T>
      * If the thread is interrupted during this method, implementors may choose to throw {@link IOStreamReadException}
      * with an {@link InterruptedException} as the cause.
      *
-     * @throws IOStreamReadException
+     * @throws Exception
      *     If there was any problem accessing the underlying resources of this {@code IOStream}.
      */
-    protected void open() throws IOStreamReadException
+    protected void open() throws Exception
     {
         // Do nothing by default
     }
@@ -179,5 +167,35 @@ public abstract class AbstractIOStream<T> implements IOStream<T>
     {
         this.state = AbstractIOStream.State.TERMINATED;
         return null;
+    }
+
+    private void doFind() throws IOStreamReadException
+    {
+        try {
+            this.next = this.find();
+        } catch (RuntimeException ex) {
+            throw ex;
+        } catch (Exception ex) {
+            throw new IOStreamReadException(ex);
+        }
+        if (this.state == AbstractIOStream.State.NEEDS_NEXT)
+        {
+            this.state = AbstractIOStream.State.HAS_NEXT;
+        }
+    }
+
+    private void doOpen() throws IOStreamReadException
+    {
+        try {
+            this.open();
+        } catch (RuntimeException ex) {
+            throw ex;
+        } catch (Exception ex) {
+            throw new IOStreamReadException(ex);
+        }
+        if (this.state == AbstractIOStream.State.NEW)
+        {
+            this.state = AbstractIOStream.State.NEEDS_NEXT;
+        }
     }
 }
