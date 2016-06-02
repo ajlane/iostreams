@@ -49,7 +49,7 @@ public class FileLineIOStream extends AbstractIOStream<FileLine>
      */
     public static FileLineIOStream fromClasspath(final String path, final Charset charset)
     {
-        return fromStream(
+        return fromByteStream(
             path,
             () -> ClassLoader.getSystemClassLoader()
                 .getResourceAsStream(path),
@@ -67,7 +67,7 @@ public class FileLineIOStream extends AbstractIOStream<FileLine>
      */
     public static FileLineIOStream fromClasspath(final String path)
     {
-        return fromStream(
+        return fromByteStream(
             path,
             () -> ClassLoader.getSystemClassLoader()
                 .getResourceAsStream(path),
@@ -88,11 +88,12 @@ public class FileLineIOStream extends AbstractIOStream<FileLine>
      * @return A ready stream.
      */
     public static FileLineIOStream fromClasspath(
-        final Class<?> siblingClass, final String path,
+        final Class<?> siblingClass,
+        final String path,
         final Charset charset
     )
     {
-        return fromStream(path, () -> siblingClass.getResourceAsStream(path), charset);
+        return fromByteStream(path, () -> siblingClass.getResourceAsStream(path), charset);
     }
 
     /**
@@ -178,8 +179,9 @@ public class FileLineIOStream extends AbstractIOStream<FileLine>
      *
      * @return A ready stream.
      */
-    public static FileLineIOStream fromStream(
-        final String path, final Callable<InputStream> supplier,
+    public static FileLineIOStream fromByteStream(
+        final String path,
+        final Callable<InputStream> supplier,
         final Charset charset
     )
     {
@@ -196,7 +198,7 @@ public class FileLineIOStream extends AbstractIOStream<FileLine>
      *
      * @return A ready stream.
      */
-    public static FileLineIOStream fromStream(final String path, final Callable<InputStream> supplier)
+    public static FileLineIOStream fromByteStream(final String path, final Callable<InputStream> supplier)
     {
         return new FileLineIOStream(path, () -> new BufferedReader(
             new InputStreamReader(supplier.call(), Charset.defaultCharset())));

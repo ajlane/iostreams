@@ -112,7 +112,7 @@ public final class IOStreams
             private IOStream<? extends T> current = null;
 
             @Override
-            protected void end() throws IOStreamCloseException
+            protected void end() throws Exception
             {
                 try (
                     final IOStream<? extends IOStream<? extends T>> autoCloseStreams = streams;
@@ -124,15 +124,13 @@ public final class IOStreams
             }
 
             @Override
-            protected T find() throws IOStreamReadException
+            protected T find() throws Exception
             {
                 while (current != null)
                 {
                     if (Thread.interrupted())
                     {
-                        throw new IOStreamReadException(
-                            new InterruptedException("The thread was interrupted.")
-                        );
+                        throw new InterruptedException("The thread was interrupted.");
                     }
                     if (current.hasNext())
                     {
@@ -140,14 +138,7 @@ public final class IOStreams
                     }
                     else
                     {
-                        try
-                        {
-                            current.close();
-                        }
-                        catch (final IOStreamCloseException ex)
-                        {
-                            throw new IOStreamReadException(ex.getCause());
-                        }
+                        current.close();
                         current = streams.hasNext() ? Objects.requireNonNull(
                             streams.next(),
                             "One of the concatenated streams was null."
@@ -158,7 +149,7 @@ public final class IOStreams
             }
 
             @Override
-            protected void open() throws IOStreamReadException
+            protected void open() throws Exception
             {
                 if (streams.hasNext())
                 {
@@ -191,7 +182,7 @@ public final class IOStreams
             private int index = 0;
 
             @Override
-            protected void end() throws IOStreamCloseException
+            protected void end() throws Exception
             {
                 Exception lastException = null;
                 boolean caughtRuntimeException = false;
@@ -255,7 +246,7 @@ public final class IOStreams
             }
 
             @Override
-            protected T find() throws IOStreamReadException
+            protected T find() throws Exception
             {
                 while (index < streams.length)
                 {
@@ -269,14 +260,7 @@ public final class IOStreams
                     }
                     else
                     {
-                        try
-                        {
-                            stream.close();
-                        }
-                        catch (final IOStreamCloseException ex)
-                        {
-                            throw new IOStreamReadException(ex.getCause());
-                        }
+                        stream.close();
                         index += 1;
                     }
                 }
@@ -341,7 +325,7 @@ public final class IOStreams
                 {
                     consumer.accept(stream.next());
                 }
-                catch (final RuntimeException | IOStreamException ex)
+                catch (final RuntimeException ex)
                 {
                     throw ex;
                 }
@@ -435,7 +419,7 @@ public final class IOStreams
             private volatile boolean terminate = false;
 
             @Override
-            protected void end() throws IOStreamCloseException
+            protected void end() throws Exception
             {
                 try (
                     final IOStream<? extends T> autoCloseStream = stream;
@@ -444,41 +428,19 @@ public final class IOStreams
                 {
                     // Auto close resources
                 }
-                catch (final RuntimeException ex)
-                {
-                    throw ex;
-                }
-                catch (final Exception ex)
-                {
-                    throw new IOStreamCloseException(ex);
-                }
             }
 
             @Override
-            protected T find() throws IOStreamReadException
+            protected T find() throws Exception
             {
                 while (!terminate && stream.hasNext())
                 {
                     if (Thread.interrupted())
                     {
-                        throw new IOStreamReadException(
-                            new InterruptedException("The thread was interrupted.")
-                        );
+                        throw new InterruptedException("The thread was interrupted.");
                     }
                     final T next = stream.next();
-                    final FilterDecision decision;
-                    try
-                    {
-                        decision = filter.apply(next);
-                    }
-                    catch (final RuntimeException ex)
-                    {
-                        throw ex;
-                    }
-                    catch (final Exception ex)
-                    {
-                        throw new IOStreamReadException(ex);
-                    }
+                    final FilterDecision decision = filter.apply(next);
                     switch (decision)
                     {
                         case KEEP_AND_CONTINUE:
@@ -803,13 +765,13 @@ public final class IOStreams
         return new AbstractIOStream<IOStream<T>>()
         {
             @Override
-            public void end() throws IOStreamCloseException
+            public void end() throws Exception
             {
                 stream.close();
             }
 
             @Override
-            public IOStream<T> find() throws IOStreamReadException
+            public IOStream<T> find() throws Exception
             {
                 if (stream.hasNext())
                 {
@@ -876,7 +838,7 @@ public final class IOStreams
             private T previous;
 
             @Override
-            public void end() throws IOStreamCloseException
+            public void end() throws Exception
             {
                 try (
                     final IOStream<T> autoCloseStream = stream;
@@ -896,7 +858,7 @@ public final class IOStreams
             }
 
             @Override
-            public IOStream<T> find() throws IOStreamReadException
+            public IOStream<T> find() throws Exception
             {
                 if (!hasPrevious)
                 {
@@ -928,13 +890,13 @@ public final class IOStreams
                     private boolean partitionEnd = false;
 
                     @Override
-                    public void end() throws IOStreamCloseException
+                    public void end() throws Exception
                     {
                         // Ignore - we'll close the underlying stream in the parent
                     }
 
                     @Override
-                    protected T find() throws IOStreamReadException
+                    protected T find() throws Exception
                     {
                         if (partitionEnd)
                         {
@@ -961,29 +923,13 @@ public final class IOStreams
                             }
                         }
                         final T result = previous;
-                        partitionEnd = !hasNext || hasPrevious && !samePartition(previous, next);
+                        partitionEnd = !hasNext || hasPrevious && !predicate.test(previous, next);
                         hasPrevious = hasNext;
                         previous = next;
                         hasNext = false;
                         return result;
                     }
                 };
-            }
-
-            private boolean samePartition(final T a, final T b) throws IOStreamReadException
-            {
-                try
-                {
-                    return predicate.test(a, b);
-                }
-                catch (final RuntimeException ex)
-                {
-                    throw ex;
-                }
-                catch (final Exception ex)
-                {
-                    throw new IOStreamReadException(ex);
-                }
             }
         };
     }
@@ -1128,7 +1074,7 @@ public final class IOStreams
             private volatile boolean terminate = false;
 
             @Override
-            public void end() throws IOStreamCloseException
+            public void end() throws Exception
             {
                 try (
                     final IOStream<? extends T> autoCloseStream = stream;
@@ -1138,26 +1084,16 @@ public final class IOStreams
                 {
                     // Auto close resources
                 }
-                catch (final RuntimeException ex)
-                {
-                    throw ex;
-                }
-                catch (final Exception ex)
-                {
-                    throw new IOStreamCloseException(ex);
-                }
             }
 
             @Override
-            public R find() throws IOStreamReadException
+            public R find() throws Exception
             {
                 while (!terminate && stream.hasNext())
                 {
                     if (Thread.interrupted())
                     {
-                        throw new IOStreamReadException(
-                            new InterruptedException("The thread was interrupted.")
-                        );
+                        throw new InterruptedException("The thread was interrupted.");
                     }
                     final T item = stream.next();
                     try
@@ -1187,12 +1123,12 @@ public final class IOStreams
                         {
                             final Exception handlerFailure = handlerThrown.getCause();
                             handlerFailure.addSuppressed(transformFailure);
-                            throw new IOStreamReadException(handlerFailure);
+                            throw handlerFailure;
                         }
                         catch (final Exception handlerThrown)
                         {
                             handlerThrown.addSuppressed(transformFailure);
-                            throw new IOStreamReadException(handlerThrown);
+                            throw handlerThrown;
                         }
                         if (decision == null)
                         {
@@ -1205,7 +1141,7 @@ public final class IOStreams
                         {
                             case KEEP_AND_CONTINUE:
                             case KEEP_AND_TERMINATE:
-                                throw new IOStreamReadException(transformFailure);
+                                throw transformFailure;
                             case SKIP_AND_CONTINUE:
                                 continue;
                             case SKIP_AND_TERMINATE:
@@ -1453,7 +1389,7 @@ public final class IOStreams
             {
                 return reducer.apply(stream);
             }
-            catch (RuntimeException | IOStreamException ex)
+            catch (RuntimeException ex)
             {
                 throw ex;
             }
@@ -1493,19 +1429,11 @@ public final class IOStreams
             private volatile boolean closed = false;
 
             @Override
-            public void end() throws IOStreamCloseException
+            public void end() throws Exception
             {
                 try (final IOStreamSupplier<? extends T> autoCloseSupplier = supplier)
                 {
                     // Auto close resources
-                }
-                catch (RuntimeException ex)
-                {
-                    throw ex;
-                }
-                catch (Exception ex)
-                {
-                    throw new IOStreamCloseException(ex);
                 }
                 finally
                 {
@@ -1514,24 +1442,13 @@ public final class IOStreams
             }
 
             @Override
-            public T find() throws IOStreamReadException
+            public T find() throws Exception
             {
                 if (closed)
                 {
                     return terminate();
                 }
-                try
-                {
-                    return supplier.get();
-                }
-                catch (RuntimeException ex)
-                {
-                    throw ex;
-                }
-                catch (Exception ex)
-                {
-                    throw new IOStreamReadException(ex);
-                }
+                return supplier.get();
             }
         };
     }
