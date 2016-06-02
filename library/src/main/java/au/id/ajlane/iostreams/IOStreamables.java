@@ -117,7 +117,7 @@ public final class IOStreamables
                     private IOStream<? extends T> current = null;
 
                     @Override
-                    protected void end() throws IOStreamCloseException
+                    protected void end() throws Exception
                     {
                         if (current != null)
                         {
@@ -126,7 +126,7 @@ public final class IOStreamables
                     }
 
                     @Override
-                    protected T find() throws IOStreamReadException
+                    protected T find() throws Exception
                     {
                         while (current != null)
                         {
@@ -136,14 +136,7 @@ public final class IOStreamables
                             }
                             else
                             {
-                                try
-                                {
-                                    current.close();
-                                }
-                                catch (final IOStreamCloseException ex)
-                                {
-                                    throw new IOStreamReadException(ex);
-                                }
+                                current.close();
                                 current = streamablesStream.hasNext() ?
                                     streamablesStream.next()
                                         .stream() :
@@ -154,7 +147,7 @@ public final class IOStreamables
                     }
 
                     @Override
-                    protected void open() throws IOStreamReadException
+                    protected void open() throws Exception
                     {
                         if (streamablesStream.hasNext())
                         {
@@ -205,7 +198,7 @@ public final class IOStreamables
                     }
 
                     @Override
-                    protected T find() throws IOStreamReadException
+                    protected T find() throws Exception
                     {
                         while (current != null)
                         {
@@ -215,14 +208,7 @@ public final class IOStreamables
                             }
                             else
                             {
-                                try
-                                {
-                                    current.close();
-                                }
-                                catch (final IOStreamCloseException ex)
-                                {
-                                    throw new IOStreamReadException(ex);
-                                }
+                                current.close();
                                 index += 1;
                                 current = index < streamables.length ? streamables[index].stream() : null;
                             }

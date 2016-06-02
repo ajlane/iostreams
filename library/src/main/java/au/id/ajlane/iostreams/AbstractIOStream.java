@@ -41,11 +41,16 @@ public abstract class AbstractIOStream<T> implements IOStream<T>
     @Override
     public final void close() throws IOStreamCloseException
     {
-        try {
+        try
+        {
             this.end();
-        } catch (RuntimeException ex) {
+        }
+        catch (RuntimeException ex)
+        {
             throw ex;
-        } catch (Exception ex) {
+
+        } catch (Exception ex)
+        {
             throw new IOStreamCloseException(ex);
         }
         this.state = AbstractIOStream.State.CLOSED;
@@ -171,11 +176,16 @@ public abstract class AbstractIOStream<T> implements IOStream<T>
 
     private void doFind() throws IOStreamReadException
     {
-        try {
+        try
+        {
             this.next = this.find();
-        } catch (RuntimeException ex) {
+        }
+        catch (RuntimeException ex)
+        {
             throw ex;
-        } catch (Exception ex) {
+        }
+        catch (Exception ex)
+        {
             throw new IOStreamReadException(ex);
         }
         if (this.state == AbstractIOStream.State.NEEDS_NEXT)
@@ -186,11 +196,16 @@ public abstract class AbstractIOStream<T> implements IOStream<T>
 
     private void doOpen() throws IOStreamReadException
     {
-        try {
+        try
+        {
             this.open();
-        } catch (RuntimeException ex) {
+        }
+        catch (RuntimeException ex)
+        {
             throw ex;
-        } catch (Exception ex) {
+        }
+        catch (Exception ex)
+        {
             throw new IOStreamReadException(ex);
         }
         if (this.state == AbstractIOStream.State.NEW)
