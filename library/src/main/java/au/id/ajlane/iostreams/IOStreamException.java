@@ -45,7 +45,7 @@ public abstract class IOStreamException extends IOException
             {
                 inner.addSuppressed(suppressed);
             }
-            return inner;
+            return fixCause(inner);
         }
         else
         {
