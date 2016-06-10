@@ -25,8 +25,21 @@ import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.Queue;
 import java.util.Set;
+import java.util.concurrent.ArrayBlockingQueue;
+import java.util.concurrent.BlockingDeque;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.Callable;
+import java.util.concurrent.CompletionService;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.locks.ReentrantLock;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.function.IntFunction;
+import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
 /**
@@ -1287,6 +1300,116 @@ public final class IOStreams
     }
 
     /**
+     * Transforms the items in the stream using several parallel threads.
+     * <p>
+     * The order of items in the new stream is not stable - they depend on if and when a background thread completes the
+     * transform.
+     * <p>
+     * An internal buffer will hold the results from the background threads until the consuming thread is ready to read
+     * them. If the buffer is full, the background threads will block until the consuming thread clears some space by
+     * reading the items.
+     *
+     * @param stream The stream to transform. Must not be null.
+     * @param transform The transform to apply. Must not be null.
+     * @param parallelism The number of background threads to use. Must be greater than zero.
+     * @param <T> The type of the items in the original stream.
+     * @param <R> The type of the transformed items.
+     * @return A new stream which will lazily transform the items in parallel.
+     */
+    public static <T,R> IOStream<R> parallelMap(final IOStream<T> stream, final IOStreamTransform<T,R> transform, final int parallelism)
+    {
+        if(stream == null) throw new NullPointerException("The stream must not be null.");
+        if(transform == null) throw new NullPointerException("The transform must not be null.");
+        if(parallelism <= 0) throw new IllegalArgumentException("The number of threads must be greater than zero.");
+        final int bufferSize = parallelism * 2;
+        return new AbstractIOStream<R>()
+        {
+            private final ExecutorService executor = Executors.newFixedThreadPool(parallelism);
+            private final ReentrantLock readLock = new ReentrantLock();
+            private final BlockingQueue<Object> results = new ArrayBlockingQueue<>(bufferSize);
+            private final Object terminator = new Object();
+            private List<Future<?>> futures;
+            private volatile int terminated = 0;
+
+            @Override
+            protected void end() throws Exception
+            {
+                try(
+                    final IOStream<T> autoCloseStream = stream;
+                    final IOStreamTransform<T,R> autoCloseTransform = transform
+                )
+                {
+                    try
+                    {
+                        for(Future<?> future: futures){
+                            future.cancel(true);
+                        }
+                    }
+                    finally
+                    {
+                        executor.shutdownNow();
+                    }
+                }
+            }
+
+            @Override
+            protected R find() throws Exception
+            {
+                while(terminated < parallelism)
+                {
+                    Object item = results.take();
+                    // FIXME: Capture and propagate exceptions from background tasks
+                    if (item == terminator)
+                    {
+                        terminated++;
+                        continue;
+                    }
+                    return (R) item;
+                }
+                return terminate();
+            }
+
+            @Override
+            protected void open() throws Exception
+            {
+                futures = new ArrayList<>(parallelism);
+                for(int i = 0; i < parallelism; i++)
+                {
+                    final Future<?> future = executor.submit(() -> {
+                        try
+                        {
+                            boolean hasNext = false;
+                            do
+                            {
+                                T next = null;
+                                readLock.lockInterruptibly();
+                                try {
+                                    if (stream.hasNext()) {
+                                        hasNext = true;
+                                        next = stream.next();
+                                    }
+                                } finally {
+                                    readLock.unlock();
+                                }
+                                if (hasNext) {
+                                    results.put(transform.apply(next));
+                                }
+                            }
+                            while (hasNext);
+                            return null;
+                        }
+                        finally
+                        {
+                            results.put(terminator);
+                        }
+                    });
+                    futures.add(future);
+                }
+            }
+        };
+    }
+
+    /**
      * Creates a peekable view of a stream.
      * <p>
      * Peeking at the items in the stream will cause them to be buffered. The buffer will not be cleared until the
@@ -1311,6 +1434,15 @@ public final class IOStreams
             private final LinkedList<T> buffer = new LinkedList<>();
 
             @Override
+            public Iterable<T> peek(int n) throws IOStreamReadException
+            {
+                int extra = n - buffer.size();
+                for (int i = 0; i < extra && stream.hasNext(); i++)
+                {
+                    buffer.add(stream.next());
+                }
+                return buffer.subList(0, Integer.min(n, buffer.size()));
+            }            @Override
             public void close() throws IOStreamCloseException
             {
                 try (final IOStream<T> autoCloseStream = stream)
@@ -1339,16 +1471,7 @@ public final class IOStreams
                 }
             }
 
-            @Override
-            public Iterable<T> peek(int n) throws IOStreamReadException
-            {
-                int extra = n - buffer.size();
-                for (int i = 0; i < extra && stream.hasNext(); i++)
-                {
-                    buffer.add(stream.next());
-                }
-                return buffer.subList(0, Integer.min(n, buffer.size()));
-            }
+
 
             @Override
             public PeekableIOStream<T> peekable()

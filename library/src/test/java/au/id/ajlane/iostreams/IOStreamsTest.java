@@ -955,6 +955,60 @@ public class IOStreamsTest
     }
 
     @Test
+    public void testParallelMap() throws IOStreamException
+    {
+        try (final IOStream<String> a = IOStreams.parallelMap(TestStream.of("a1", "a2", "a3", "a4", "a5", "a6", "a7"), s -> s.replace('a', 'z'), 4))
+        {
+            final String[] aToZ = a.toArray(String[]::new);
+            Arrays.sort(aToZ);
+            Assert.assertArrayEquals(new String[]{"z1", "z2", "z3", "z4", "z5", "z6", "z7"}, aToZ);
+        }
+
+        try
+        {
+            IOStreams.parallelMap(null, a->a, 4);
+            Assert.fail();
+        }
+        catch (NullPointerException ex)
+        {
+            // Expected
+        }
+
+        try
+        {
+            IOStreams.parallelMap(IOStreams.empty(), null, 4);
+            Assert.fail();
+        }
+        catch (NullPointerException ex)
+        {
+            // Expected
+        }
+
+        try
+        {
+            IOStreams.parallelMap(IOStreams.empty(), a->a, 0);
+            Assert.fail();
+        }
+        catch (IllegalArgumentException ex)
+        {
+            // Expected
+        }
+
+        try
+        {
+            IOStreams.parallelMap(IOStreams.empty(), a->a, -1);
+            Assert.fail();
+        }
+        catch (IllegalArgumentException ex)
+        {
+            // Expected
+        }
+
+        // TODO: Test that exceptions are being handled correctly
+        // -- They're not
+    }
+
+    @Test
     public void testPeekable() throws IOStreamException
     {
         final IOStream<String> a = IOStreams.fromArray("a1", "a2", "a3", "a4", "a5");
