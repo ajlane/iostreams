@@ -25,21 +25,16 @@ import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.Queue;
 import java.util.Set;
 import java.util.concurrent.ArrayBlockingQueue;
-import java.util.concurrent.BlockingDeque;
 import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.Callable;
-import java.util.concurrent.CompletionService;
+import java.util.concurrent.CancellationException;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.locks.ReentrantLock;
-import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.function.IntFunction;
-import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
 /**
@@ -1316,11 +1311,23 @@ public final class IOStreams
      * @param <R> The type of the transformed items.
      * @return A new stream which will lazily transform the items in parallel.
      */
-    public static <T,R> IOStream<R> parallelMap(final IOStream<T> stream, final IOStreamTransform<T,R> transform, final int parallelism)
+    public static <T,R> IOStream<R> parallelMap(
+        final IOStream<T> stream,
+        final IOStreamTransform<T,R> transform,
+        final int parallelism)
     {
-        if(stream == null) throw new NullPointerException("The stream must not be null.");
-        if(transform == null) throw new NullPointerException("The transform must not be null.");
-        if(parallelism <= 0) throw new IllegalArgumentException("The number of threads must be greater than zero.");
+        if (stream == null)
+        {
+            throw new NullPointerException("The stream must not be null.");
+        }
+        if (transform == null)
+        {
+            throw new NullPointerException("The transform must not be null.");
+        }
+        if (parallelism <= 0)
+        {
+            throw new IllegalArgumentException("The number of threads must be greater than zero.");
+        }
         final int bufferSize = parallelism * 2;
         return new AbstractIOStream<R>()
         {
@@ -1334,16 +1341,21 @@ public final class IOStreams
             @Override
             protected void end() throws Exception
             {
-                try(
+                try (
                     final IOStream<T> autoCloseStream = stream;
                     final IOStreamTransform<T,R> autoCloseTransform = transform
                 )
                 {
                     try
                     {
-                        for(Future<?> future: futures){
-                            future.cancel(true);
+                        for (Future<?> future: futures)
+                        {
+                            if (future != null)
+                            {
+                                future.cancel(true);
+                            }
                         }
+                        throwFutureExceptions();
                     }
                     finally
                     {
@@ -1355,10 +1367,10 @@ public final class IOStreams
             @Override
             protected R find() throws Exception
             {
-                while(terminated < parallelism)
+                while (terminated < parallelism)
                 {
+                    throwFutureExceptions();
                     Object item = results.take();
-                    // FIXME: Capture and propagate exceptions from background tasks
                     if (item == terminator)
                     {
                         terminated++;
@@ -1373,25 +1385,31 @@ public final class IOStreams
             protected void open() throws Exception
             {
                 futures = new ArrayList<>(parallelism);
-                for(int i = 0; i < parallelism; i++)
+                for ( int i = 0; i < parallelism; i++)
                 {
                     final Future<?> future = executor.submit(() -> {
                         try
                         {
-                            boolean hasNext = false;
+                            boolean hasNext;
                             do
                             {
                                 T next = null;
+                                hasNext = false;
                                 readLock.lockInterruptibly();
-                                try {
-                                    if (stream.hasNext()) {
+                                try
+                                {
+                                    if (stream.hasNext())
+                                    {
                                         hasNext = true;
                                         next = stream.next();
                                     }
-                                } finally {
+                                }
+                                finally
+                                {
                                     readLock.unlock();
                                 }
-                                if (hasNext) {
+                                if (hasNext)
+                                {
                                     results.put(transform.apply(next));
                                 }
                             }
@@ -1405,6 +1423,61 @@ public final class IOStreams
                     });
                     futures.add(future);
                 }
+            }
+
+            private void throwFutureExceptions() throws Exception
+            {
+                final List<Exception> thrownList = new ArrayList<>(futures.size());
+                for (int i = 0; i < futures.size(); i++)
+                {
+                    final Future<?> future = futures.get(i);
+                    if (future != null && future.isDone())
+                    {
+                        try
+                        {
+                            future.get();
+                        }
+                        catch (CancellationException ex)
+                        {
+                            // Ignore - We've already closed the stream and thrown any exceptions.
+                        }
+                        catch (ExecutionException ex)
+                        {
+                            final Throwable cause = ex.getCause();
+                            if (cause instanceof RuntimeException)
+                            {
+                                throw (RuntimeException) cause;
+                            }
+                            else if (cause instanceof Exception)
+                            {
+                                thrownList.add((Exception) cause);
+                            }
+                            else if (cause instanceof Error)
+                            {
+                                throw (Error) cause;
+                            }
+                            else
+                            {
+                                throw new RuntimeException(cause);
+                            }
+                        }
+                        futures.set(i, null);
+                    }
+                }
+                if (thrownList.isEmpty())
+                {
+                    return;
+                }
+                Exception lastThrown = null;
+                for (Exception thrown : thrownList)
+                {
+                    if (lastThrown != null)
+                    {
+                        thrown.addSuppressed(lastThrown);
+                    }
+                    lastThrown = thrown;
+                }
+                throw lastThrown;
             }
         };
     }
@@ -1442,7 +1515,9 @@ public final class IOStreams
                     buffer.add(stream.next());
                 }
                 return buffer.subList(0, Integer.min(n, buffer.size()));
-            }            @Override
+            }
+
+            @Override
             public void close() throws IOStreamCloseException
             {
                 try (final IOStream<T> autoCloseStream = stream)

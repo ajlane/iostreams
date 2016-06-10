@@ -1004,8 +1004,88 @@ public class IOStreamsTest
             // Expected
         }
 
-        // TODO: Test that exceptions are being handled correctly
-        // -- They're not
+        try (final IOStream<String> b = IOStreams.parallelMap(
+            TestStream.of("b1", "b2", "b3"),
+            new IOStreamTransform<String, String>()
+            {
+                @Override
+                public String apply(final String item)
+                {
+                    return item.replace('b', 'z');
+                }
+
+                @Override
+                public void close() throws IOException
+                {
+                    throw new IOException("b");
+                }
+            },
+            4
+        ))
+        {
+            final String[] bToZ = b.toArray(String[]::new);
+            Arrays.sort(bToZ);
+            Assert.assertArrayEquals(new String[]{"z1", "z2", "z3"}, bToZ);
+        }
+        catch (IOStreamCloseException ex)
+        {
+            Assert.assertEquals(
+                "b",
+                ex.getCause()
+                    .getMessage()
+            );
+        }
+
+        boolean caughtCloseException = false;
+        try (final IOStream<String> c = IOStreams.parallelMap(
+            new ErrorStream<>(new IOException("c-read"), new RuntimeException("c-close")),
+            new IOStreamTransform<String, String>()
+            {
+                @Override
+                public String apply(final String item)
+                {
+                    throw new RuntimeException("c-map");
+                }
+
+                @Override
+                public void close() throws IOException
+                {
+                    throw new IOException("c-map-close");
+                }
+            },
+            4
+        ))
+        {
+            try
+            {
+                c.hasNext();
+                Assert.fail();
+            }
+            catch (IOStreamReadException ex)
+            {
+                Assert.assertEquals(
+                    "c-read",
+                    ex.getCause()
+                        .getMessage()
+                );
+            }
+        }
+        catch (IOStreamCloseException ex)
+        {
+            caughtCloseException = true;
+            Assert.assertEquals(
+                "c-map-close",
+                ex.getCause()
+                    .getMessage()
+            );
+            Assert.assertEquals(
+                "c-close",
+                ex.getCause()
+                    .getSuppressed()[0]
+                    .getMessage()
+            );
+        }
+        Assert.assertTrue(caughtCloseException);
     }
 
     @Test
