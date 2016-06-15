@@ -1649,6 +1649,198 @@ public final class IOStreams
         return stream.filter(IOStreamFilters.keepUntil(predicate));
     }
 
+    /**
+     * Zips the items of two streams into a single stream, in order.
+     * <p>
+     * If one stream has more items than the other, the extra items will be lost. To provide the zip function with
+     * default values, use {@link #zipAll}
+     *
+     * @param left
+     *     The first stream to combine.
+     * @param right
+     *     The second stream to combine.
+     * @param zipFunction
+     *     A function to combine the pairs of items.
+     * @param <A>
+     *     The type of the items in the first stream.
+     * @param <B>
+     *     The type of the items in the second stream.
+     * @param <Z>
+     *     The type of the items in the combined stream.
+     *
+     * @return A combined view of the two streams.
+     */
+    public static <A, B, Z> IOStream<Z> zip(
+        final IOStream<A> left,
+        final IOStream<B> right,
+        final IOStreamZipFunction<? super A, ? super B, ? extends Z> zipFunction
+    )
+    {
+        return new IOStream<Z>()
+        {
+            @Override
+            public void close() throws IOStreamCloseException
+            {
+                try (final IOStream<A> autoCloseLeft = left;
+                     final IOStream<B> autoCloseRight = right)
+                {
+                    try
+                    {
+                        zipFunction.close();
+                    }
+                    catch (RuntimeException ex)
+                    {
+                        throw ex;
+                    }
+                    catch (Exception ex)
+                    {
+                        throw new IOStreamCloseException(ex);
+                    }
+                }
+            }
+
+            @Override
+            public boolean hasNext() throws IOStreamReadException
+            {
+                return left.hasNext() && right.hasNext();
+            }
+
+            @Override
+            public Z next() throws IOStreamReadException
+            {
+                try
+                {
+                    return zipFunction.apply(left.next(), right.next());
+                }
+                catch (RuntimeException ex)
+                {
+                    throw ex;
+                }
+                catch (Exception ex)
+                {
+                    throw new IOStreamReadException(ex);
+                }
+            }
+        };
+    }
+
+    /**
+     * Zips the items of two streams into a single stream, in order.
+     * <p>
+     * Unlike {@link #zip}, if one of the streams has less items than the other, the zip function will be provided with
+     * null values.
+     *
+     * @param left
+     *     The first stream to combine.
+     * @param right
+     *     The second stream to combine.
+     * @param zipFunction
+     *     A function to combine the individual.
+     * @param <A>
+     *     The type of the items in the first stream.
+     * @param <B>
+     *     The type of the items in the second stream.
+     * @param <Z>
+     *     The type of the items in the combined stream.
+     *
+     * @return A combined view of the two streams.
+     */
+    public static <A, B, Z> IOStream<Z> zipAll(
+        final IOStream<A> left,
+        final IOStream<B> right,
+        final IOStreamZipFunction<? super A, ? super B, ? extends Z> zipFunction
+    )
+    {
+        return zipAll(left, right, zipFunction, () -> null, () -> null);
+    }
+
+    /**
+     * Zips the items of two streams into a single stream, in order.
+     * <p>
+     * Unlike {@link #zip}, if one of the streams has less items than the other, the zip function will be provided with
+     * default values using one of the provided functions.
+     *
+     * @param left
+     *     The first stream to combine.
+     * @param right
+     *     The second stream to combine.
+     * @param zipFunction
+     *     A function to combine the individual.
+     * @param leftDefaults
+     *     A function to supply default values to use if the first stream has less items than the second.
+     * @param rightDefaults
+     *     A function to supply default values to use if the second stream has less items than the first.
+     * @param <A>
+     *     The type of the items in the first stream.
+     * @param <B>
+     *     The type of the items in the second stream.
+     * @param <Z>
+     *     The type of the items in the combined stream.
+     *
+     * @return A combined view of the two streams.
+     */
+    public static <A, B, Z> IOStream<Z> zipAll(
+        final IOStream<A> left,
+        final IOStream<B> right,
+        final IOStreamZipFunction<? super A, ? super B, ? extends Z> zipFunction,
+        final IOStreamSupplier<? extends A> leftDefaults,
+        final IOStreamSupplier<? extends B> rightDefaults
+    )
+    {
+        return new IOStream<Z>()
+        {
+            @Override
+            public void close() throws IOStreamCloseException
+            {
+                try (final IOStream<A> autoCloseLeft = left;
+                     final IOStream<B> autoCloseRight = right)
+                {
+                    try (final IOStreamSupplier<? extends A> autoCloseLeftDefaults = leftDefaults;
+                         final IOStreamSupplier<? extends B> autoCloseRightDefaults = rightDefaults;
+                         final IOStreamZipFunction<? super A, ? super B, ? extends Z> autoCloseZipFunction =
+                             zipFunction)
+                    {
+                        // Auto close resources
+                    }
+                    catch (RuntimeException ex)
+                    {
+                        throw ex;
+                    }
+                    catch (Exception ex)
+                    {
+                        throw new IOStreamCloseException(ex);
+                    }
+                }
+            }
+
+            @Override
+            public boolean hasNext() throws IOStreamReadException
+            {
+                return left.hasNext() || right.hasNext();
+            }
+
+            @Override
+            public Z next() throws IOStreamReadException
+            {
+                try
+                {
+                    return zipFunction.apply(
+                        left.hasNext() ? left.next() : leftDefaults.get(),
+                        right.hasNext() ? right.next() : rightDefaults.get()
+                    );
+                }
+                catch (RuntimeException ex)
+                {
+                    throw ex;
+                }
+                catch (Exception ex)
+                {
+                    throw new IOStreamReadException(ex);
+                }
+            }
+        };
+    }
+
     private IOStreams() throws InstantiationException
     {
         throw new InstantiationException("This class cannot be instantiated.");

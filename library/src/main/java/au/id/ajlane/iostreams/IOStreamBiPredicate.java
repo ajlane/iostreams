@@ -16,6 +16,12 @@
 
 package au.id.ajlane.iostreams;
 
+/**
+ * A predicate function that requires a pair of parameters.
+ *
+ * @param <A> The type of the first parameter.
+ * @param <B> The type of the second parameter.
+ */
 @FunctionalInterface
 public interface IOStreamBiPredicate<A, B> extends AutoCloseable
 {

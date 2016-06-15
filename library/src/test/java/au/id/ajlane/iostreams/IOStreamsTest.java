@@ -117,7 +117,7 @@ public class IOStreamsTest
         }
 
         final ErrorStream<String> f = new ErrorStream<>(new RuntimeException("f"), null);
-        final ErrorStream<String> g = new ErrorStream<>(new RuntimeException("g"), null);
+        final ErrorStream<String> g = new ErrorStream<>(new IOException("g"), null);
         final ErrorStream<String> h = new ErrorStream<>(new RuntimeException("h"), null);
         final IOStream<String> fgh = IOStreams.concat(f, g, h);
 
@@ -178,6 +178,38 @@ public class IOStreamsTest
             );
         }
         Assert.assertTrue(closeFailed);
+
+        final ErrorStream<String> l = new ErrorStream<>(null, new IOException("l"));
+        final ErrorStream<String> m = new ErrorStream<>(null, new RuntimeException("m"));
+        final ErrorStream<String> n = new ErrorStream<>(null, new IOException("n"));
+        final IOStream<String> lmn = IOStreams.concat(l, m, n);
+
+        try (final IOStream<String> autoCloseLmn = lmn)
+        {
+            lmn.limit(6).consume();
+        }
+        catch (RuntimeException ex)
+        {
+            Assert.assertEquals(
+                "Suppressed a runtime exception with a checked exception.",
+                ex.getMessage()
+            );
+            Assert.assertEquals(
+                "n",
+                ex.getCause()
+                    .getMessage()
+            );
+            Assert.assertEquals(
+                "m",
+                ex.getCause()
+                    .getSuppressed()[0].getMessage()
+            );
+            Assert.assertEquals(
+                "l",
+                ex.getCause()
+                    .getSuppressed()[0].getSuppressed()[0].getMessage()
+            );
+        }
     }
 
     @Test
