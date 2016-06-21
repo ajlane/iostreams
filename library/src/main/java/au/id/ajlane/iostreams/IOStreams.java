@@ -26,16 +26,17 @@ import java.util.NoSuchElementException;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
-import java.util.concurrent.ArrayBlockingQueue;
-import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.CancellationException;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
-import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.IntFunction;
 import java.util.stream.Stream;
+
+/*
+ * Wishlist for new utilities
+ *
+ *  - public static <A,B,Z> IOStream<Z> zip(IOStream<A>, IOStream<B>, IOStreamZipFunction<A,B,Z>)
+ *  - public static <T> IOStream<T> interleave(IOStream<T>...)
+ *  - public static <T> AsyncIOStream<T> async(IOStream<T>, int, Supplier<BlockingQueue>)
+ */
+
 
 /**
  * Utilities for working with instances of {@link IOStream}.
@@ -976,6 +977,10 @@ public final class IOStreams
      */
     public static <T> IOStream<T> limit(final IOStream<T> stream, final int size)
     {
+        if(size <= 0)
+        {
+            return IOStreams.empty();
+        }
         return stream.filter(IOStreamFilters.limit(size));
     }
 

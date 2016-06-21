@@ -474,6 +474,11 @@ public final class IOStreamFilters
      */
     public static <T> IOStreamFilter<T> limit(final int size)
     {
+        if(size <= 0)
+        {
+            return IOStreamFilters.none();
+        }
+
         return new IOStreamFilter<T>()
         {
             private int count = 0;
