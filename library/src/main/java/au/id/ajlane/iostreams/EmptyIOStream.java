@@ -32,10 +32,27 @@ import java.util.function.IntFunction;
  */
 class EmptyIOStream implements PeekableIOStream
 {
+
+    /**
+     * An empty stream which will close a dependent resource when it is closed.
+     *
+     * @param resource The dependent resource. Must not be null.
+     * @return An empty stream.
+     */
+    static EmptyIOStream withResource(final AutoCloseable resource)
+    {
+        return new EmptyIOStreamWithResource(resource);
+    }
+
     private static class EmptyIOStreamWithResource extends EmptyIOStream
     {
         private final AutoCloseable resource;
 
+        /**
+         * Initialises the empty stream.
+         *
+         * @param resource A dependent resource to close with this stream. Must not be null.
+         */
         public EmptyIOStreamWithResource(final AutoCloseable resource)
         {
             this.resource = resource;

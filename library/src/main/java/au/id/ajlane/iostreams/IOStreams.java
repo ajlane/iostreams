@@ -979,7 +979,9 @@ public final class IOStreams
     {
         if(size <= 0)
         {
-            return IOStreams.empty();
+            @SuppressWarnings("unchecked")
+            final IOStream<T> empty = (IOStream<T>) EmptyIOStream.withResource(stream);
+            return empty;
         }
         return stream.filter(IOStreamFilters.limit(size));
     }
