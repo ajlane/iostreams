@@ -977,7 +977,7 @@ public final class IOStreams
      */
     public static <T> IOStream<T> limit(final IOStream<T> stream, final int size)
     {
-        if(size <= 0)
+        if (size <= 0)
         {
             @SuppressWarnings("unchecked")
             final IOStream<T> empty = (IOStream<T>) EmptyIOStream.withResource(stream);
