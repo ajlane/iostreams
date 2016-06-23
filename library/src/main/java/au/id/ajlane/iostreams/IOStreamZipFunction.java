@@ -21,6 +21,7 @@ public interface IOStreamZipFunction<A, B, Z> extends AutoCloseable
     Z apply(A left, B right) throws Exception;
 
     @Override
-    default void close() throws Exception{
+    default void close() throws Exception
+    {
     }
 }

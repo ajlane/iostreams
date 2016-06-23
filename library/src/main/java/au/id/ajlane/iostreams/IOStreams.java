@@ -230,7 +230,7 @@ public final class IOStreams
                     {
                         if (lastException instanceof RuntimeException)
                         {
-                            throw (RuntimeException) lastException;
+                            throw lastException;
                         }
                         else
                         {
@@ -244,7 +244,7 @@ public final class IOStreams
                     {
                         if (lastException instanceof RuntimeException)
                         {
-                            throw (RuntimeException) lastException;
+                            throw lastException;
                         }
                         else
                         {
@@ -1326,17 +1326,6 @@ public final class IOStreams
             private final LinkedList<T> buffer = new LinkedList<>();
 
             @Override
-            public Iterable<T> peek(int n) throws IOStreamReadException
-            {
-                int extra = n - buffer.size();
-                for (int i = 0; i < extra && stream.hasNext(); i++)
-                {
-                    buffer.add(stream.next());
-                }
-                return buffer.subList(0, Integer.min(n, buffer.size()));
-            }
-
-            @Override
             public void close() throws IOStreamCloseException
             {
                 try (final IOStream<T> autoCloseStream = stream)
@@ -1365,7 +1354,16 @@ public final class IOStreams
                 }
             }
 
-
+            @Override
+            public Iterable<T> peek(int n) throws IOStreamReadException
+            {
+                int extra = n - buffer.size();
+                for (int i = 0; i < extra && stream.hasNext(); i++)
+                {
+                    buffer.add(stream.next());
+                }
+                return buffer.subList(0, Integer.min(n, buffer.size()));
+            }
 
             @Override
             public PeekableIOStream<T> peekable()
