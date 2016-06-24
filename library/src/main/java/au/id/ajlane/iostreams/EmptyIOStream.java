@@ -169,7 +169,7 @@ class EmptyIOStream implements PeekableIOStream
     }
 
     @Override
-    public IOStream limit(int size)
+    public IOStream limit(long size)
     {
         if (size < 0)
         {
