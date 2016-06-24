@@ -472,7 +472,7 @@ public final class IOStreamFilters
      *
      * @return An instance of {@code IOStreamFilter}.
      */
-    public static <T> IOStreamFilter<T> limit(final int size)
+    public static <T> IOStreamFilter<T> limit(final long size)
     {
         if (size <= 0)
         {
@@ -481,7 +481,7 @@ public final class IOStreamFilters
 
         return new IOStreamFilter<T>()
         {
-            private int count = 0;
+            private long count = 0;
 
             @Override
             public FilterDecision apply(T item)

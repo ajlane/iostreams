@@ -229,7 +229,7 @@ public interface IOStream<T> extends Closeable
      *
      * @return A limited view of the stream.
      */
-    default IOStream<T> limit(final int size)
+    default IOStream<T> limit(final long size)
     {
         return IOStreams.limit(this, size);
     }

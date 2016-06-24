@@ -41,6 +41,10 @@ class EmptyIOStream implements PeekableIOStream
      */
     static EmptyIOStream withResource(final AutoCloseable resource)
     {
+        if (resource instanceof EmptyIOStream)
+        {
+            return (EmptyIOStream) resource;
+        }
         return new EmptyIOStreamWithResource(resource);
     }
 

@@ -975,7 +975,7 @@ public final class IOStreams
      *
      * @return A limited view of the stream.
      */
-    public static <T> IOStream<T> limit(final IOStream<T> stream, final int size)
+    public static <T> IOStream<T> limit(final IOStream<T> stream, final long size)
     {
         if (size <= 0)
         {
