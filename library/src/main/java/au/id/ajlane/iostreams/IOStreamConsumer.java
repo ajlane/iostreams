@@ -26,18 +26,46 @@ package au.id.ajlane.iostreams;
 public interface IOStreamConsumer<T> extends AutoCloseable
 {
     /**
+     * Represents the state of the consumer.
+     */
+    enum IOStreamConsumerState
+    {
+        /**
+         * The consumer is expecting to consume more items.
+         */
+        CONTINUE,
+        /**
+         * The consumer is not expecting to consumer any more items.
+         */
+        BREAK
+    }
+
+    /**
      * Provides an item for the consumer to consume.
      *
      * @param item
      *     The item to consume.
      *
+     * @return The state of the consumer immediately after consuming the item. Consumers are free to change their state
+     * at any time, so this value may not represent the current state of the consumer.
+     *
      * @throws Exception
      *     If there was a problem with consuming the item.
      */
-    void accept(T item) throws Exception;
+    IOStreamConsumerState accept(T item) throws Exception;
 
     @Override
     default void close() throws Exception
     {
+    }
+
+    static <T> IOStreamConsumer<? super T> none()
+    {
+        return (IOStreamConsumer<Object>) item -> IOStreamConsumerState.BREAK;
+    }
+
+    static <T> IOStreamConsumer<? super T> ignoreAll()
+    {
+        return (IOStreamConsumer<Object>) item -> IOStreamConsumerState.CONTINUE;
     }
 }

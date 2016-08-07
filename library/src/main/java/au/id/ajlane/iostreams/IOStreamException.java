@@ -19,15 +19,10 @@ package au.id.ajlane.iostreams;
 import java.io.IOException;
 
 /**
- * The base class for exceptions thrown by {@link IOStream}.
- *
- * @see IOStreamReadException
- * @see IOStreamCloseException
+ * Represents the failure of an {@link IOStream} to produce or process items.
  */
-public abstract class IOStreamException extends IOException
+public class IOStreamException extends IOException
 {
-    private static final long serialVersionUID = -7730103429830744318L;
-
     private static Exception fixCause(final Exception cause)
     {
         if (cause == null)
@@ -56,8 +51,6 @@ public abstract class IOStreamException extends IOException
     /**
      * Constructs a new {@code IOStreamException} with the given message and cause.
      *
-     * @param message
-     *     A message describing the exception. Must not be empty or {@code null}.
      * @param cause
      *     The underlying cause of the issue. Must not be {@code null}. An {@code IOStreamException} will be replaced
      *     with it's own cause.
@@ -67,9 +60,9 @@ public abstract class IOStreamException extends IOException
      * @throws NullPointerException
      *     if the given cause is {@code null}.
      */
-    IOStreamException(final String message, final Exception cause)
+    public IOStreamException(final Exception cause)
     {
-        super(message, fixCause(cause));
+        super(fixCause(cause));
     }
 
     /**

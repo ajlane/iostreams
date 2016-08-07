@@ -16,23 +16,8 @@
 
 package au.id.ajlane.iostreams;
 
-public abstract class AbstractIOStream<T> implements IOStream<T>
-{
-    @Override
-    public final void consume(final IOStreamConsumer<? super T> consumer) throws IOStreamException
-    {
-        try(IOStreamConsumer<? super T> autoCloseConsumer = consumer)
-        {
-            generate(consumer);
-        }
-        catch (RuntimeException ex){
-            throw ex;
-        }
-        catch (Exception ex)
-        {
-            throw new IOStreamException(ex);
-        }
-    }
-
-    protected abstract void generate(final IOStreamConsumer<? super T> consumer) throws Exception;
+@FunctionalInterface
+public interface IOStreamAction<T> extends AutoCloseable{
+    void apply(T item) throws Exception;
+    default void close() throws Exception{}
 }

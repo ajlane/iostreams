@@ -16,23 +16,29 @@
 
 package au.id.ajlane.iostreams;
 
-public abstract class AbstractIOStream<T> implements IOStream<T>
+public class ArrayIOStream<T> extends AbstractIOStream<T>
 {
-    @Override
-    public final void consume(final IOStreamConsumer<? super T> consumer) throws IOStreamException
-    {
-        try(IOStreamConsumer<? super T> autoCloseConsumer = consumer)
-        {
-            generate(consumer);
-        }
-        catch (RuntimeException ex){
-            throw ex;
-        }
-        catch (Exception ex)
-        {
-            throw new IOStreamException(ex);
-        }
+    private final T[] array;
+
+    @SafeVarargs
+    public ArrayIOStream(T... array){
+        this.array = array;
     }
 
-    protected abstract void generate(final IOStreamConsumer<? super T> consumer) throws Exception;
+    @Override
+    protected void generate(final IOStreamConsumer<? super T> consumer) throws Exception
+    {
+        loop:
+        for (T item : array)
+        {
+            switch (consumer.accept(item))
+            {
+                case CONTINUE:
+                default:
+                    break;
+                case BREAK:
+                    break loop;
+            }
+        }
+    }
 }

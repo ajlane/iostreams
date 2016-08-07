@@ -16,13 +16,13 @@
 
 package au.id.ajlane.iostreams;
 
-import java.io.Closeable;
 import java.util.Comparator;
 import java.util.Iterator;
 import java.util.List;
-import java.util.NoSuchElementException;
 import java.util.Optional;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicReference;
+import java.util.concurrent.atomic.LongAdder;
 import java.util.function.IntFunction;
 import java.util.stream.Stream;
 
@@ -36,64 +36,70 @@ import java.util.stream.Stream;
  * Consider the easier-to-use {@link AbstractIOStream} when implementing a new {@code IOStream}.
  * <p>
  * Utility methods on {@link IOStreams} can make working with {@code IOStream}s easier: Use {@link IOStreams#map} to
- * modify the items in a {@code IOStream}, or {@link IOStreams#filter} to remove particular items. Join multiple {@code
+ * modify the items in an {@code IOStream}, or {@link IOStreams#filter} to remove particular items. Join multiple {@code
  * Stream}s together with {@link IOStreams#concat}.
  * <p>
- * When defining public interfaces, consider carefully whether you require a {@code IOStream} or an {@code
+ * When defining public interfaces, consider carefully whether you require an {@code IOStream} or an {@code
  * IOStreamable}.
  *
  * @param <T>
  *     The type of the items in the {@code IOStream}
  */
-public interface IOStream<T> extends Closeable
+public interface IOStream<T>
 {
-    /**
-     * Releases any resources held by the {@code IOStream}.
-     * <p>
-     * Successive calls to {@code close()} should have no further effect.
-     * <p>
-     * The behaviour of a {@code IOStream} after its {@code close} method has been called is undefined. Typically, an
-     * {@code IOStream} would behave as if it contained no more items (by returning {@code false} from {@link
-     * #hasNext}).
-     *
-     * @throws IOStreamCloseException
-     *     If the stream could not be closed for some reason. The stream may not release all resources if this is the
-     *     case.
-     */
-    @Override
-    void close() throws IOStreamCloseException;
 
     /**
      * Consumes the stream while discarding the items. <p>Useful for triggering any side-effects from processing the
      * stream where the output is not needed.</p> <p>Closes the stream when done.</p>
      *
-     * @throws IOStreamReadException
-     *     If any item in the stream could not be read for some reason.
-     * @throws IOStreamCloseException
-     *     If the stream could not be closed for some reason. The stream may not release all resources if this is the
-     *     case.
+     * @throws IOStreamException
+     *     If any item in the stream could not be read.
      */
-    default void consume() throws IOStreamReadException, IOStreamCloseException
+    default void consume() throws IOStreamException
     {
-        IOStreams.consume(this);
+        consume(IOStreamConsumer.ignoreAll());
     }
 
     /**
-     * Consumes the stream by passing each item to a consumer. <p>Closes the stream when done.</p>
+     * Consumes the stream by passing each item to a consumer.
+     * <p>
+     * Closes both the stream and the consumer when done.
      *
      * @param consumer
-     *     A function to receive the items in the stream.
+     *     A function to receive the items in the stream. Must not be null.
      *
-     * @throws IOStreamReadException
-     *     If any item in the stream could not be read for some reason.
-     * @throws IOStreamCloseException
-     *     If the stream could not be closed for some reason. The stream may not release all resources if this is the
-     *     case.
+     * @throws IOStreamException
+     *     If the stream could not be read.
      */
-    default void consume(final IOStreamConsumer<? super T> consumer)
-        throws IOStreamReadException, IOStreamCloseException
+    void consume(final IOStreamConsumer<? super T> consumer)
+        throws IOStreamException;
+
+    /**
+     * Consumes the stream, performing an action for each item in the stream.
+     *
+     * @param action
+     *     The action to perform. Must not be null.
+     *
+     * @throws IOStreamException
+     *     If the stream could not be read, or the action could not be performed for any item.
+     */
+    default void foreach(IOStreamAction<? super T> action) throws IOStreamException
     {
-        IOStreams.consume(this, consumer);
+        try (IOStreamAction<? super T> autoCloseAction = action)
+        {
+            consume(item -> {
+                action.apply(item);
+                return IOStreamConsumer.IOStreamConsumerState.CONTINUE;
+            });
+        }
+        catch (RuntimeException ex)
+        {
+            throw ex;
+        }
+        catch (Exception ex)
+        {
+            throw new IOStreamException(ex);
+        }
     }
 
     /**
@@ -103,27 +109,14 @@ public interface IOStream<T> extends Closeable
      *
      * @return The number of items in the stream, or {@link Long#MAX_VALUE} if there are too many items to count.
      *
-     * @throws IOStreamReadException
+     * @throws IOStreamException
      *     If there was a problem in reading the stream.
-     * @throws IOStreamCloseException
-     *     If there was a problem in closing the stream.
      */
-    default long count() throws IOStreamReadException, IOStreamCloseException
+    default long count() throws IOStreamException
     {
-        return IOStreams.count(this);
-    }
-
-    /**
-     * Applies a filter to the items in the stream.
-     *
-     * @param filter
-     *     The filter to apply. Must not be null.
-     *
-     * @return A filtered view of the stream.
-     */
-    default IOStream<T> filter(final IOStreamFilter<? super T> filter)
-    {
-        return IOStreams.filter(this, filter);
+        final LongAdder counter = new LongAdder();
+        foreach(i -> counter.increment());
+        return counter.sum();
     }
 
     /**
@@ -138,7 +131,21 @@ public interface IOStream<T> extends Closeable
      */
     default <R> IOStream<R> flatMap(final IOStreamTransform<? super T, ? extends IOStream<? extends R>> transform)
     {
-        return IOStreams.flatMap(this, transform);
+        final IOStream<T> original = this;
+        return new AbstractIOStream<R>(){
+            @Override
+            protected void generate(final IOStreamConsumer<? super R> consumer) throws Exception
+            {
+                try(IOStreamTransform<? super T, ? extends IOStream<? extends R>> autoCloseTransform = transform)
+                {
+                    original.consume(item -> {
+                        transform.apply(item)
+                            .consume(consumer);
+                        return IOStreamConsumer.IOStreamConsumerState.CONTINUE;
+                    });
+                }
+            }
+        };
     }
 
     /**
@@ -153,15 +160,31 @@ public interface IOStream<T> extends Closeable
      *
      * @return The result of the accumulator, after it has consumed all of the items in the stream.
      *
-     * @throws IOStreamReadException
+     * @throws IOStreamException
      *     If there was a problem with reading the stream.
-     * @throws IOStreamCloseException
-     *     If there was a problem with closing the stream.
      */
     default <R> R fold(final R initial, final IOStreamAccumulator<R, ? super T> accumulator)
-        throws IOStreamReadException, IOStreamCloseException
+        throws IOStreamException
     {
-        return IOStreams.fold(this, initial, accumulator);
+        final AtomicReference<R> result = new AtomicReference<>(initial);
+        try(IOStreamAccumulator<R, ? super T> autoCloseAccumulator = accumulator)
+        {
+            consume(item -> {
+                boolean done = false;
+                while(!done)
+                {
+                    // TODO: Figure out a better way to deal with multithreading than just retrying.
+                    final R previous = result.get();
+                    final R next = accumulator.add(previous, item);
+                    done = result.compareAndSet(previous, next);
+                }
+            });
+        } catch (RuntimeException ex){
+            throw ex;
+        } catch (Exception ex){
+            throw new IOStreamException(ex);
+        }
+        return result.get();
     }
 
     /**
@@ -191,22 +214,6 @@ public interface IOStream<T> extends Closeable
     {
         return IOStreams.group(this, predicate);
     }
-
-    /**
-     * Checks if there are any more items in the {@code IOStream}.
-     * <p>
-     * It is not uncommon for significant work to be necessary in order to calculate {@code hasNext}. Typically,
-     * implementations not be able to determine if there is a next item without fetching and buffering it.
-     * <p>
-     * If the thread is interrupted before this method returns, implementations may choose to throw a {@link
-     * IOStreamReadException} with a {@link InterruptedException} as the cause.
-     *
-     * @return {@code true} if a subsequent call to {@link #next} will succeed. {@code false} otherwise.
-     *
-     * @throws IOStreamReadException
-     *     If there was any problem in reading from the underlying resource.
-     */
-    boolean hasNext() throws IOStreamReadException;
 
     /**
      * Filters the stream to retain only items which are matched by the predicate.
@@ -317,21 +324,6 @@ public interface IOStream<T> extends Closeable
     {
         return IOStreams.min(this, comparator);
     }
-
-    /**
-     * Returns the next item in the {@code IOStream}.
-     * <p>
-     * If the thread is interrupted before this method returns, implementations may choose to throw a {@link
-     * IOStreamReadException} with a {@link InterruptedException} as the cause.
-     *
-     * @return The next item in the {@code IOStream}. {@code null} is a valid item, although discouraged.
-     *
-     * @throws NoSuchElementException
-     *     If there is no next item (calling {@link #hasNext} before this method would have returned {@code false}).
-     * @throws IOStreamReadException
-     *     If there was any problem in reading from the underlying resource.
-     */
-    T next() throws IOStreamReadException;
 
     /**
      * Registers a function to observe values as they are consumed.
