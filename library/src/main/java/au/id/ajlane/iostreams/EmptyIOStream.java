@@ -30,7 +30,7 @@ import java.util.function.IntFunction;
  * Because the stream is always empty, we can define the type without using type parameters to specify the type of the
  * items.
  */
-class EmptyIOStream implements PeekableIOStream
+public class EmptyIOStream implements PeekableIOStream
 {
 
     /**
