@@ -1328,4 +1328,118 @@ public class IOStreamsTest
         }
     }
 
+    @Test
+    public void testZip() throws IOStreamException
+    {
+        TestStream<String> a1 = TestStream.of("a1-1", "a1-2", "a1-3");
+        TestStream<String> a2 = TestStream.of("a2-1", "a2-2", "a2-3");
+        try (final IOStream<String> aZipped = IOStreams.zip(a1, a2, (l, r) -> l + "+" + r))
+        {
+            Assert.assertArrayEquals(
+                new String[]{
+                    "a1-1+a2-1",
+                    "a1-2+a2-2",
+                    "a1-3+a2-3"
+                },
+                aZipped.toArray(String[]::new)
+            );
+        }
+        Assert.assertTrue(a1.isClosed());
+        Assert.assertTrue(a2.isClosed());
+
+        TestStream<String> b1 = TestStream.of("b1-1", "b1-2");
+        TestStream<String> b2 = TestStream.of("b2-1", "b2-2", "b2-3", "b2-4");
+        try (final IOStream<String> bZipped = IOStreams.zip(b1, b2, (l, r) -> l + "+" + r))
+        {
+            Assert.assertArrayEquals(
+                new String[]{
+                    "b1-1+b2-1",
+                    "b1-2+b2-2"
+                },
+                new String[]{
+                    bZipped.next(),
+                    bZipped.next()
+                }
+            );
+
+            Assert.assertFalse(bZipped.hasNext());
+
+            Assert.assertFalse(b1.hasNext());
+            Assert.assertTrue(b2.hasNext());
+
+            Assert.assertFalse(b1.isClosed());
+            Assert.assertFalse(b2.isClosed());
+
+            Assert.assertArrayEquals(
+                new String[]{
+                    "b2-3",
+                    "b2-4"
+                },
+                b2.toArray(String[]::new)
+            );
+        }
+        Assert.assertTrue(b1.isClosed());
+        Assert.assertTrue(b2.isClosed());
+    }
+
+
+    @Test
+    public void testZipAll() throws IOStreamException
+    {
+        TestStream<String> a1 = TestStream.of("a1-1", "a1-2", "a1-3");
+        TestStream<String> a2 = TestStream.of("a2-1", "a2-2", "a2-3");
+        try (final IOStream<String> aZipped = IOStreams.zipAll(
+            a1,
+            a2,
+            (l, r) -> l + "+" + r,
+            () -> "a1-x",
+            () -> "a2-x"
+        ))
+        {
+            Assert.assertArrayEquals(
+                new String[]{
+                    "a1-1+a2-1",
+                    "a1-2+a2-2",
+                    "a1-3+a2-3"
+                },
+                aZipped.toArray(String[]::new)
+            );
+        }
+        Assert.assertTrue(a1.isClosed());
+        Assert.assertTrue(a2.isClosed());
+
+        TestStream<String> b1 = TestStream.of("b1-1", "b1-2");
+        TestStream<String> b2 = TestStream.of("b2-1", "b2-2", "b2-3", "b2-4");
+        try (final IOStream<String> bZipped = IOStreams.zipAll(
+            b1,
+            b2,
+            (l, r) -> l + "+" + r,
+            () -> "b1-x",
+            () -> "b2-x"
+        ))
+        {
+            Assert.assertArrayEquals(
+                new String[]{
+                    "b1-1+b2-1",
+                    "b1-2+b2-2",
+                    "b1-x+b2-3",
+                    "b1-x+b2-4"
+                },
+                new String[]{
+                    bZipped.next(),
+                    bZipped.next(),
+                    bZipped.next(),
+                    bZipped.next()
+                }
+            );
+
+            Assert.assertFalse(b1.hasNext());
+            Assert.assertFalse(b2.hasNext());
+
+            Assert.assertFalse(b1.isClosed());
+            Assert.assertFalse(b2.isClosed());
+        }
+        Assert.assertTrue(b1.isClosed());
+        Assert.assertTrue(b2.isClosed());
+    }
 }

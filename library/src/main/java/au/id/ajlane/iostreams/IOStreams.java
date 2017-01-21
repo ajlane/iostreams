@@ -29,14 +29,6 @@ import java.util.Set;
 import java.util.function.IntFunction;
 import java.util.stream.Stream;
 
-/*
- * Wishlist for new utilities
- *
- *  - public static <A,B,Z> IOStream<Z> zip(IOStream<A>, IOStream<B>, IOStreamZipFunction<A,B,Z>)
- *  - public static <T> IOStream<T> interleave(IOStream<T>...)
- *  - public static <T> AsyncIOStream<T> async(IOStream<T>, int, Supplier<BlockingQueue>)
- */
-
 /**
  * Utilities for working with instances of {@link IOStream}.
  * <p>
@@ -119,6 +111,7 @@ public final class IOStreams
         {
             private IOStream<? extends T> current = null;
 
+            @SuppressWarnings("EmptyTryBlock")
             @Override
             protected void end() throws Exception
             {
@@ -442,6 +435,7 @@ public final class IOStreams
         {
             private volatile boolean terminate = false;
 
+            @SuppressWarnings("EmptyTryBlock")
             @Override
             protected void end() throws Exception
             {
@@ -861,6 +855,7 @@ public final class IOStreams
             private T next;
             private T previous;
 
+            @SuppressWarnings("EmptyTryBlock")
             @Override
             public void end() throws Exception
             {
@@ -1022,6 +1017,7 @@ public final class IOStreams
         Objects.requireNonNull(transform, "The transform cannot be null.");
         return new IOStream<R>()
         {
+            @SuppressWarnings("EmptyTryBlock")
             @Override
             public void close() throws IOStreamCloseException
             {
@@ -1101,6 +1097,7 @@ public final class IOStreams
         {
             private volatile boolean terminate = false;
 
+            @SuppressWarnings("EmptyTryBlock")
             @Override
             public void end() throws Exception
             {
@@ -1137,6 +1134,7 @@ public final class IOStreams
                         final Exception transformFailure = transformThrown instanceof IOStreamException ?
                             ((IOStreamException) transformThrown).getCause() :
                             transformThrown;
+                        assert transformFailure != null;
                         final FilterDecision decision;
                         try
                         {
@@ -1267,6 +1265,7 @@ public final class IOStreams
         Objects.requireNonNull(observer, "The observer cannot be null.");
         return new IOStream<T>()
         {
+            @SuppressWarnings("EmptyTryBlock")
             @Override
             public void close() throws IOStreamCloseException
             {
@@ -1460,6 +1459,7 @@ public final class IOStreams
         {
             private volatile boolean closed = false;
 
+            @SuppressWarnings("EmptyTryBlock")
             @Override
             public void end() throws Exception
             {
@@ -1821,6 +1821,7 @@ public final class IOStreams
     {
         return new IOStream<Z>()
         {
+            @SuppressWarnings("EmptyTryBlock")
             @Override
             public void close() throws IOStreamCloseException
             {
