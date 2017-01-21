@@ -37,7 +37,6 @@ import java.util.stream.Stream;
  *  - public static <T> AsyncIOStream<T> async(IOStream<T>, int, Supplier<BlockingQueue>)
  */
 
-
 /**
  * Utilities for working with instances of {@link IOStream}.
  * <p>
@@ -995,9 +994,7 @@ public final class IOStreams
     {
         if (size <= 0)
         {
-            @SuppressWarnings("unchecked")
-            final IOStream<T> empty = (IOStream<T>) EmptyIOStream.withResource(stream);
-            return empty;
+            return truncate(stream);
         }
         return stream.filter(IOStreamFilters.limit(size));
     }
@@ -1373,6 +1370,10 @@ public final class IOStreams
             @Override
             public Iterable<T> peek(int n) throws IOStreamReadException
             {
+                if (n < 0)
+                {
+                    throw new IllegalArgumentException("A non-negative number must be provided.");
+                }
                 int extra = n - buffer.size();
                 for (int i = 0; i < extra && stream.hasNext(); i++)
                 {

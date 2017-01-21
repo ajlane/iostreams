@@ -17,8 +17,10 @@
 package au.id.ajlane.iostreams;
 
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 import java.util.NoSuchElementException;
+import java.util.Optional;
 import java.util.Set;
 import java.util.function.IntFunction;
 
@@ -32,22 +34,6 @@ import java.util.function.IntFunction;
  */
 public class EmptyIOStream implements PeekableIOStream
 {
-
-    /**
-     * An empty stream which will close a dependent resource when it is closed.
-     *
-     * @param resource The dependent resource. Must not be null.
-     * @return An empty stream.
-     */
-    static EmptyIOStream withResource(final AutoCloseable resource)
-    {
-        if (resource instanceof EmptyIOStream)
-        {
-            return (EmptyIOStream) resource;
-        }
-        return new EmptyIOStreamWithResource(resource);
-    }
-
     private static class EmptyIOStreamWithResource extends EmptyIOStream
     {
         private final AutoCloseable resource;
@@ -55,7 +41,8 @@ public class EmptyIOStream implements PeekableIOStream
         /**
          * Initialises the empty stream.
          *
-         * @param resource A dependent resource to close with this stream. Must not be null.
+         * @param resource
+         *     A dependent resource to close with this stream. Must not be null.
          */
         public EmptyIOStreamWithResource(final AutoCloseable resource)
         {
@@ -78,6 +65,27 @@ public class EmptyIOStream implements PeekableIOStream
                 throw new IOStreamCloseException(ex);
             }
         }
+    }
+
+    /**
+     * An empty stream which will close a dependent resource when it is closed.
+     *
+     * @param resource
+     *     The dependent resource. Must not be null.
+     *
+     * @return An empty stream.
+     */
+    static EmptyIOStream withResource(final AutoCloseable resource)
+    {
+        if (resource == null)
+        {
+            throw new NullPointerException("A non-null resource must be provided.");
+        }
+        if (resource instanceof EmptyIOStream)
+        {
+            return (EmptyIOStream) resource;
+        }
+        return new EmptyIOStreamWithResource(resource);
     }
 
     @Override
@@ -109,8 +117,18 @@ public class EmptyIOStream implements PeekableIOStream
     }
 
     @Override
+    public long count() throws IOStreamReadException, IOStreamCloseException
+    {
+        return 0;
+    }
+
+    @Override
     public IOStream filter(final IOStreamFilter filter)
     {
+        if (filter == null)
+        {
+            throw new NullPointerException("A non-null filter must be provided.");
+        }
         return new EmptyIOStreamWithResource(filter);
     }
 
@@ -118,7 +136,11 @@ public class EmptyIOStream implements PeekableIOStream
     @Override
     public IOStream flatMap(final IOStreamTransform transform)
     {
-        return new EmptyIOStreamWithResource(transform);
+        if (transform == null)
+        {
+            throw new NullPointerException("A non-null transform must be provided.");
+        }
+        return withResource(transform);
     }
 
     @Override
@@ -153,7 +175,11 @@ public class EmptyIOStream implements PeekableIOStream
     @Override
     public IOStream group(final IOStreamBiPredicate predicate)
     {
-        return new EmptyIOStreamWithResource(predicate);
+        if (predicate == null)
+        {
+            throw new NullPointerException("A non-null predicate must be provided.");
+        }
+        return withResource(predicate);
     }
 
     @Override
@@ -165,7 +191,11 @@ public class EmptyIOStream implements PeekableIOStream
     @Override
     public IOStream keep(final IOStreamPredicate predicate)
     {
-        return new EmptyIOStreamWithResource(predicate);
+        if (predicate == null)
+        {
+            throw new NullPointerException("A non-null predicate must be provided.");
+        }
+        return withResource(predicate);
     }
 
     @Override
@@ -181,7 +211,7 @@ public class EmptyIOStream implements PeekableIOStream
     @Override
     public IOStream map(IOStreamTransform transform)
     {
-        return new EmptyIOStreamWithResource(transform);
+        return withResource(transform);
     }
 
     @Override
@@ -190,7 +220,15 @@ public class EmptyIOStream implements PeekableIOStream
         final IOStreamTransformExceptionHandler exceptionHandler
     )
     {
-        return new EmptyIOStreamWithResource(() ->
+        if (transform == null)
+        {
+            throw new NullPointerException("A non-null transform must be provided.");
+        }
+        if (exceptionHandler == null)
+        {
+            throw new NullPointerException("A non-null exception handler must be provided.");
+        }
+        return withResource(() ->
         {
             try (
                 final IOStreamTransform autoCloseTransform = transform;
@@ -211,6 +249,26 @@ public class EmptyIOStream implements PeekableIOStream
     }
 
     @Override
+    public Optional max(final Comparator comparator) throws IOStreamReadException, IOStreamCloseException
+    {
+        if (comparator == null)
+        {
+            throw new NullPointerException("A non-null comparator must be provided.");
+        }
+        return Optional.empty();
+    }
+
+    @Override
+    public Optional min(final Comparator comparator) throws IOStreamReadException, IOStreamCloseException
+    {
+        if (comparator == null)
+        {
+            throw new NullPointerException("A non-null comparator must be provided.");
+        }
+        return Optional.empty();
+    }
+
+    @Override
     public Object next()
     {
         throw new NoSuchElementException("There is no next item in the stream.");
@@ -219,7 +277,11 @@ public class EmptyIOStream implements PeekableIOStream
     @Override
     public IOStream observe(IOStreamConsumer observer)
     {
-        return new EmptyIOStreamWithResource(observer);
+        if (observer == null)
+        {
+            throw new NullPointerException("A non-null observer must be provided.");
+        }
+        return withResource(observer);
     }
 
     @Override
@@ -231,6 +293,10 @@ public class EmptyIOStream implements PeekableIOStream
     @Override
     public Iterable peek(int n) throws IOStreamReadException
     {
+        if (n < 0)
+        {
+            throw new IllegalArgumentException("A non-negative number must be provided.");
+        }
         return Collections.emptyList();
     }
 
@@ -244,24 +310,40 @@ public class EmptyIOStream implements PeekableIOStream
     public Object reduce(final IOStreamTransform reducer)
         throws IOStreamReadException, IOStreamCloseException
     {
-        return new EmptyIOStreamWithResource(reducer);
+        if (reducer == null)
+        {
+            throw new NullPointerException("A non-null reducer must be provided.");
+        }
+        return withResource(reducer);
     }
 
     @Override
     public IOStream skip(IOStreamPredicate predicate)
     {
-        return new EmptyIOStreamWithResource(predicate);
+        if (predicate == null)
+        {
+            throw new NullPointerException("A non-null predicate must be provided.");
+        }
+        return withResource(predicate);
     }
 
     @Override
     public IOStream split(IOStreamBiPredicate predicate)
     {
-        return new EmptyIOStreamWithResource(predicate);
+        if (predicate == null)
+        {
+            throw new NullPointerException("A non-null predicate must be provided.");
+        }
+        return withResource(predicate);
     }
 
     @Override
     public Object[] toArray(final IntFunction supplier) throws IOStreamReadException, IOStreamCloseException
     {
+        if (supplier == null)
+        {
+            throw new NullPointerException("A non-null supplier must be provided.");
+        }
         return (Object[]) supplier.apply(0);
     }
 
@@ -275,5 +357,21 @@ public class EmptyIOStream implements PeekableIOStream
     public Set<Object> toSet() throws IOStreamReadException, IOStreamCloseException
     {
         return Collections.emptySet();
+    }
+
+    @Override
+    public IOStream truncate()
+    {
+        return this;
+    }
+
+    @Override
+    public IOStream until(final IOStreamPredicate predicate)
+    {
+        if (predicate == null)
+        {
+            throw new NullPointerException("A non-null predicate must be provided.");
+        }
+        return this;
     }
 }
