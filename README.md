@@ -3,7 +3,7 @@ IOStreams
 [![javadoc](http://www.javadoc.io/badge/au.id.ajlane.iostreams/iostreams.svg)](http://www.javadoc.io/doc/au.id.ajlane.iostreams/iostreams)
 [![build-status](https://travis-ci.org/ajlane/iostreams.svg?branch=master)](https://travis-ci.org/ajlane/iostreams) [![codecov](https://codecov.io/gh/ajlane/iostreams/branch/master/graph/badge.svg)](https://codecov.io/gh/ajlane/iostreams)
 
-Composable heavy-weight iterators for Java. Like Java 8 Streams that can throw checked exceptions.
+Composable heavy-weight iterators for Java.
 
 An `IOStream` provides `hasNext` and `next` methods, just like an `Iterator`, but is also `Closeable` and throws predictable checked exceptions.
 
