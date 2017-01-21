@@ -20,6 +20,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
@@ -983,6 +984,58 @@ public class IOStreamsTest
     }
 
     @Test
+    public void testMax() throws IOStreamException
+    {
+        try (TestStream<Integer> a = TestStream.of(1, 4, 6, 10, 2, 9, -2))
+        {
+            Assert.assertEquals(
+                10,
+                (int) IOStreams.max(a, Comparator.naturalOrder())
+                    .orElse(-1)
+            );
+
+            Assert.assertTrue(a.isClosed());
+        }
+
+        try (TestStream<Integer> b = TestStream.of())
+        {
+            Assert.assertEquals(
+                null,
+                IOStreams.max(b, Comparator.naturalOrder())
+                    .orElse(null)
+            );
+
+            Assert.assertTrue(b.isClosed());
+        }
+    }
+
+    @Test
+    public void testMin() throws IOStreamException
+    {
+        try (TestStream<Integer> a = TestStream.of(5, 7, 2, 10, -3, 1, 0))
+        {
+            Assert.assertEquals(
+                -3,
+                (int) IOStreams.min(a, Comparator.naturalOrder())
+                    .orElse(100)
+            );
+
+            Assert.assertTrue(a.isClosed());
+        }
+
+        try (TestStream<Integer> b = TestStream.of())
+        {
+            Assert.assertEquals(
+                null,
+                IOStreams.min(b, Comparator.naturalOrder())
+                    .orElse(null)
+            );
+
+            Assert.assertTrue(b.isClosed());
+        }
+    }
+
+    @Test
     public void testObserve() throws IOStreamException
     {
         final IOStream<String> a = IOStreams.fromArray("a1", "a2", "a3", "a4", "a5");
@@ -1381,7 +1434,6 @@ public class IOStreamsTest
         Assert.assertTrue(b1.isClosed());
         Assert.assertTrue(b2.isClosed());
     }
-
 
     @Test
     public void testZipAll() throws IOStreamException
