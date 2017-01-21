@@ -186,7 +186,8 @@ public class IOStreamsTest
 
         try (final IOStream<String> autoCloseLmn = lmn)
         {
-            lmn.limit(6).consume();
+            lmn.limit(6)
+                .consume();
         }
         catch (RuntimeException ex)
         {
@@ -264,6 +265,38 @@ public class IOStreamsTest
         {
             // Expected
         }
+    }
+
+    @Test
+    public void testCount() throws IOStreamException
+    {
+        try (final IOStream<String> a = TestStream.of("a1", "a2", "a3"))
+        {
+            Assert.assertEquals(3, IOStreams.count(a));
+        }
+
+        final ErrorStream<?> b = new ErrorStream<>(new IOException("b-read"), new IOException("b-close"));
+        boolean caughtReadException = false;
+        try
+        {
+            IOStreams.count(b);
+        }
+        catch (IOStreamReadException ex)
+        {
+            Assert.assertEquals(
+                "b-read",
+                ex.getCause()
+                    .getMessage()
+            );
+            caughtReadException = true;
+
+            Assert.assertEquals(
+                "b-close",
+                ex.getSuppressed()[0].getCause()
+                    .getMessage()
+            );
+        }
+        Assert.assertTrue(caughtReadException);
     }
 
     @Test
@@ -966,7 +999,8 @@ public class IOStreamsTest
 
         try
         {
-            IOStreams.observe(null, value -> {
+            IOStreams.observe(null, value ->
+            {
             });
             Assert.fail();
         }
@@ -1040,7 +1074,8 @@ public class IOStreamsTest
     {
         try (final IOStream<String> a = IOStreams.fromArray("a1", "a2", "a3", "a4", "a5"))
         {
-            final String aReduced = a.reduce(values -> {
+            final String aReduced = a.reduce(values ->
+            {
                 final StringBuilder builder = new StringBuilder();
                 values.consume(builder::append);
                 return builder.toString();
@@ -1108,7 +1143,8 @@ public class IOStreamsTest
         }
 
         final AtomicInteger counterB = new AtomicInteger(1);
-        final TestStream<String> b = TestStream.wrap(IOStreams.repeat(() -> {
+        final TestStream<String> b = TestStream.wrap(IOStreams.repeat(() ->
+        {
             throw new IOException("b" + counterB.getAndIncrement());
         }));
         try
@@ -1213,6 +1249,45 @@ public class IOStreamsTest
 
         final IOStream<String> b = IOStreams.fromArray("b1", "b2", "b3");
         Assert.assertEquals(new HashSet<>(Arrays.asList("b1", "b2", "b3")), IOStreams.toSet(b));
+    }
+
+    @Test
+    public void testTruncate() throws IOStreamException
+    {
+        TestStream<String> a = TestStream.of("a1", "a2", "a3", "a4");
+        IOStream<String> truncatedA = IOStreams.empty(a);
+        Assert.assertFalse(truncatedA.hasNext());
+        try
+        {
+            truncatedA.next();
+            Assert.fail();
+        }
+        catch (NoSuchElementException ex)
+        {
+            // Expected
+        }
+        Assert.assertFalse(a.isClosed());
+        truncatedA.close();
+        Assert.assertTrue(a.isClosed());
+
+        boolean caughtCloseException = false;
+        try (final IOStream<String> b = IOStreams.empty(new ErrorStream<>(
+            new IOException("b-read"),
+            new IOException("b-close")
+        )))
+        {
+            Assert.assertFalse(b.hasNext());
+        }
+        catch (IOStreamCloseException ex)
+        {
+            Assert.assertEquals(
+                "b-close",
+                ex.getCause()
+                    .getMessage()
+            );
+            caughtCloseException = true;
+        }
+        Assert.assertTrue(caughtCloseException);
     }
 
     @Test

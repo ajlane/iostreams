@@ -408,6 +408,22 @@ public final class IOStreams
     }
 
     /**
+     * Gets an empty stream which will close the given resource when it is closed.
+     *
+     * @param resource
+     *     The resource to close when the empty stream closes.
+     * @param <T>
+     *     The type of the items in the stream, if it had any.
+     *
+     * @return An empty stream.
+     */
+    @SuppressWarnings("unchecked")
+    public static <T> IOStream<T> empty(AutoCloseable resource)
+    {
+        return EmptyIOStream.withResource(resource);
+    }
+
+    /**
      * Applies a filter to the items in a stream.
      *
      * @param stream
@@ -1131,26 +1147,26 @@ public final class IOStreams
                         }
                         catch (final RuntimeException handlerThrown)
                         {
-                            handlerThrown.addSuppressed(transformFailure);
-                            throw handlerThrown;
+                            transformFailure.addSuppressed(handlerThrown);
+                            throw transformFailure;
                         }
                         catch (final IOStreamException handlerThrown)
                         {
                             final Exception handlerFailure = handlerThrown.getCause();
-                            handlerFailure.addSuppressed(transformFailure);
-                            throw handlerFailure;
+                            transformFailure.addSuppressed(handlerFailure);
+                            throw transformFailure;
                         }
                         catch (final Exception handlerThrown)
                         {
-                            handlerThrown.addSuppressed(transformFailure);
-                            throw handlerThrown;
+                            transformFailure.addSuppressed(handlerThrown);
+                            throw transformFailure;
                         }
                         if (decision == null)
                         {
                             final NullPointerException handlerFailure =
                                 new NullPointerException("The filter decision was null.");
-                            handlerFailure.addSuppressed(transformFailure);
-                            throw handlerFailure;
+                            transformFailure.addSuppressed(handlerFailure);
+                            throw transformFailure;
                         }
                         switch (decision)
                         {
@@ -1165,8 +1181,8 @@ public final class IOStreams
                             default:
                                 final UnsupportedOperationException handlerFailure =
                                     new UnsupportedOperationException("Unrecognised decision: " + decision);
-                                handlerFailure.addSuppressed(transformFailure);
-                                throw handlerFailure;
+                                transformFailure.addSuppressed(handlerFailure);
+                                throw transformFailure;
                         }
                     }
                 }
@@ -1626,6 +1642,23 @@ public final class IOStreams
         final Set<T> set = new HashSet<>();
         stream.consume(set::add);
         return set;
+    }
+
+    /**
+     * Truncates a stream so that it will produce no items.
+     * <p>
+     * The stream should still be closed appropriately.
+     *
+     * @param stream
+     *     The stream to truncate.
+     * @param <T>
+     *     The type of the items in the stream, if it had any.
+     *
+     * @return An empty stream.
+     */
+    public static <T> IOStream<T> truncate(IOStream<T> stream)
+    {
+        return empty(stream);
     }
 
     /**

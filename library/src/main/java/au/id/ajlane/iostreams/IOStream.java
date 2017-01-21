@@ -457,6 +457,19 @@ public interface IOStream<T> extends Closeable
     }
 
     /**
+     * Makes the stream empty.
+     * <p>
+     * Although empty, the stream still needs to be closed correctly by calling {@link #close} or one of the other
+     * consuming methods.
+     *
+     * @return An empty stream.
+     */
+    default IOStream<T> truncate()
+    {
+        return IOStreams.truncate(this);
+    }
+
+    /**
      * Terminates the stream when one of the items matches. <p> The matching item will not be kept.
      *
      * @param predicate
