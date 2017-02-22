@@ -1266,7 +1266,21 @@ public class IOStreamsTest
     }
 
     @Test
-    public void testSkip() throws IOStreamException
+    public void testSkipByCount() throws IOStreamException
+    {
+        try (final IOStream<String> a = IOStreams.skip(TestStream.of("a1", "a2", "a3", "a4", "a5", "a6", "a7"), 3))
+        {
+            Assert.assertArrayEquals(new String[]{"a4", "a5", "a6", "a7"}, a.toArray(String[]::new));
+        }
+
+        try (final IOStream<String> a = IOStreams.skip(TestStream.of("a1", "a2", "a3"), 0))
+        {
+            Assert.assertArrayEquals(new String[]{"a1", "a2", "a3"}, a.toArray(String[]::new));
+        }
+    }
+
+    @Test
+    public void testSkipByPredicate() throws IOStreamException
     {
         try (final IOStream<String> a = IOStreams.skip(TestStream.of("a1", "a2", "a3"), "a2"::equals))
         {

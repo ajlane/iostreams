@@ -538,6 +538,39 @@ public final class IOStreamFilters
         return t -> predicate.test(t) ? FilterDecision.KEEP_AND_CONTINUE : FilterDecision.SKIP_AND_TERMINATE;
     }
 
+    /**
+     * Creates a filter which will skip the first n items.
+     *
+     * @param n
+     *     The number of items to skip.
+     * @param <T>
+     *     The type of the items in the stream.
+     *
+     * @return A filter.
+     */
+    public static <T> IOStreamFilter<? super T> skip(final long n)
+    {
+        if (n <= 0)
+        {
+            return all();
+        }
+        return new IOStreamFilter<T>()
+        {
+            private volatile long count = 0;
+
+            @Override
+            public FilterDecision apply(final T item) throws Exception
+            {
+                if (count < n)
+                {
+                    count++;
+                    return FilterDecision.SKIP_AND_CONTINUE;
+                }
+                return FilterDecision.KEEP_AND_CONTINUE;
+            }
+        };
+    }
+
     private IOStreamFilters() throws InstantiationException
     {
         throw new InstantiationException("This class cannot be instantiated.");

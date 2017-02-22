@@ -1526,6 +1526,27 @@ public final class IOStreams
     }
 
     /**
+     * Filters a stream by skipping the first n items.
+     *
+     * @param stream
+     *     The stream to filter. Must not be null.
+     * @param n
+     *     The number of items to skip.
+     * @param <T>
+     *     The type of the items in the stream.
+     *
+     * @return A view of the stream, containing only the items after the first n.
+     */
+    public static <T> IOStream<T> skip(final IOStream<T> stream, final long n)
+    {
+        if (n <= 0)
+        {
+            return stream;
+        }
+        return filter(stream, IOStreamFilters.skip(n));
+    }
+
+    /**
      * Filters a stream by skipping items that match a predicate.
      *
      * @param stream

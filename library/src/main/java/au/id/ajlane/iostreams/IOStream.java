@@ -393,6 +393,19 @@ public interface IOStream<T> extends Closeable
     }
 
     /**
+     * Filters the stream by skipping the first n items.
+     *
+     * @param n
+     *     The number of items to skip.
+     *
+     * @return A view of the stream, containing only the items after the first n.
+     */
+    default IOStream<T> skip(final long n)
+    {
+        return IOStreams.skip(this, n);
+    }
+
+    /**
      * Splits the stream into groups of items.
      * <p>
      * This is the dual of {@link #group(IOStreamBiPredicate)}.
