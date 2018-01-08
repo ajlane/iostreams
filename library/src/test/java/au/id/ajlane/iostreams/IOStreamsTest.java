@@ -16,6 +16,9 @@
 
 package au.id.ajlane.iostreams;
 
+import org.junit.Assert;
+import org.junit.Test;
+
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -27,9 +30,6 @@ import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.StreamSupport;
-
-import org.junit.Assert;
-import org.junit.Test;
 
 /**
  * Tests {@link IOStreams}.
@@ -316,6 +316,26 @@ public class IOStreamsTest
                 // Expected
             }
         }
+    }
+
+
+    @Test
+    public void testExceptionSuppression(){
+        final IOException tryA = new IOException("tryA");
+        final IOException finallyA = new IOException("finallyA");
+        finallyA.addSuppressed(tryA);
+
+        final IOStreamException tryB = new IOStreamReadException(finallyA);
+        final IOStreamException finallyB = new IOStreamCloseException(tryB);
+        finallyB.addSuppressed(tryB);
+
+        final IOStreamException tryC = new IOStreamReadException(finallyB);
+        final IOStreamException finallyC = new IOStreamCloseException(tryC);
+        finallyC.addSuppressed(tryC);
+
+        Assert.assertEquals("finallyA", finallyC.getCause().getMessage());
+        Assert.assertEquals("tryA", finallyC.getCause().getSuppressed()[0].getMessage());
+        Assert.assertEquals(1, finallyC.getCause().getSuppressed().length);
     }
 
     @Test
@@ -641,6 +661,16 @@ public class IOStreamsTest
             );
             Assert.assertFalse(bGroups.hasNext());
         }
+
+        final TestStream<String> c = TestStream.of();
+        try (final IOStream<? extends IOStream<String>> cGroups = IOStreams.group(c, 5))
+        {
+            Assert.assertFalse(cGroups.hasNext());
+        }
+
+        Assert.assertTrue(a.isClosed());
+        Assert.assertTrue(b.isClosed());
+        Assert.assertTrue(c.isClosed());
 
         Assert.assertTrue(a.isClosed());
         Assert.assertTrue(b.isClosed());

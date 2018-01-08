@@ -40,12 +40,16 @@ public abstract class IOStreamException extends IOException
         }
         else if (cause instanceof IOStreamException)
         {
-            final Exception inner = ((IOStreamException) cause).getCause();
-            for (final Throwable suppressed : cause.getSuppressed())
-            {
-                inner.addSuppressed(suppressed);
+            Exception ex = ((IOStreamException)cause).getCause();
+            while(ex instanceof IOStreamException){
+                final Exception exCause = ((IOStreamException)ex).getCause();
+                for (final Throwable suppressed : ex.getSuppressed())
+                {
+                    exCause.addSuppressed(suppressed);
+                }
+                ex = exCause;
             }
-            return fixCause(inner);
+            return ex;
         }
         else
         {
