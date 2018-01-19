@@ -50,13 +50,13 @@ public class EmptyIOStream implements PeekableIOStream
         }
 
         @Override
-        public void close() throws IOStreamCloseException
+        public void close() throws IOStreamCloseException, InterruptedException
         {
             try
             {
                 resource.close();
             }
-            catch (final RuntimeException ex)
+            catch (final InterruptedException | RuntimeException ex)
             {
                 throw ex;
             }
@@ -89,24 +89,24 @@ public class EmptyIOStream implements PeekableIOStream
     }
 
     @Override
-    public void close() throws IOStreamCloseException
+    public void close() throws IOStreamCloseException, InterruptedException
     {
     }
 
     @Override
-    public void consume() throws IOStreamReadException, IOStreamCloseException
+    public void consume() throws IOStreamReadException, IOStreamCloseException, InterruptedException
     {
     }
 
     @Override
     public void consume(final IOStreamConsumer consumer)
-        throws IOStreamReadException, IOStreamCloseException
+        throws IOStreamReadException, IOStreamCloseException, InterruptedException
     {
         try
         {
             consumer.close();
         }
-        catch (final RuntimeException ex)
+        catch (final InterruptedException | RuntimeException ex)
         {
             throw ex;
         }
@@ -145,13 +145,13 @@ public class EmptyIOStream implements PeekableIOStream
 
     @Override
     public Object fold(final Object initial, final IOStreamAccumulator accumulator)
-        throws IOStreamReadException, IOStreamCloseException
+        throws IOStreamReadException, IOStreamCloseException, InterruptedException
     {
         try
         {
             accumulator.close();
         }
-        catch (final RuntimeException ex)
+        catch (final InterruptedException | IOStreamReadException | RuntimeException ex)
         {
             throw ex;
         }
@@ -237,11 +237,11 @@ public class EmptyIOStream implements PeekableIOStream
             {
                 // Auto close resources
             }
-            catch (RuntimeException ex)
+            catch (final InterruptedException | RuntimeException ex)
             {
                 throw ex;
             }
-            catch (Exception ex)
+            catch (final Exception ex)
             {
                 throw new IOStreamCloseException(ex);
             }

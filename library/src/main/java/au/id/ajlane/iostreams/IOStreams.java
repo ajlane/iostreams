@@ -251,6 +251,10 @@ public final class IOStreams
             {
                 while (index < streams.length)
                 {
+                    if (Thread.interrupted())
+                    {
+                        throw new InterruptedException("The thread was interrupted.");
+                    }
                     final IOStream<? extends T> stream = Objects.requireNonNull(
                         streams[index],
                         "One of the concatenated streams was null."
@@ -284,14 +288,20 @@ public final class IOStreams
      *     If there was a problem while reading the stream.
      * @throws IOStreamCloseException
      *     If there was a problem while closing the stream.
+     * @throws InterruptedException
+     *     If the thread was interrupted.
      */
     public static <T> void consume(final IOStream<T> stream)
-        throws IOStreamReadException, IOStreamCloseException
+        throws IOStreamReadException, IOStreamCloseException, InterruptedException
     {
         try (final IOStream<T> outer = stream)
         {
             while (stream.hasNext())
             {
+                if (Thread.interrupted())
+                {
+                    throw new InterruptedException("The thread was interrupted.");
+                }
                 stream.next();
             }
         }
@@ -311,9 +321,11 @@ public final class IOStreams
      *     If there was a problem while reading the stream.
      * @throws IOStreamCloseException
      *     If there was a problem while closing the stream.
+     * @throws InterruptedException
+     *     If the thread was interrupted.
      */
     public static <T> void consume(final IOStream<T> stream, final IOStreamConsumer<? super T> consumer)
-        throws IOStreamReadException, IOStreamCloseException
+        throws IOStreamReadException, IOStreamCloseException, InterruptedException
     {
         try (
             final IOStream<T> autoCloseStream = stream;
@@ -322,6 +334,10 @@ public final class IOStreams
         {
             while (stream.hasNext())
             {
+                if (Thread.interrupted())
+                {
+                    throw new InterruptedException("The thread was interrupted.");
+                }
                 try
                 {
                     consumer.accept(stream.next());
@@ -336,7 +352,7 @@ public final class IOStreams
                 }
             }
         }
-        catch (final RuntimeException ex)
+        catch (final InterruptedException | RuntimeException ex)
         {
             throw ex;
         }
@@ -364,15 +380,21 @@ public final class IOStreams
      *     If there was a problem with reading the stream.
      * @throws IOStreamCloseException
      *     If there was a problem with closing the stream.
+     * @throws InterruptedException
+     *     If the thread was interrupted.
      */
     public static <T> long count(final IOStream<T> stream)
-        throws IOStreamReadException, IOStreamCloseException
+        throws IOStreamReadException, IOStreamCloseException, InterruptedException
     {
         try (final IOStream<T> autoCloseStream = stream)
         {
             long count = 0;
             while (stream.hasNext())
             {
+                if (Thread.interrupted())
+                {
+                    throw new InterruptedException("The thread was interrupted.");
+                }
                 stream.next();
                 if (count < Long.MAX_VALUE)
                 {
@@ -581,13 +603,15 @@ public final class IOStreams
      *     If there was a problem with reading the stream.
      * @throws IOStreamCloseException
      *     If there was a problem with closing the stream.
+     * @throws InterruptedException
+     *     If the thread was interrupted.
      */
     public static <T, R> R fold(
         final IOStream<T> stream,
         final R initial,
         final IOStreamAccumulator<R, ? super T> accumulator
     )
-        throws IOStreamReadException, IOStreamCloseException
+        throws IOStreamReadException, IOStreamCloseException, InterruptedException
     {
         Objects.requireNonNull(stream, "The stream must not be null.");
         Objects.requireNonNull(accumulator, "The accumulator must not be null.");
@@ -599,11 +623,15 @@ public final class IOStreams
             R result = initial;
             while (stream.hasNext())
             {
+                if (Thread.interrupted())
+                {
+                    throw new InterruptedException("The thread was interrupted.");
+                }
                 result = accumulator.add(result, stream.next());
             }
             return result;
         }
-        catch (final RuntimeException ex)
+        catch (final RuntimeException | InterruptedException ex)
         {
             throw ex;
         }
@@ -691,7 +719,7 @@ public final class IOStreams
         return new IOStream<T>()
         {
             @Override
-            public void close() throws IOStreamCloseException
+            public void close() throws IOStreamCloseException, InterruptedException
             {
                 if (iterator instanceof AutoCloseable)
                 {
@@ -699,7 +727,7 @@ public final class IOStreams
                     {
                         ((AutoCloseable) iterator).close();
                     }
-                    catch (final RuntimeException ex)
+                    catch (final RuntimeException | InterruptedException ex)
                     {
                         throw ex;
                     }
@@ -804,13 +832,13 @@ public final class IOStreams
                         }
 
                         @Override
-                        public boolean hasNext() throws IOStreamReadException
+                        public boolean hasNext() throws IOStreamReadException, InterruptedException
                         {
                             return count < size && stream.hasNext();
                         }
 
                         @Override
-                        public T next() throws IOStreamReadException
+                        public T next() throws IOStreamReadException, InterruptedException
                         {
                             if (count >= size)
                             {
@@ -1019,7 +1047,7 @@ public final class IOStreams
         {
             @SuppressWarnings("EmptyTryBlock")
             @Override
-            public void close() throws IOStreamCloseException
+            public void close() throws IOStreamCloseException, InterruptedException
             {
                 try (
                     final IOStream<? extends T> autoCloseStream = stream;
@@ -1028,7 +1056,7 @@ public final class IOStreams
                 {
                     // Auto close resources
                 }
-                catch (final RuntimeException ex)
+                catch (final RuntimeException | InterruptedException ex)
                 {
                     throw ex;
                 }
@@ -1039,19 +1067,19 @@ public final class IOStreams
             }
 
             @Override
-            public boolean hasNext() throws IOStreamReadException
+            public boolean hasNext() throws IOStreamReadException, InterruptedException
             {
                 return stream.hasNext();
             }
 
             @Override
-            public R next() throws IOStreamReadException
+            public R next() throws IOStreamReadException, InterruptedException
             {
                 try
                 {
                     return transform.apply(stream.next());
                 }
-                catch (final RuntimeException ex)
+                catch (final RuntimeException | InterruptedException ex)
                 {
                     throw ex;
                 }
@@ -1202,15 +1230,21 @@ public final class IOStreams
      *     If there was problem with reading the stream.
      * @throws IOStreamCloseException
      *     If there was a problem with closing the stream.
+     * @throws InterruptedException
+     *     If the thread was interrupted.
      */
     public static <T> Optional<T> max(final IOStream<T> stream, Comparator<T> comparator)
-        throws IOStreamReadException, IOStreamCloseException
+        throws IOStreamReadException, IOStreamCloseException, InterruptedException
     {
         Optional<T> max = Optional.empty();
         try (final IOStream<T> autoCloseStream = stream)
         {
             while (stream.hasNext())
             {
+                if (Thread.interrupted())
+                {
+                    throw new InterruptedException("The thread was interrupted.");
+                }
                 final T item = stream.next();
                 if (!max.isPresent() || comparator.compare(item, max.get()) > 0)
                 {
@@ -1238,9 +1272,11 @@ public final class IOStreams
      *     If there was a problem with reading the stream.
      * @throws IOStreamCloseException
      *     If there was a problem with closing the stream.
+     * @throws InterruptedException
+     *     If the thread was interrupted.
      */
     public static <T> Optional<T> min(final IOStream<T> stream, Comparator<T> comparator)
-        throws IOStreamReadException, IOStreamCloseException
+        throws IOStreamReadException, IOStreamCloseException, InterruptedException
     {
         return max(stream, comparator.reversed());
     }
@@ -1267,7 +1303,7 @@ public final class IOStreams
         {
             @SuppressWarnings("EmptyTryBlock")
             @Override
-            public void close() throws IOStreamCloseException
+            public void close() throws IOStreamCloseException, InterruptedException
             {
                 try (
                     final IOStream<T> autoCloseStream = stream;
@@ -1276,7 +1312,7 @@ public final class IOStreams
                 {
                     // Auto close resources
                 }
-                catch (RuntimeException ex)
+                catch (RuntimeException | InterruptedException ex)
                 {
                     throw ex;
                 }
@@ -1287,13 +1323,13 @@ public final class IOStreams
             }
 
             @Override
-            public boolean hasNext() throws IOStreamReadException
+            public boolean hasNext() throws IOStreamReadException, InterruptedException
             {
                 return stream.hasNext();
             }
 
             @Override
-            public T next() throws IOStreamReadException
+            public T next() throws IOStreamReadException, InterruptedException
             {
                 final T next = stream.next();
                 try
@@ -1338,7 +1374,7 @@ public final class IOStreams
             private final LinkedList<T> buffer = new LinkedList<>();
 
             @Override
-            public void close() throws IOStreamCloseException
+            public void close() throws IOStreamCloseException, InterruptedException
             {
                 try (final IOStream<T> autoCloseStream = stream)
                 {
@@ -1347,13 +1383,13 @@ public final class IOStreams
             }
 
             @Override
-            public boolean hasNext() throws IOStreamReadException
+            public boolean hasNext() throws IOStreamReadException, InterruptedException
             {
                 return buffer.size() > 0 || stream.hasNext();
             }
 
             @Override
-            public T next() throws IOStreamReadException
+            public T next() throws IOStreamReadException, InterruptedException
             {
                 if (buffer.size() > 0)
                 {
@@ -1367,7 +1403,7 @@ public final class IOStreams
             }
 
             @Override
-            public Iterable<T> peek(int n) throws IOStreamReadException
+            public Iterable<T> peek(int n) throws IOStreamReadException, InterruptedException
             {
                 if (n < 0)
                 {
@@ -1376,6 +1412,10 @@ public final class IOStreams
                 int extra = n - buffer.size();
                 for (int i = 0; i < extra && stream.hasNext(); i++)
                 {
+                    if (Thread.interrupted())
+                    {
+                        throw new InterruptedException("The thread was interrupted.");
+                    }
                     buffer.add(stream.next());
                 }
                 return buffer.subList(0, Integer.min(n, buffer.size()));
@@ -1407,9 +1447,11 @@ public final class IOStreams
      *     If there was a problem in reading the stream.
      * @throws IOStreamCloseException
      *     If there was a problem in closing the stream.
+     * @throws InterruptedException
+     *     If the thread was interrupted.
      */
     public static <R, T> R reduce(final IOStream<T> stream, final IOStreamTransform<? super IOStream<T>, R> reducer)
-        throws IOStreamReadException, IOStreamCloseException
+        throws IOStreamReadException, IOStreamCloseException, InterruptedException
     {
         try (
             final IOStream<T> autoCloseStream = stream;
@@ -1429,7 +1471,7 @@ public final class IOStreams
                 throw new IOStreamReadException(ex);
             }
         }
-        catch (final RuntimeException ex)
+        catch (final InterruptedException | IOStreamReadException | RuntimeException ex)
         {
             throw ex;
         }
@@ -1609,9 +1651,11 @@ public final class IOStreams
      *     If there was a problem in reading the stream.
      * @throws IOStreamCloseException
      *     If there was a problem in closing the stream.
+     * @throws InterruptedException
+     *     If the thread was interrupted.
      */
     public static <T> T[] toArray(final IOStream<T> stream, final IntFunction<T[]> supplier)
-        throws IOStreamReadException, IOStreamCloseException
+        throws IOStreamReadException, IOStreamCloseException, InterruptedException
     {
         Objects.requireNonNull(stream, "The stream cannot be null.");
         final List<T> list = new ArrayList<>();
@@ -1633,8 +1677,11 @@ public final class IOStreams
      *     If there was a problem in reading the stream.
      * @throws IOStreamCloseException
      *     If there was a problem in closing the stream.
+     * @throws InterruptedException
+     *     If the thread was interrupted.
      */
-    public static <T> List<T> toList(final IOStream<T> stream) throws IOStreamReadException, IOStreamCloseException
+    public static <T> List<T> toList(final IOStream<T> stream)
+        throws IOStreamReadException, IOStreamCloseException, InterruptedException
     {
         Objects.requireNonNull("The stream cannot be null.");
         final List<T> list = new ArrayList<>();
@@ -1656,9 +1703,11 @@ public final class IOStreams
      *     If there was a problem in reading the stream.
      * @throws IOStreamCloseException
      *     If there was a problem in closing the stream.
+     * @throws InterruptedException
+     *     If the thread was interrupted.
      */
     public static <T> Set<T> toSet(final IOStream<T> stream)
-        throws IOStreamReadException, IOStreamCloseException
+        throws IOStreamReadException, IOStreamCloseException, InterruptedException
     {
         Objects.requireNonNull("The stream cannot be null.");
         final Set<T> set = new HashSet<>();
@@ -1732,7 +1781,7 @@ public final class IOStreams
         return new IOStream<Z>()
         {
             @Override
-            public void close() throws IOStreamCloseException
+            public void close() throws IOStreamCloseException, InterruptedException
             {
                 try (final IOStream<A> autoCloseLeft = left;
                      final IOStream<B> autoCloseRight = right)
@@ -1753,19 +1802,19 @@ public final class IOStreams
             }
 
             @Override
-            public boolean hasNext() throws IOStreamReadException
+            public boolean hasNext() throws IOStreamReadException, InterruptedException
             {
                 return left.hasNext() && right.hasNext();
             }
 
             @Override
-            public Z next() throws IOStreamReadException
+            public Z next() throws IOStreamReadException, InterruptedException
             {
                 try
                 {
                     return zipFunction.apply(left.next(), right.next());
                 }
-                catch (RuntimeException ex)
+                catch (RuntimeException | InterruptedException ex)
                 {
                     throw ex;
                 }
@@ -1844,7 +1893,7 @@ public final class IOStreams
         {
             @SuppressWarnings("EmptyTryBlock")
             @Override
-            public void close() throws IOStreamCloseException
+            public void close() throws IOStreamCloseException, InterruptedException
             {
                 try (final IOStream<A> autoCloseLeft = left;
                      final IOStream<B> autoCloseRight = right)
@@ -1868,13 +1917,13 @@ public final class IOStreams
             }
 
             @Override
-            public boolean hasNext() throws IOStreamReadException
+            public boolean hasNext() throws IOStreamReadException, InterruptedException
             {
                 return left.hasNext() || right.hasNext();
             }
 
             @Override
-            public Z next() throws IOStreamReadException
+            public Z next() throws IOStreamReadException, InterruptedException
             {
                 try
                 {
@@ -1883,7 +1932,7 @@ public final class IOStreams
                         right.hasNext() ? right.next() : rightDefaults.get()
                     );
                 }
-                catch (RuntimeException ex)
+                catch (RuntimeException | InterruptedException ex)
                 {
                     throw ex;
                 }

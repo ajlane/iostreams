@@ -41,7 +41,7 @@ public class IOStreamablesTest
      *     If any {@link IOStream} fails. Should not occur.
      */
     @Test
-    public void testConcatArrayOfStreamables() throws IOStreamException
+    public void testConcatArrayOfStreamables() throws IOStreamException, InterruptedException
     {
         final IOStreamable<String> a = IOStreamables.fromArray("a1");
         final IOStreamable<String> b = IOStreamables.fromArray("b1");
@@ -93,7 +93,7 @@ public class IOStreamablesTest
      *     If any {@link IOStream} fails. Should not occur.
      */
     @Test
-    public void testConcatStreamableOfStreamables() throws IOStreamException
+    public void testConcatStreamableOfStreamables() throws IOStreamException, InterruptedException
     {
         final IOStreamable<String> a = IOStreamables.fromArray("a1");
         final IOStreamable<String> b = IOStreamables.fromArray("b1");
@@ -145,7 +145,7 @@ public class IOStreamablesTest
      *     If a {@link IOStream} fails. Should not occur.
      */
     @Test
-    public void testEmptyStreamable() throws IOStreamException
+    public void testEmptyStreamable() throws IOStreamException, InterruptedException
     {
         final IOStreamable<String> a = IOStreamables.empty();
         try (final IOStream<String> stream = a.stream())
@@ -170,7 +170,7 @@ public class IOStreamablesTest
      *     If a {@code IOStream} fails. Should not occur.
      */
     @Test
-    public void testFilter() throws IOStreamException
+    public void testFilter() throws IOStreamException, InterruptedException
     {
         Assert.assertArrayEquals(
             new String[]{"a1", "a2", "a3"},
@@ -246,7 +246,7 @@ public class IOStreamablesTest
      *     If any {@code IOStream} fails. Should not occur.
      */
     @Test
-    public void testFlattenArrays() throws IOStreamException
+    public void testFlattenArrays() throws IOStreamException, InterruptedException
     {
         Assert.assertArrayEquals(
             new String[]{"a1", "a2", "b1", "b2", "b3", "c1"},
@@ -326,7 +326,7 @@ public class IOStreamablesTest
      *     If a {@code IOStream} fails. Should not occur.
      */
     @Test
-    public void testFlattenIterables() throws IOStreamException
+    public void testFlattenIterables() throws IOStreamException, InterruptedException
     {
         Assert.assertArrayEquals(
             new String[]{"a1", "a2", "b1", "b2", "b3", "c1"},
@@ -407,7 +407,7 @@ public class IOStreamablesTest
      *     If a {@link IOStream} fails. Should not occur.
      */
     @Test
-    public void testFlattenStreamables() throws IOStreamException
+    public void testFlattenStreamables() throws IOStreamException, InterruptedException
     {
         Assert.assertArrayEquals(
             new String[]{"a1", "a2", "b1", "b2", "b3", "c1"},
@@ -494,7 +494,7 @@ public class IOStreamablesTest
      *     If a {@link IOStream} fails. Should not occur.
      */
     @Test
-    public void testIterableStreamable() throws IOStreamException
+    public void testIterableStreamable() throws IOStreamException, InterruptedException
     {
         final List<String> values = Arrays.asList("a", "b", "c");
         try (final IOStream<String> stream = IOStreamables.fromIterable(values)
@@ -526,7 +526,7 @@ public class IOStreamablesTest
      *     If a {@link IOStream} fails. Should not occur.
      */
     @Test
-    public void testSingletonStreamable() throws IOStreamException
+    public void testSingletonStreamable() throws IOStreamException, InterruptedException
     {
         final IOStreamable<Object> a = IOStreamables.singleton("a");
         try (final IOStream<Object> stream = a.stream())
@@ -553,7 +553,7 @@ public class IOStreamablesTest
      *     If a {@link IOStream} fails. Should not occur.
      */
     @Test
-    public void testToArray() throws IOStreamException
+    public void testToArray() throws IOStreamException, InterruptedException
     {
         final IOStreamable<String> a = IOStreamables.fromArray();
         Assert.assertArrayEquals(IOStreamablesTest.EMPTY, IOStreamables.toArray(a, String[]::new));
@@ -569,7 +569,7 @@ public class IOStreamablesTest
      *     If a {@link IOStream} fails. Should not occur.
      */
     @Test
-    public void testToList() throws IOStreamException
+    public void testToList() throws IOStreamException, InterruptedException
     {
         final IOStreamable<String> a = IOStreamables.fromArray();
         Assert.assertEquals(new ArrayList<String>(0), IOStreamables.toList(a));
@@ -585,7 +585,7 @@ public class IOStreamablesTest
      *     If a {@link IOStream} fails. Should not occur.
      */
     @Test
-    public void testToSet() throws IOStreamException
+    public void testToSet() throws IOStreamException, InterruptedException
     {
         final IOStreamable<String> a = IOStreamables.fromArray();
         Assert.assertEquals(new HashSet<String>(0), IOStreamables.toSet(a));

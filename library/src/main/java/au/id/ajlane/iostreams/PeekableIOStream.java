@@ -36,8 +36,10 @@ public interface PeekableIOStream<T> extends IOStream<T>
      *     If there was a problem with reading the stream.
      * @throws java.util.NoSuchElementException
      *     If there is no next item in the stream.
+     * @throws InterruptedException
+     *     If the thread was interrupted.
      */
-    default T peek() throws IOStreamReadException
+    default T peek() throws IOStreamReadException, InterruptedException
     {
         return this.peek(1)
             .iterator()
@@ -54,6 +56,8 @@ public interface PeekableIOStream<T> extends IOStream<T>
      *
      * @throws IOStreamReadException
      *     If there was a problem with reading the stream.
+     * @throws InterruptedException
+     *     If the thread was interrupted.
      */
-    Iterable<T> peek(int n) throws IOStreamReadException;
+    Iterable<T> peek(int n) throws IOStreamReadException, InterruptedException;
 }

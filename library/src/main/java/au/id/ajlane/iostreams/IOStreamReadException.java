@@ -32,10 +32,12 @@ public final class IOStreamReadException extends IOStreamException
      *
      * @throws RuntimeException
      *     If the cause is a runtime exception.
+     * @throws InterruptedException
+     *     If the cause is an interrupted exception.
      * @throws NullPointerException
      *     If the cause is {@code null}.
      */
-    public IOStreamReadException(final Exception cause)
+    public IOStreamReadException(final Exception cause) throws InterruptedException
     {
         super("Could not read from the stream.", cause);
     }

@@ -16,7 +16,6 @@
 
 package au.id.ajlane.iostreams;
 
-import java.io.Closeable;
 import java.util.Comparator;
 import java.util.Iterator;
 import java.util.List;
@@ -45,7 +44,7 @@ import java.util.stream.Stream;
  * @param <T>
  *     The type of the items in the {@code IOStream}
  */
-public interface IOStream<T> extends Closeable
+public interface IOStream<T> extends AutoCloseable
 {
     /**
      * Releases any resources held by the {@code IOStream}.
@@ -59,9 +58,12 @@ public interface IOStream<T> extends Closeable
      * @throws IOStreamCloseException
      *     If the stream could not be closed for some reason. The stream may not release all resources if this is the
      *     case.
+     * @throws InterruptedException
+     *     If the thread is interrupted before the stream could be closed. The stream may not release all resources if
+     *     this is the case.
      */
     @Override
-    void close() throws IOStreamCloseException;
+    void close() throws IOStreamCloseException, InterruptedException;
 
     /**
      * Consumes the stream while discarding the items. <p>Useful for triggering any side-effects from processing the
@@ -72,8 +74,10 @@ public interface IOStream<T> extends Closeable
      * @throws IOStreamCloseException
      *     If the stream could not be closed for some reason. The stream may not release all resources if this is the
      *     case.
+     * @throws InterruptedException
+     *     If the thread was interrupted.
      */
-    default void consume() throws IOStreamReadException, IOStreamCloseException
+    default void consume() throws IOStreamReadException, IOStreamCloseException, InterruptedException
     {
         IOStreams.consume(this);
     }
@@ -89,9 +93,11 @@ public interface IOStream<T> extends Closeable
      * @throws IOStreamCloseException
      *     If the stream could not be closed for some reason. The stream may not release all resources if this is the
      *     case.
+     * @throws InterruptedException
+     *     If the thread was interrupted.
      */
     default void consume(final IOStreamConsumer<? super T> consumer)
-        throws IOStreamReadException, IOStreamCloseException
+        throws IOStreamReadException, IOStreamCloseException, InterruptedException
     {
         IOStreams.consume(this, consumer);
     }
@@ -107,8 +113,10 @@ public interface IOStream<T> extends Closeable
      *     If there was a problem in reading the stream.
      * @throws IOStreamCloseException
      *     If there was a problem in closing the stream.
+     * @throws InterruptedException
+     *     If the thread was interrupted.
      */
-    default long count() throws IOStreamReadException, IOStreamCloseException
+    default long count() throws IOStreamReadException, IOStreamCloseException, InterruptedException
     {
         return IOStreams.count(this);
     }
@@ -157,9 +165,11 @@ public interface IOStream<T> extends Closeable
      *     If there was a problem with reading the stream.
      * @throws IOStreamCloseException
      *     If there was a problem with closing the stream.
+     * @throws InterruptedException
+     *     If the thread was interrupted.
      */
     default <R> R fold(final R initial, final IOStreamAccumulator<R, ? super T> accumulator)
-        throws IOStreamReadException, IOStreamCloseException
+        throws IOStreamReadException, IOStreamCloseException, InterruptedException
     {
         return IOStreams.fold(this, initial, accumulator);
     }
@@ -197,16 +207,15 @@ public interface IOStream<T> extends Closeable
      * <p>
      * It is not uncommon for significant work to be necessary in order to calculate {@code hasNext}. Typically,
      * implementations not be able to determine if there is a next item without fetching and buffering it.
-     * <p>
-     * If the thread is interrupted before this method returns, implementations may choose to throw a {@link
-     * IOStreamReadException} with a {@link InterruptedException} as the cause.
      *
      * @return {@code true} if a subsequent call to {@link #next} will succeed. {@code false} otherwise.
      *
      * @throws IOStreamReadException
      *     If there was any problem in reading from the underlying resource.
+     * @throws InterruptedException
+     *     If the thread was interrupted before the check could finish.
      */
-    boolean hasNext() throws IOStreamReadException;
+    boolean hasNext() throws IOStreamReadException, InterruptedException;
 
     /**
      * Filters the stream to retain only items which are matched by the predicate.
@@ -292,8 +301,11 @@ public interface IOStream<T> extends Closeable
      *     If there was a problem in reading the stream.
      * @throws IOStreamCloseException
      *     If there was a problem in closing the stream.
+     * @throws InterruptedException
+     *     If the thread was interrupted.
      */
-    default Optional<T> max(final Comparator<T> comparator) throws IOStreamReadException, IOStreamCloseException
+    default Optional<T> max(final Comparator<T> comparator)
+        throws IOStreamReadException, IOStreamCloseException, InterruptedException
     {
         return IOStreams.max(this, comparator);
     }
@@ -312,17 +324,17 @@ public interface IOStream<T> extends Closeable
      *     If there was a problem in reading the stream.
      * @throws IOStreamCloseException
      *     If there was a problem in closing the stream.
+     * @throws InterruptedException
+     *     If the thread was interrupted.
      */
-    default Optional<T> min(final Comparator<T> comparator) throws IOStreamReadException, IOStreamCloseException
+    default Optional<T> min(final Comparator<T> comparator)
+        throws IOStreamReadException, IOStreamCloseException, InterruptedException
     {
         return IOStreams.min(this, comparator);
     }
 
     /**
      * Returns the next item in the {@code IOStream}.
-     * <p>
-     * If the thread is interrupted before this method returns, implementations may choose to throw a {@link
-     * IOStreamReadException} with a {@link InterruptedException} as the cause.
      *
      * @return The next item in the {@code IOStream}. {@code null} is a valid item, although discouraged.
      *
@@ -330,8 +342,10 @@ public interface IOStream<T> extends Closeable
      *     If there is no next item (calling {@link #hasNext} before this method would have returned {@code false}).
      * @throws IOStreamReadException
      *     If there was any problem in reading from the underlying resource.
+     * @throws InterruptedException
+     *     If the thread is interrupted before the item can be returned.
      */
-    T next() throws IOStreamReadException;
+    T next() throws IOStreamReadException, InterruptedException;
 
     /**
      * Registers a function to observe values as they are consumed.
@@ -372,9 +386,11 @@ public interface IOStream<T> extends Closeable
      *     If there was a problem in reading the stream.
      * @throws IOStreamCloseException
      *     If there was a problem in closing the stream.
+     * @throws InterruptedException
+     *     If the thread was interrupted.
      */
     default <R> R reduce(final IOStreamTransform<? super IOStream<T>, R> reducer)
-        throws IOStreamReadException, IOStreamCloseException
+        throws IOStreamReadException, IOStreamCloseException, InterruptedException
     {
         return IOStreams.reduce(this, reducer);
     }
@@ -433,8 +449,11 @@ public interface IOStream<T> extends Closeable
      *     If there was a problem in reading the stream.
      * @throws IOStreamCloseException
      *     If there was a problem in closing the stream.
+     * @throws InterruptedException
+     *     If the thread was interrupted.
      */
-    default T[] toArray(final IntFunction<T[]> supplier) throws IOStreamReadException, IOStreamCloseException
+    default T[] toArray(final IntFunction<T[]> supplier)
+        throws IOStreamReadException, IOStreamCloseException, InterruptedException
     {
         return IOStreams.toArray(this, supplier);
     }
@@ -448,8 +467,10 @@ public interface IOStream<T> extends Closeable
      *     If there was a problem in reading the stream.
      * @throws IOStreamCloseException
      *     If there was a problem in closing the stream.
+     * @throws InterruptedException
+     *     If the thread was interrupted.
      */
-    default List<T> toList() throws IOStreamReadException, IOStreamCloseException
+    default List<T> toList() throws IOStreamReadException, IOStreamCloseException, InterruptedException
     {
         return IOStreams.toList(this);
     }
@@ -463,8 +484,10 @@ public interface IOStream<T> extends Closeable
      *     If there was a problem in reading the stream.
      * @throws IOStreamCloseException
      *     If there was a problem in closing the stream.
+     * @throws InterruptedException
+     *     If the thread was interrupted.
      */
-    default Set<T> toSet() throws IOStreamReadException, IOStreamCloseException
+    default Set<T> toSet() throws IOStreamReadException, IOStreamCloseException, InterruptedException
     {
         return IOStreams.toSet(this);
     }

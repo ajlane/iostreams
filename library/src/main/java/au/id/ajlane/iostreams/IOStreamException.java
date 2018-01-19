@@ -28,7 +28,7 @@ public abstract class IOStreamException extends IOException
 {
     private static final long serialVersionUID = -7730103429830744318L;
 
-    private static Exception fixCause(final Exception cause)
+    private static Exception fixCause(final Exception cause) throws InterruptedException
     {
         if (cause == null)
         {
@@ -37,6 +37,10 @@ public abstract class IOStreamException extends IOException
         else if (cause instanceof RuntimeException)
         {
             throw (RuntimeException) cause;
+        }
+        else if (cause instanceof InterruptedException)
+        {
+            throw (InterruptedException) cause;
         }
         else if (cause instanceof IOStreamException)
         {
@@ -69,10 +73,12 @@ public abstract class IOStreamException extends IOException
      *
      * @throws RuntimeException
      *     if the given cause is a runtime exception.
+     * @throws InterruptedException
+     *     if the given cause is an interrupted exception.
      * @throws NullPointerException
      *     if the given cause is {@code null}.
      */
-    IOStreamException(final String message, final Exception cause)
+    IOStreamException(final String message, final Exception cause) throws InterruptedException
     {
         super(message, fixCause(cause));
     }

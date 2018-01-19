@@ -21,6 +21,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicLong;
 
 /**
  * Utilities for working with instances of {@link IOStreamFilter}.
@@ -242,7 +243,7 @@ public final class IOStreamFilters
     @SafeVarargs
     public static <T> IOStreamFilter<T> pipe(final IOStreamFilter<? super T>... filters)
     {
-        return IOStreamFilters.pipe(Arrays.asList(filters));
+        return IOStreamFilters.pipe((Iterable<IOStreamFilter<? super T>>)Arrays.asList(filters));
     }
 
     /**
@@ -266,7 +267,7 @@ public final class IOStreamFilters
         return new AbstractIOStreamFilter<T>()
         {
             @Override
-            public void close() throws IOStreamCloseException
+            public void close() throws IOStreamCloseException, InterruptedException
             {
                 Exception lastException = null;
                 boolean runtimeException = false;
@@ -556,14 +557,13 @@ public final class IOStreamFilters
         }
         return new IOStreamFilter<T>()
         {
-            private volatile long count = 0;
+            private final AtomicLong count = new AtomicLong(0);
 
             @Override
             public FilterDecision apply(final T item) throws Exception
             {
-                if (count < n)
+                if (count.getAndUpdate(c -> c < n ? c + 1 : c) < n)
                 {
-                    count++;
                     return FilterDecision.SKIP_AND_CONTINUE;
                 }
                 return FilterDecision.KEEP_AND_CONTINUE;

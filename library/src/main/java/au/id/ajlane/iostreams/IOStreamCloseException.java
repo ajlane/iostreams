@@ -32,10 +32,12 @@ public final class IOStreamCloseException extends IOStreamException
      *
      * @throws RuntimeException
      *     If the cause is a runtime exception.
+     * @throws InterruptedException
+     *     If the cause is an interrupted exception.
      * @throws NullPointerException
      *     If the cause is {@code null}.
      */
-    public IOStreamCloseException(final Exception cause)
+    public IOStreamCloseException(final Exception cause) throws InterruptedException
     {
         super("Could not close the stream.", cause);
     }

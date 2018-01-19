@@ -19,7 +19,7 @@ Example
 This example uses IOStreams to lazily read the given text files and output their contents line-by-line.
 
 ```java
-public static void main(final String... args) throws IOStreamException
+public static void main(final String... args) throws IOStreamException, InterruptedException
 {
     // Start with a list of file names
     IOStreams.fromArray(args)
@@ -38,13 +38,14 @@ public static void main(final String... args) throws IOStreamException
 
 Sure, let's have a look at that version.
 ```java
-public static void main(final String... args) throws IOException{
+public static void main(final String... args) throws IOException, InterruptedException{
     // Start with a list of file names
     for(String file : args){
         // Read each line from each file
         try(final BufferedReader reader = Files.newBufferedReader(Paths.get(file), StandardCharsets.UTF_8)){
             int lineNumber = 0;
             for(String lineText = reader.readLine(); lineText != null; lineText = reader.readLine(), lineNumber++){
+                if(Thread.interrupted()) throw new InterruptedException();
                 // Filter out empty lines or lines that start with a comment
                 if(lineText.matches("\\s*(#.*)?")) {
                     // Prefix with the path and line number, and trim whitespace and comments from the lines that are left

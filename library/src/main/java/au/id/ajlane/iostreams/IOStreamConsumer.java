@@ -17,7 +17,7 @@
 package au.id.ajlane.iostreams;
 
 /**
- * A function which recieves/consumes items.
+ * A function which receives/consumes items.
  *
  * @param <T>
  *     The type of the items.

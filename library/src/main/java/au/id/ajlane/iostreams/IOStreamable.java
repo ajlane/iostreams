@@ -41,8 +41,10 @@ public interface IOStreamable<T>
      *     If there were any problems in reading the stream.
      * @throws IOStreamCloseException
      *     If there were any problems in closing the stream.
+     * @throws InterruptedException
+     *     If the thread was interrupted.
      */
-    default void consume() throws IOStreamReadException, IOStreamCloseException
+    default void consume() throws IOStreamReadException, IOStreamCloseException, InterruptedException
     {
         IOStreamables.consume(this);
     }
@@ -57,9 +59,11 @@ public interface IOStreamable<T>
      *     If there were any problems in reading the stream.
      * @throws IOStreamCloseException
      *     If there were any problems in closing the stream.
+     * @throws InterruptedException
+     *     If the thread was interrupted.
      */
     default void consume(final Supplier<? extends IOStreamConsumer<? super T>> consumer) throws IOStreamReadException,
-        IOStreamCloseException
+        IOStreamCloseException, InterruptedException
     {
         IOStreamables.consume(this, consumer);
     }

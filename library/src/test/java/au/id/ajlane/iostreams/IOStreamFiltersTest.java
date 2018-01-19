@@ -37,7 +37,7 @@ public class IOStreamFiltersTest
      *     If a {@code IOStream} fails unexpectedly.
      */
     @Test
-    public void testAllFilter() throws IOStreamException
+    public void testAllFilter() throws IOStreamException, InterruptedException
     {
         final IOStream<String> original = IOStreams.fromArray("a", "b", "c");
         try (final IOStream<String> stream = IOStreams.filter(original, IOStreamFilters.all()))
@@ -68,7 +68,7 @@ public class IOStreamFiltersTest
      *     If a {@link IOStream} fails unexpectedly.
      */
     @Test
-    public void testArrayBlacklistFilter() throws IOStreamException
+    public void testArrayBlacklistFilter() throws IOStreamException, InterruptedException
     {
         final IOStream<String> original = IOStreams.fromArray("a", "b", "c");
         try (final IOStream<String> stream = IOStreams.filter(original, IOStreamFilters.blacklist("a", "c")))
@@ -95,7 +95,7 @@ public class IOStreamFiltersTest
      *     If a {@link IOStream} fails unexpectedly.
      */
     @Test
-    public void testArrayWhitelistFilter() throws IOStreamException
+    public void testArrayWhitelistFilter() throws IOStreamException, InterruptedException
     {
         final IOStream<String> original = IOStreams.fromArray("a", "b", "c");
         try (final IOStream<String> stream = IOStreams.filter(original, IOStreamFilters.whitelist("b", "c")))
@@ -124,7 +124,7 @@ public class IOStreamFiltersTest
      *     If a {@code IOStream} fails unexpectedly.
      */
     @Test
-    public void testCollectionBlacklistFilter() throws IOStreamException
+    public void testCollectionBlacklistFilter() throws IOStreamException, InterruptedException
     {
         final IOStream<String> original = IOStreams.fromArray("a", "b", "c");
         final Collection<String> collection = Arrays.asList("a", "c");
@@ -156,7 +156,7 @@ public class IOStreamFiltersTest
      *     If a {@link IOStream} fails unexpectedly.
      */
     @Test
-    public void testCollectionWhitelistFilter() throws IOStreamException
+    public void testCollectionWhitelistFilter() throws IOStreamException, InterruptedException
     {
         final IOStream<String> original = IOStreams.fromArray("a", "b", "c");
         final Collection<String> collection = Arrays.asList("b", "c");
@@ -189,7 +189,7 @@ public class IOStreamFiltersTest
      *     If a {@code IOStream} fails unexpectedly.
      */
     @Test
-    public void testIterableBlacklistFilter() throws IOStreamException
+    public void testIterableBlacklistFilter() throws IOStreamException, InterruptedException
     {
         final IOStream<String> original = IOStreams.fromArray("a", "b", "c");
         final Iterable<String> iterable = Arrays.asList("a", "c");
@@ -220,7 +220,7 @@ public class IOStreamFiltersTest
      *     If a {@link IOStream} fails unexpectedly.
      */
     @Test
-    public void testIterableWhitelistFilter() throws IOStreamException
+    public void testIterableWhitelistFilter() throws IOStreamException, InterruptedException
     {
         final IOStream<String> original = IOStreams.fromArray("a", "b", "c");
         final Iterable<String> iterable = Arrays.asList("b", "c");
@@ -253,7 +253,7 @@ public class IOStreamFiltersTest
      *     If a {@link IOStream} fails unexpectedly.
      */
     @Test
-    public void testNoneFilter() throws IOStreamException
+    public void testNoneFilter() throws IOStreamException, InterruptedException
     {
         final IOStream<String> original = IOStreams.fromArray("a", "b", "c");
         try (final IOStream<String> stream = IOStreams.filter(original, IOStreamFilters.none()))
@@ -278,7 +278,7 @@ public class IOStreamFiltersTest
      *     If a {@code IOStream} fails unexpectedly.
      */
     @Test
-    public void testSetBlacklistFilter() throws IOStreamException
+    public void testSetBlacklistFilter() throws IOStreamException, InterruptedException
     {
         final IOStream<String> original = IOStreams.fromArray("a", "b", "c");
         final Set<String> set = new HashSet<>(
@@ -311,7 +311,7 @@ public class IOStreamFiltersTest
      *     If a {@link IOStream} fails unexpectedly.
      */
     @Test
-    public void testSetWhitelistFilter() throws IOStreamException
+    public void testSetWhitelistFilter() throws IOStreamException, InterruptedException
     {
         final IOStream<String> original = IOStreams.fromArray("a", "b", "c");
         final Set<String> set = new HashSet<>(

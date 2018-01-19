@@ -20,7 +20,6 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Paths;
 
 import au.id.ajlane.iostreams.FileLineIOStream;
-import au.id.ajlane.iostreams.FilterDecision;
 import au.id.ajlane.iostreams.IOStreams;
 
 /**

@@ -217,7 +217,7 @@ public class FileLineIOStream extends AbstractIOStream<FileLine>
     }
 
     @Override
-    protected void end() throws IOStreamCloseException
+    protected void end() throws IOStreamCloseException, InterruptedException
     {
         if (this.reader != null)
         {
@@ -234,7 +234,7 @@ public class FileLineIOStream extends AbstractIOStream<FileLine>
     }
 
     @Override
-    protected FileLine find() throws IOStreamReadException
+    protected FileLine find() throws IOStreamReadException, InterruptedException
     {
         final String value;
         try
@@ -275,13 +275,13 @@ public class FileLineIOStream extends AbstractIOStream<FileLine>
     }
 
     @Override
-    protected void open() throws IOStreamReadException
+    protected void open() throws IOStreamReadException, InterruptedException
     {
         try
         {
             this.reader = supplier.call();
         }
-        catch (final RuntimeException ex)
+        catch (final RuntimeException | InterruptedException ex)
         {
             throw ex;
         }

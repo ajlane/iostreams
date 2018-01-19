@@ -39,7 +39,7 @@ public class ErrorStream<T> implements IOStream<T>
     }
 
     @Override
-    public void close() throws IOStreamCloseException
+    public void close() throws IOStreamCloseException, InterruptedException
     {
         if (closeException != null)
         {
@@ -48,7 +48,7 @@ public class ErrorStream<T> implements IOStream<T>
     }
 
     @Override
-    public boolean hasNext() throws IOStreamReadException
+    public boolean hasNext() throws IOStreamReadException, InterruptedException
     {
         if (readException != null)
         {
@@ -58,7 +58,7 @@ public class ErrorStream<T> implements IOStream<T>
     }
 
     @Override
-    public T next() throws IOStreamReadException
+    public T next() throws IOStreamReadException, InterruptedException
     {
         if (readException != null)
         {

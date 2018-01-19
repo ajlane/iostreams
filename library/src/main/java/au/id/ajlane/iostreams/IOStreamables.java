@@ -189,7 +189,7 @@ public final class IOStreamables
                     private int index = 0;
 
                     @Override
-                    protected void end() throws IOStreamCloseException
+                    protected void end() throws IOStreamCloseException, InterruptedException
                     {
                         if (current != null)
                         {
@@ -243,12 +243,14 @@ public final class IOStreamables
      *     If there were any problems in reading the stream.
      * @throws IOStreamCloseException
      *     If there were any problems in closing the stream.
+     * @throws InterruptedException
+     *     If the thread was interrupted.
      */
     public static <T> void consume(
         final IOStreamable<T> streamable,
         final Supplier<? extends IOStreamConsumer<? super T>> consumer
     )
-        throws IOStreamReadException, IOStreamCloseException
+        throws IOStreamReadException, IOStreamCloseException, InterruptedException
     {
         IOStreams.consume(streamable.stream(), consumer.get());
     }
@@ -265,9 +267,11 @@ public final class IOStreamables
      *     If there were any problems in reading the stream.
      * @throws IOStreamCloseException
      *     If there were any problems in closing the stream.
+     * @throws InterruptedException
+     *     If the thread was interrupted.
      */
     public static <T> void consume(final IOStreamable<T> streamable)
-        throws IOStreamReadException, IOStreamCloseException
+        throws IOStreamReadException, IOStreamCloseException, InterruptedException
     {
         IOStreams.consume(streamable.stream());
     }
@@ -530,9 +534,11 @@ public final class IOStreamables
      *     If there was any problem in reading the stream.
      * @throws IOStreamCloseException
      *     If there was any problem in closing the stream.
+     * @throws InterruptedException
+     *     If the thread was interrupted.
      */
     public static <T> T[] toArray(final IOStreamable<T> streamable, final IntFunction<T[]> supplier)
-        throws IOStreamReadException, IOStreamCloseException
+        throws IOStreamReadException, IOStreamCloseException, InterruptedException
     {
         return streamable.stream()
             .toArray(supplier);
@@ -552,9 +558,11 @@ public final class IOStreamables
      *     If there was any problem in reading the stream.
      * @throws IOStreamCloseException
      *     If there was any problem in closing the stream.
+     * @throws InterruptedException
+     *     If the thread was interrupted.
      */
     public static <T> List<? extends T> toList(final IOStreamable<T> streamable)
-        throws IOStreamReadException, IOStreamCloseException
+        throws IOStreamReadException, IOStreamCloseException, InterruptedException
     {
         return IOStreams.toList(streamable.stream());
     }
@@ -575,9 +583,11 @@ public final class IOStreamables
      *     If there was any problem in reading the resource's stream.
      * @throws IOStreamCloseException
      *     If there was any problem in closing the resource's stream.
+     * @throws InterruptedException
+     *     If the thread was interrupted.
      */
     public static <T> Set<T> toSet(final IOStreamable<T> streamable)
-        throws IOStreamReadException, IOStreamCloseException
+        throws IOStreamReadException, IOStreamCloseException, InterruptedException
     {
         return IOStreams.toSet(streamable.stream());
     }

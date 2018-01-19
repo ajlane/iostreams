@@ -63,14 +63,14 @@ public class TestStream<T> implements IOStream<T>
     }
 
     @Override
-    public void close() throws IOStreamCloseException
+    public void close() throws IOStreamCloseException, InterruptedException
     {
         stream.close();
         closed = true;
     }
 
     @Override
-    public boolean hasNext() throws IOStreamReadException
+    public boolean hasNext() throws IOStreamReadException, InterruptedException
     {
         return stream.hasNext();
     }
@@ -86,7 +86,7 @@ public class TestStream<T> implements IOStream<T>
     }
 
     @Override
-    public T next() throws IOStreamReadException
+    public T next() throws IOStreamReadException, InterruptedException
     {
         return stream.next();
     }

@@ -38,7 +38,7 @@ import java.util.stream.StreamSupport;
 public class IOStreamsTest
 {
     @Test
-    public void testCast() throws IOStreamException
+    public void testCast() throws IOStreamException, InterruptedException
     {
         final IOStream<Object> a = TestStream.of("a1", "a2", "a3");
         try (final IOStream<String> aAsStrings = IOStreams.cast(a))
@@ -66,7 +66,7 @@ public class IOStreamsTest
     }
 
     @Test
-    public void testConcatArrayOfStreams() throws IOStreamException
+    public void testConcatArrayOfStreams() throws IOStreamException, InterruptedException
     {
         final TestStream<String> a = TestStream.of("a1");
         final TestStream<String> b = TestStream.of("b1");
@@ -127,7 +127,7 @@ public class IOStreamsTest
             fgh.hasNext();
             Assert.fail();
         }
-        catch (RuntimeException ex)
+        catch (final RuntimeException ex)
         {
             if (!"f".equals(ex.getMessage()))
             {
@@ -140,7 +140,7 @@ public class IOStreamsTest
             fgh.next();
             Assert.fail();
         }
-        catch (RuntimeException ex)
+        catch (final RuntimeException ex)
         {
             if (!"f".equals(ex.getMessage()))
             {
@@ -159,7 +159,7 @@ public class IOStreamsTest
             Assert.assertTrue(ijk.hasNext());
             Assert.assertEquals(null, ijk.next());
         }
-        catch (IOStreamCloseException ex)
+        catch (final IOStreamCloseException ex)
         {
             closeFailed = true;
             Assert.assertEquals(
@@ -190,7 +190,7 @@ public class IOStreamsTest
             lmn.limit(6)
                 .consume();
         }
-        catch (RuntimeException ex)
+        catch (final RuntimeException ex)
         {
             Assert.assertEquals(
                 "Suppressed a runtime exception with a checked exception.",
@@ -215,7 +215,7 @@ public class IOStreamsTest
     }
 
     @Test
-    public void testConcatStreamOfStreams() throws IOStreamException
+    public void testConcatStreamOfStreams() throws IOStreamException, InterruptedException
     {
         final TestStream<String> a = TestStream.of("a1");
         final TestStream<String> b = TestStream.of("b1");
@@ -269,7 +269,7 @@ public class IOStreamsTest
     }
 
     @Test
-    public void testCount() throws IOStreamException
+    public void testCount() throws IOStreamException, InterruptedException
     {
         try (final IOStream<String> a = TestStream.of("a1", "a2", "a3"))
         {
@@ -282,7 +282,7 @@ public class IOStreamsTest
         {
             IOStreams.count(b);
         }
-        catch (IOStreamReadException ex)
+        catch (final IOStreamReadException ex)
         {
             Assert.assertEquals(
                 "b-read",
@@ -301,7 +301,7 @@ public class IOStreamsTest
     }
 
     @Test
-    public void testEmptyStream() throws IOStreamException
+    public void testEmptyStream() throws IOStreamException, InterruptedException
     {
         try (final IOStream<String> stream = IOStreams.empty())
         {
@@ -320,7 +320,8 @@ public class IOStreamsTest
 
 
     @Test
-    public void testExceptionSuppression(){
+    public void testExceptionSuppression() throws InterruptedException
+    {
         final IOException tryA = new IOException("tryA");
         final IOException finallyA = new IOException("finallyA");
         finallyA.addSuppressed(tryA);
@@ -339,7 +340,7 @@ public class IOStreamsTest
     }
 
     @Test
-    public void testFilter() throws IOStreamException
+    public void testFilter() throws IOStreamException, InterruptedException
     {
         final TestStream<String> a = TestStream.of("a1", "a2", "a3");
         final TestStreamFilter<String> allA = TestStreamFilter.wrap(IOStreamFilters.all());
@@ -412,7 +413,7 @@ public class IOStreamsTest
     }
 
     @Test
-    public void testFlattenArrays() throws IOStreamException
+    public void testFlattenArrays() throws IOStreamException, InterruptedException
     {
         Assert.assertArrayEquals(
             new String[]{"a1", "a2", "b1", "b2", "b3", "c1"},
@@ -478,7 +479,7 @@ public class IOStreamsTest
     }
 
     @Test
-    public void testFlattenIterables() throws IOStreamException
+    public void testFlattenIterables() throws IOStreamException, InterruptedException
     {
         Assert.assertArrayEquals(
             new String[]{"a1", "a2", "b1", "b2", "b3", "c1"},
@@ -544,7 +545,7 @@ public class IOStreamsTest
     }
 
     @Test
-    public void testFlattenIterators() throws IOStreamException
+    public void testFlattenIterators() throws IOStreamException, InterruptedException
     {
         Assert.assertArrayEquals(
             new String[]{"a1", "a2", "b1", "b2", "b3", "c1"},
@@ -619,7 +620,7 @@ public class IOStreamsTest
     }
 
     @Test
-    public void testFold() throws IOStreamException
+    public void testFold() throws IOStreamException, InterruptedException
     {
         final TestStream<Integer> a = TestStream.of(1, 2, 3, 4, 5, 6, 7, 8, 9, 10);
         final Long aFolded = a.fold(0L, (sum, i) -> sum + i);
@@ -628,7 +629,7 @@ public class IOStreamsTest
     }
 
     @Test
-    public void testGroup() throws IOStreamException
+    public void testGroup() throws IOStreamException, InterruptedException
     {
         final TestStream<String> a = TestStream.of("a1", "a2", "a3", "a4", "a5");
         try (final IOStream<? extends IOStream<String>> aGroups = IOStreams.group(a, 2))
@@ -680,7 +681,7 @@ public class IOStreamsTest
             IOStreams.group(null, 1);
             Assert.fail();
         }
-        catch (NullPointerException ex)
+        catch (final NullPointerException ex)
         {
             // Expected
         }
@@ -690,7 +691,7 @@ public class IOStreamsTest
             IOStreams.group(b, 0);
             Assert.fail();
         }
-        catch (IllegalArgumentException ex)
+        catch (final IllegalArgumentException ex)
         {
             // Expected
         }
@@ -700,14 +701,14 @@ public class IOStreamsTest
             IOStreams.group(b, -10);
             Assert.fail();
         }
-        catch (IllegalArgumentException ex)
+        catch (final IllegalArgumentException ex)
         {
             // Expected
         }
     }
 
     @Test
-    public void testGroupAdjacent() throws IOStreamException
+    public void testGroupAdjacent() throws IOStreamException, InterruptedException
     {
         final TestStream<String> a = TestStream.of(
             "a-a1", "a-a2", "a-a3", "a-b1", "a-b2", "a-a4", "a-c1", "a-d1", "a-d2"
@@ -793,7 +794,7 @@ public class IOStreamsTest
             IOStreams.group(null, (l, r) -> false);
             Assert.fail();
         }
-        catch (NullPointerException ex)
+        catch (final NullPointerException ex)
         {
             // Expected
         }
@@ -803,14 +804,14 @@ public class IOStreamsTest
             IOStreams.group(a, null);
             Assert.fail();
         }
-        catch (NullPointerException ex)
+        catch (final NullPointerException ex)
         {
             // Expected
         }
     }
 
     @Test
-    public void testIterableStream() throws IOStreamException
+    public void testIterableStream() throws IOStreamException, InterruptedException
     {
         final List<String> values = Arrays.asList("a", "b", "c");
         try (final IOStream<String> stream = IOStreams.fromIterable(values))
@@ -835,7 +836,7 @@ public class IOStreamsTest
     }
 
     @Test
-    public void testIteratorStream() throws IOStreamException
+    public void testIteratorStream() throws IOStreamException, InterruptedException
     {
         final List<String> values = Arrays.asList("a", "b", "c");
         try (final IOStream<String> stream = IOStreams.fromIterator(values.iterator()))
@@ -860,7 +861,7 @@ public class IOStreamsTest
     }
 
     @Test
-    public void testKeep() throws IOStreamException
+    public void testKeep() throws IOStreamException, InterruptedException
     {
         try (final IOStream<String> a = IOStreams.keep(TestStream.of("a1", "a2", "a3"), "a2"::equals))
         {
@@ -869,7 +870,7 @@ public class IOStreamsTest
     }
 
     @Test
-    public void testLimit() throws IOStreamException
+    public void testLimit() throws IOStreamException, InterruptedException
     {
         try (final IOStream<String> a = IOStreams.limit(TestStream.of("a1", "a2", "a3"), 2))
         {
@@ -878,7 +879,7 @@ public class IOStreamsTest
     }
 
     @Test
-    public void testMap() throws IOStreamException
+    public void testMap() throws IOStreamException, InterruptedException
     {
         try (final IOStream<String> a = IOStreams.map(TestStream.of("a1", "a2", "a3"), s -> s.replace('a', 'z')))
         {
@@ -905,7 +906,7 @@ public class IOStreamsTest
         {
             Assert.assertArrayEquals(new String[]{"z1", "z2", "z3"}, b.toArray(String[]::new));
         }
-        catch (IOStreamCloseException ex)
+        catch (final IOStreamCloseException ex)
         {
             Assert.assertEquals(
                 "b",
@@ -938,7 +939,7 @@ public class IOStreamsTest
                 c.hasNext();
                 Assert.fail();
             }
-            catch (IOStreamReadException ex)
+            catch (final IOStreamReadException ex)
             {
                 Assert.assertEquals(
                     "c-read",
@@ -947,7 +948,7 @@ public class IOStreamsTest
                 );
             }
         }
-        catch (IOStreamCloseException ex)
+        catch (final IOStreamCloseException ex)
         {
             caughtCloseException = true;
             Assert.assertEquals(
@@ -966,7 +967,7 @@ public class IOStreamsTest
     }
 
     @Test
-    public void testMapWithExceptionHandler() throws IOStreamException
+    public void testMapWithExceptionHandler() throws IOStreamException, InterruptedException
     {
         final IOStreamTransformExceptionHandler<String> skipHandler = (item, ex) -> FilterDecision.SKIP_AND_CONTINUE;
 
@@ -1003,7 +1004,7 @@ public class IOStreamsTest
         {
             Assert.assertArrayEquals(new String[]{"z1", "z3"}, b.toArray(String[]::new));
         }
-        catch (IOStreamCloseException ex)
+        catch (final IOStreamCloseException ex)
         {
             Assert.assertEquals(
                 "b",
@@ -1014,7 +1015,7 @@ public class IOStreamsTest
     }
 
     @Test
-    public void testMax() throws IOStreamException
+    public void testMax() throws IOStreamException, InterruptedException
     {
         try (TestStream<Integer> a = TestStream.of(1, 4, 6, 10, 2, 9, -2))
         {
@@ -1040,7 +1041,7 @@ public class IOStreamsTest
     }
 
     @Test
-    public void testMin() throws IOStreamException
+    public void testMin() throws IOStreamException, InterruptedException
     {
         try (TestStream<Integer> a = TestStream.of(5, 7, 2, 10, -3, 1, 0))
         {
@@ -1066,7 +1067,7 @@ public class IOStreamsTest
     }
 
     @Test
-    public void testObserve() throws IOStreamException
+    public void testObserve() throws IOStreamException, InterruptedException
     {
         final IOStream<String> a = IOStreams.fromArray("a1", "a2", "a3", "a4", "a5");
         final ArrayList<String> aObservedValues = new ArrayList<>(5);
@@ -1087,7 +1088,7 @@ public class IOStreamsTest
             });
             Assert.fail();
         }
-        catch (NullPointerException ex)
+        catch (final NullPointerException ex)
         {
             // Expected
         }
@@ -1097,14 +1098,14 @@ public class IOStreamsTest
             IOStreams.observe(a, null);
             Assert.fail();
         }
-        catch (NullPointerException ex)
+        catch (final NullPointerException ex)
         {
             // Expected
         }
     }
 
     @Test
-    public void testPeekable() throws IOStreamException
+    public void testPeekable() throws IOStreamException, InterruptedException
     {
         final IOStream<String> a = IOStreams.fromArray("a1", "a2", "a3", "a4", "a5");
         final PeekableIOStream<String> aPeekable = IOStreams.peekable(a);
@@ -1136,7 +1137,7 @@ public class IOStreamsTest
             aPeekable.peek();
             Assert.fail();
         }
-        catch (NoSuchElementException ex)
+        catch (final NoSuchElementException ex)
         {
             // Expected
         }
@@ -1146,14 +1147,14 @@ public class IOStreamsTest
             IOStreams.peekable(null);
             Assert.fail();
         }
-        catch (NullPointerException ex)
+        catch (final NullPointerException ex)
         {
             // Expected
         }
     }
 
     @Test
-    public void testReduce() throws IOStreamException
+    public void testReduce() throws IOStreamException, InterruptedException
     {
         try (final IOStream<String> a = IOStreams.fromArray("a1", "a2", "a3", "a4", "a5"))
         {
@@ -1184,7 +1185,7 @@ public class IOStreamsTest
             });
             Assert.fail();
         }
-        catch (IOStreamCloseException ex)
+        catch (final IOStreamCloseException ex)
         {
             Assert.assertEquals(
                 "b",
@@ -1195,7 +1196,7 @@ public class IOStreamsTest
     }
 
     @Test
-    public void testRepeat() throws IOStreamException
+    public void testRepeat() throws IOStreamException, InterruptedException
     {
         final AtomicInteger counterA = new AtomicInteger(1);
         final TestStream<Integer> a = TestStream.wrap(IOStreams.repeat(counterA::getAndIncrement));
@@ -1220,7 +1221,7 @@ public class IOStreamsTest
             IOStreams.repeat(null);
             Assert.fail();
         }
-        catch (NullPointerException ex)
+        catch (final NullPointerException ex)
         {
             // Expected
         }
@@ -1235,7 +1236,7 @@ public class IOStreamsTest
             b.hasNext();
             Assert.fail();
         }
-        catch (IOStreamException ex)
+        catch (final IOStreamException ex)
         {
             Assert.assertEquals(
                 "b1",
@@ -1248,7 +1249,7 @@ public class IOStreamsTest
             b.next();
             Assert.fail();
         }
-        catch (IOStreamException ex)
+        catch (final IOStreamException ex)
         {
             Assert.assertEquals(
                 "b2",
@@ -1262,7 +1263,7 @@ public class IOStreamsTest
             b.consume();
             Assert.fail();
         }
-        catch (IOStreamException ex)
+        catch (final IOStreamException ex)
         {
             Assert.assertEquals(
                 "b3",
@@ -1275,7 +1276,7 @@ public class IOStreamsTest
     }
 
     @Test
-    public void testSingletonStream() throws IOStreamException
+    public void testSingletonStream() throws IOStreamException, InterruptedException
     {
         final String singleton = "a";
         try (final IOStream<Object> stream = IOStreams.singleton(singleton))
@@ -1296,7 +1297,7 @@ public class IOStreamsTest
     }
 
     @Test
-    public void testSkipByCount() throws IOStreamException
+    public void testSkipByCount() throws IOStreamException, InterruptedException
     {
         try (final IOStream<String> a = IOStreams.skip(TestStream.of("a1", "a2", "a3", "a4", "a5", "a6", "a7"), 3))
         {
@@ -1310,7 +1311,7 @@ public class IOStreamsTest
     }
 
     @Test
-    public void testSkipByPredicate() throws IOStreamException
+    public void testSkipByPredicate() throws IOStreamException, InterruptedException
     {
         try (final IOStream<String> a = IOStreams.skip(TestStream.of("a1", "a2", "a3"), "a2"::equals))
         {
@@ -1319,7 +1320,7 @@ public class IOStreamsTest
     }
 
     @Test
-    public void testToArray() throws IOStreamException
+    public void testToArray() throws IOStreamException, InterruptedException
     {
         final IOStream<String> a = IOStreams.fromArray();
         Assert.assertArrayEquals(new String[0], IOStreams.toArray(a, String[]::new));
@@ -1329,7 +1330,7 @@ public class IOStreamsTest
     }
 
     @Test
-    public void testToList() throws IOStreamException
+    public void testToList() throws IOStreamException, InterruptedException
     {
         final IOStream<String> a = IOStreams.fromArray();
         Assert.assertEquals(new ArrayList<String>(0), IOStreams.toList(a));
@@ -1339,7 +1340,7 @@ public class IOStreamsTest
     }
 
     @Test
-    public void testToSet() throws IOStreamException
+    public void testToSet() throws IOStreamException, InterruptedException
     {
         final IOStream<String> a = IOStreams.fromArray();
         Assert.assertEquals(new HashSet<String>(0), IOStreams.toSet(a));
@@ -1349,7 +1350,7 @@ public class IOStreamsTest
     }
 
     @Test
-    public void testTruncate() throws IOStreamException
+    public void testTruncate() throws IOStreamException, InterruptedException
     {
         TestStream<String> a = TestStream.of("a1", "a2", "a3", "a4");
         IOStream<String> truncatedA = IOStreams.empty(a);
@@ -1359,7 +1360,7 @@ public class IOStreamsTest
             truncatedA.next();
             Assert.fail();
         }
-        catch (NoSuchElementException ex)
+        catch (final NoSuchElementException ex)
         {
             // Expected
         }
@@ -1375,7 +1376,7 @@ public class IOStreamsTest
         {
             Assert.assertFalse(b.hasNext());
         }
-        catch (IOStreamCloseException ex)
+        catch (final IOStreamCloseException ex)
         {
             Assert.assertEquals(
                 "b-close",
@@ -1388,7 +1389,7 @@ public class IOStreamsTest
     }
 
     @Test
-    public void testUntil() throws IOStreamException
+    public void testUntil() throws IOStreamException, InterruptedException
     {
         final TestStream<String> a = TestStream.of("a1", "a2", "a3", "a4");
         Assert.assertArrayEquals(
@@ -1409,7 +1410,7 @@ public class IOStreamsTest
             IOStreams.until(a, null);
             Assert.fail();
         }
-        catch (NullPointerException ex)
+        catch (final NullPointerException ex)
         {
             // Expected
         }
@@ -1419,14 +1420,14 @@ public class IOStreamsTest
             IOStreams.until(null, "a3"::equals);
             Assert.fail();
         }
-        catch (NullPointerException ex)
+        catch (final NullPointerException ex)
         {
             // Expected
         }
     }
 
     @Test
-    public void testZip() throws IOStreamException
+    public void testZip() throws IOStreamException, InterruptedException
     {
         TestStream<String> a1 = TestStream.of("a1-1", "a1-2", "a1-3");
         TestStream<String> a2 = TestStream.of("a2-1", "a2-2", "a2-3");
@@ -1480,7 +1481,7 @@ public class IOStreamsTest
     }
 
     @Test
-    public void testZipAll() throws IOStreamException
+    public void testZipAll() throws IOStreamException, InterruptedException
     {
         TestStream<String> a1 = TestStream.of("a1-1", "a1-2", "a1-3");
         TestStream<String> a2 = TestStream.of("a2-1", "a2-2", "a2-3");
