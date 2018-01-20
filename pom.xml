@@ -26,7 +26,7 @@
 
     <groupId>au.id.ajlane.iostreams</groupId>
     <artifactId>iostreams-parent</artifactId>
-    <version>0.1.0-SNAPSHOT</version>
+    <version>0.1.0</version>
 
     <packaging>pom</packaging>
 
@@ -53,7 +53,7 @@
         <url>https://github.com/ajlane/iostreams</url>
         <connection>scm:git:git://github.com/ajlane/iostreams.git</connection>
         <developerConnection>scm:git:git@github.com:ajlane/iostreams.git</developerConnection>
-        <tag>HEAD</tag>
+        <tag>iostreams-parent-0.1.0</tag>
     </scm>
 
     <modules>
