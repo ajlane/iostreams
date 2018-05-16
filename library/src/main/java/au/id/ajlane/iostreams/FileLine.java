@@ -63,7 +63,7 @@ public final class FileLine implements Cloneable
 
     @SuppressWarnings("CloneDoesntCallSuperClone")
     @Override
-    protected FileLine clone()
+    public FileLine clone()
     {
         return new FileLine(path, number, text);
     }
